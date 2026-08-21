@@ -1,0 +1,6 @@
+{
+  "name": "nooswise",
+  "description": "A minimalist, aesthetic bill splitting app for friends with circular financing to simplify debts without requiring an account.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
