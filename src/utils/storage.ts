@@ -215,7 +215,7 @@ export interface ParsedRoute {
 }
 
 /**
- * Parse current browser URL (path or hash) to extract exact route state
+ * Parse current browser URL (path, hash, or search query) to extract exact route state
  */
 export function parseCurrentRoute(): ParsedRoute {
   if (typeof window === 'undefined') {
@@ -224,6 +224,21 @@ export function parseCurrentRoute(): ParsedRoute {
 
   const pathname = window.location.pathname.replace(/^\/+|\/+$/g, '');
   const hash = window.location.hash.replace(/^#\/?/, '').replace(/\/+$/, '');
+  const searchParams = new URLSearchParams(window.location.search);
+
+  // Check if search query param has split ID (e.g., ?s=trip or ?split=trip or ?id=trip)
+  const querySplitId = searchParams.get('s') || searchParams.get('split') || searchParams.get('id');
+  if (querySplitId) {
+    const isSummary = searchParams.get('tab') === 'summary' || searchParams.get('tab') === 'settle-up';
+    const isSettings = searchParams.get('tab') === 'settings';
+    return {
+      isHome: false,
+      groupId: decodeURIComponent(querySplitId),
+      tab: isSummary ? 'settle-up' : isSettings ? 'settings' : 'expenses',
+      isSummary,
+      rawLegacyGroup: null,
+    };
+  }
 
   // Check if legacy encoded group is in hash
   const legacyGroup = decodeGroupFromUrl();
@@ -238,7 +253,7 @@ export function parseCurrentRoute(): ParsedRoute {
   }
 
   // 1. Root / Welcome Screen: '/' or '' or '#/' or '#welcome' or '#home'
-  if (!pathname && (!hash || hash === 'welcome' || hash === 'home')) {
+  if ((!pathname || pathname === 'index.html') && (!hash || hash === 'welcome' || hash === 'home')) {
     return {
       isHome: true,
       groupId: null,
@@ -259,11 +274,11 @@ export function parseCurrentRoute(): ParsedRoute {
     };
   }
 
-  // 3. Path-based /:groupId or /:groupId/summary or /:groupId/settings
-  const pathParts = pathname ? pathname.split('/') : [];
+  // 3. Extract parts from hash or pathname
   const hashParts = hash ? hash.split('/') : [];
+  const pathParts = pathname && pathname !== 'index.html' ? pathname.split('/') : [];
 
-  const parts = pathParts.length > 0 && pathParts[0] !== 'index.html' ? pathParts : hashParts;
+  const parts = hashParts.length > 0 ? hashParts : pathParts;
 
   if (parts.length > 0) {
     let rawGroupId = parts[0];
@@ -272,14 +287,21 @@ export function parseCurrentRoute(): ParsedRoute {
     }
 
     // Filter out common asset or system paths
-    if (rawGroupId && !rawGroupId.startsWith('api') && !rawGroupId.startsWith('assets') && !rawGroupId.endsWith('.js') && !rawGroupId.endsWith('.css')) {
+    if (
+      rawGroupId &&
+      !rawGroupId.startsWith('api') &&
+      !rawGroupId.startsWith('assets') &&
+      !rawGroupId.endsWith('.js') &&
+      !rawGroupId.endsWith('.css') &&
+      rawGroupId !== 'index.html'
+    ) {
       const subRoute = parts[parts.length - 1];
       const isSummary = subRoute === 'summary' || subRoute === 'settle-up';
       const isSettings = subRoute === 'settings';
 
       return {
         isHome: false,
-        groupId: rawGroupId,
+        groupId: decodeURIComponent(rawGroupId),
         tab: isSummary ? 'settle-up' : isSettings ? 'settings' : 'expenses',
         isSummary,
         rawLegacyGroup: null,
@@ -288,7 +310,7 @@ export function parseCurrentRoute(): ParsedRoute {
   }
 
   return {
-    isHome: false,
+    isHome: true,
     groupId: null,
     tab: null,
     isSummary: false,
@@ -297,7 +319,7 @@ export function parseCurrentRoute(): ParsedRoute {
 }
 
 /**
- * Extract split ID from current URL (hash or path)
+ * Extract split ID from current URL (hash or path or query)
  */
 export function getSplitIdFromUrl(): string | null {
   const route = parseCurrentRoute();
@@ -305,14 +327,15 @@ export function getSplitIdFromUrl(): string | null {
 }
 
 /**
- * Encode group/split to a clean shareable URL (e.g., https://nooswise.netlify.app/weekend-getaway or /weekend-getaway/summary)
+ * Encode group/split to a clean shareable URL
+ * Formats as https://nooswise.netlify.app/#/[groupId] so that it opens reliably on every host without 404
  */
 export function encodeGroupToUrl(group: Group, isSummary: boolean = false): string {
   try {
     if (!group) return typeof window !== 'undefined' ? window.location.href : '';
     const base = typeof window !== 'undefined' ? window.location.origin : 'https://nooswise.netlify.app';
     const sub = isSummary ? '/summary' : '';
-    return `${base}/${group.id}${sub}`;
+    return `${base}/#/${encodeURIComponent(group.id)}${sub}`;
   } catch (e) {
     console.error('Error encoding split to URL', e);
     return typeof window !== 'undefined' ? window.location.href : '';
@@ -331,8 +354,8 @@ export function updateBrowserUrl(options: {
 
   try {
     if (options.isHome) {
-      if (window.location.pathname !== '/' || window.location.hash) {
-        window.history.pushState(null, '', '/');
+      if (window.location.hash && window.location.hash !== '#/' && window.location.hash !== '') {
+        window.history.replaceState(null, '', '/');
       }
       return;
     }
@@ -345,13 +368,12 @@ export function updateBrowserUrl(options: {
         subPath = '/settings';
       }
 
-      const newPath = `/${encodeURIComponent(options.groupId)}${subPath}`;
-      if (window.location.pathname !== newPath) {
-        window.history.pushState(null, '', newPath);
+      const newHash = `#/${encodeURIComponent(options.groupId)}${subPath}`;
+      if (window.location.hash !== newHash) {
+        window.history.replaceState(null, '', newHash);
       }
     }
   } catch {
-    // Fallback to hash if history API restricted
     if (options.isHome) {
       window.location.hash = '';
     } else if (options.groupId) {

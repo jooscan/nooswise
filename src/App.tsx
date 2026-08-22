@@ -109,19 +109,15 @@ export default function App() {
   const initialRoute = parseCurrentRoute();
 
   const [groups, setGroups] = useState<Group[]>(() => {
-    const loaded = loadAllGroups();
-    if (loaded.length === 0) {
-      saveAllGroups([INITIAL_DEFAULT_GROUP], false);
-      return [INITIAL_DEFAULT_GROUP];
-    }
-    return loaded;
+    return loadAllGroups();
   });
 
   const [activeGroupId, setCurrentActiveGroupId] = useState<string>(() => {
     if (initialRoute.groupId) return initialRoute.groupId;
     const stored = getActiveGroupId();
     if (stored) return stored;
-    return INITIAL_DEFAULT_GROUP.id;
+    const all = loadAllGroups();
+    return all.length > 0 ? all[0].id : '';
   });
 
   const [activeTab, setActiveTab] = useState<ActiveTab>(() => {
@@ -282,7 +278,7 @@ export default function App() {
   // 1. Initial mount and browser back/forward route synchronization
   useEffect(() => {
     const route = parseCurrentRoute();
-    const targetGroupId = route.groupId || (route.rawLegacyGroup ? route.rawLegacyGroup.id : null) || activeGroupId;
+    const targetGroupId = route.groupId || (route.rawLegacyGroup ? route.rawLegacyGroup.id : null);
 
     // A. Sync initial local groups to cloud so backend is populated
     const local = loadAllGroups();
@@ -290,7 +286,7 @@ export default function App() {
       local.forEach((g) => pushGroupToCloud(g));
     }
 
-    // B. If a specific split is requested via URL or active group, fetch latest state from Cloud
+    // B. If a specific split is requested via URL, fetch latest state from Cloud
     if (targetGroupId) {
       fetchGroupFromCloud(targetGroupId).then((remoteGroup) => {
         if (remoteGroup) {
