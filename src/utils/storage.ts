@@ -204,38 +204,159 @@ export function setActiveGroupId(id: string, broadcast: boolean = true): void {
 }
 
 /**
- * Extract split ID from current URL (hash or path)
+ * Route Information Interface
  */
-export function getSplitIdFromUrl(): string | null {
-  if (typeof window === 'undefined') return null;
-  const hash = window.location.hash || '';
-  const pathname = window.location.pathname || '';
-
-  // 1. Check path /s/:id
-  const pathMatch = pathname.match(/^\/s\/([a-zA-Z0-9_-]+)/);
-  if (pathMatch) return pathMatch[1];
-
-  // 2. Check hash #/s/:id or #s/:id or #split=:id
-  const hashMatch = hash.match(/^#\/?s(?:plit)?\/([a-zA-Z0-9_-]+)/);
-  if (hashMatch) return hashMatch[1];
-
-  const paramMatch = hash.match(/#split=([a-zA-Z0-9_-]+)/);
-  if (paramMatch && !paramMatch[1].startsWith('N4I')) return paramMatch[1];
-
-  return null;
+export interface ParsedRoute {
+  isHome: boolean;
+  groupId: string | null;
+  tab: 'expenses' | 'settle-up' | 'settings' | null;
+  isSummary: boolean;
+  rawLegacyGroup: Group | null;
 }
 
 /**
- * Encode group/split to a clean, ultra-short shareable URL
+ * Parse current browser URL (path or hash) to extract exact route state
  */
-export function encodeGroupToUrl(group: Group): string {
+export function parseCurrentRoute(): ParsedRoute {
+  if (typeof window === 'undefined') {
+    return { isHome: true, groupId: null, tab: null, isSummary: false, rawLegacyGroup: null };
+  }
+
+  const pathname = window.location.pathname.replace(/^\/+|\/+$/g, '');
+  const hash = window.location.hash.replace(/^#\/?/, '').replace(/\/+$/, '');
+
+  // Check if legacy encoded group is in hash
+  const legacyGroup = decodeGroupFromUrl();
+  if (legacyGroup && (window.location.hash.includes('#s=') || window.location.hash.includes('#split=') || window.location.hash.includes('#group='))) {
+    return {
+      isHome: false,
+      groupId: legacyGroup.id,
+      tab: 'expenses',
+      isSummary: false,
+      rawLegacyGroup: legacyGroup,
+    };
+  }
+
+  // 1. Root / Welcome Screen: '/' or '' or '#/' or '#welcome' or '#home'
+  if (!pathname && (!hash || hash === 'welcome' || hash === 'home')) {
+    return {
+      isHome: true,
+      groupId: null,
+      tab: null,
+      isSummary: false,
+      rawLegacyGroup: null,
+    };
+  }
+
+  // 2. Global summary route: '/summary' or '#/summary' or '/settle-up' or '#/settle-up'
+  if (pathname === 'summary' || hash === 'summary' || pathname === 'settle-up' || hash === 'settle-up') {
+    return {
+      isHome: false,
+      groupId: null,
+      tab: 'settle-up',
+      isSummary: true,
+      rawLegacyGroup: null,
+    };
+  }
+
+  // 3. Path-based /:groupId or /:groupId/summary or /:groupId/settings
+  const pathParts = pathname ? pathname.split('/') : [];
+  const hashParts = hash ? hash.split('/') : [];
+
+  const parts = pathParts.length > 0 && pathParts[0] !== 'index.html' ? pathParts : hashParts;
+
+  if (parts.length > 0) {
+    let rawGroupId = parts[0];
+    if (rawGroupId === 's' && parts.length > 1) {
+      rawGroupId = parts[1];
+    }
+
+    // Filter out common asset or system paths
+    if (rawGroupId && !rawGroupId.startsWith('api') && !rawGroupId.startsWith('assets') && !rawGroupId.endsWith('.js') && !rawGroupId.endsWith('.css')) {
+      const subRoute = parts[parts.length - 1];
+      const isSummary = subRoute === 'summary' || subRoute === 'settle-up';
+      const isSettings = subRoute === 'settings';
+
+      return {
+        isHome: false,
+        groupId: rawGroupId,
+        tab: isSummary ? 'settle-up' : isSettings ? 'settings' : 'expenses',
+        isSummary,
+        rawLegacyGroup: null,
+      };
+    }
+  }
+
+  return {
+    isHome: false,
+    groupId: null,
+    tab: null,
+    isSummary: false,
+    rawLegacyGroup: null,
+  };
+}
+
+/**
+ * Extract split ID from current URL (hash or path)
+ */
+export function getSplitIdFromUrl(): string | null {
+  const route = parseCurrentRoute();
+  return route.groupId;
+}
+
+/**
+ * Encode group/split to a clean shareable URL (e.g., https://nooswise.netlify.app/weekend-getaway or /weekend-getaway/summary)
+ */
+export function encodeGroupToUrl(group: Group, isSummary: boolean = false): string {
   try {
     if (!group) return typeof window !== 'undefined' ? window.location.href : '';
-    const base = typeof window !== 'undefined' ? window.location.origin : '';
-    return `${base}/#/s/${group.id}`;
+    const base = typeof window !== 'undefined' ? window.location.origin : 'https://nooswise.netlify.app';
+    const sub = isSummary ? '/summary' : '';
+    return `${base}/${group.id}${sub}`;
   } catch (e) {
     console.error('Error encoding split to URL', e);
     return typeof window !== 'undefined' ? window.location.href : '';
+  }
+}
+
+/**
+ * Update browser URL bar cleanly without reloading the page
+ */
+export function updateBrowserUrl(options: {
+  isHome?: boolean;
+  groupId?: string | null;
+  tab?: 'expenses' | 'settle-up' | 'settings';
+}): void {
+  if (typeof window === 'undefined') return;
+
+  try {
+    if (options.isHome) {
+      if (window.location.pathname !== '/' || window.location.hash) {
+        window.history.pushState(null, '', '/');
+      }
+      return;
+    }
+
+    if (options.groupId) {
+      let subPath = '';
+      if (options.tab === 'settle-up') {
+        subPath = '/summary';
+      } else if (options.tab === 'settings') {
+        subPath = '/settings';
+      }
+
+      const newPath = `/${encodeURIComponent(options.groupId)}${subPath}`;
+      if (window.location.pathname !== newPath) {
+        window.history.pushState(null, '', newPath);
+      }
+    }
+  } catch {
+    // Fallback to hash if history API restricted
+    if (options.isHome) {
+      window.location.hash = '';
+    } else if (options.groupId) {
+      window.location.hash = `#/${options.groupId}${options.tab === 'settle-up' ? '/summary' : ''}`;
+    }
   }
 }
 

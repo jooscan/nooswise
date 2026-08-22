@@ -63,6 +63,63 @@ export async function pollGroupUpdates(
 }
 
 /**
+ * Real-time Server-Sent Events (SSE) subscriber
+ * Pushes updates from server to client with zero latency!
+ */
+export function subscribeToSplitEvents(
+  groupId: string,
+  onUpdate: (remoteGroup: Group) => void
+): () => void {
+  if (typeof window === 'undefined' || !groupId || typeof EventSource === 'undefined') {
+    return () => {};
+  }
+
+  let eventSource: EventSource | null = null;
+  let isClosed = false;
+
+  const connect = () => {
+    if (isClosed) return;
+    try {
+      eventSource = new EventSource(`/api/splits/${encodeURIComponent(groupId)}/stream`);
+
+      eventSource.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data && data.group) {
+            onUpdate(data.group as Group);
+          }
+        } catch (err) {
+          console.warn('Failed to parse SSE payload:', err);
+        }
+      };
+
+      eventSource.onerror = () => {
+        if (eventSource) {
+          eventSource.close();
+          eventSource = null;
+        }
+        // Auto-reconnect after 3 seconds if not explicitly unsubscribed
+        if (!isClosed) {
+          setTimeout(connect, 3000);
+        }
+      };
+    } catch (err) {
+      console.warn('SSE connection error:', err);
+    }
+  };
+
+  connect();
+
+  return () => {
+    isClosed = true;
+    if (eventSource) {
+      eventSource.close();
+      eventSource = null;
+    }
+  };
+}
+
+/**
  * Merge remote group state while preserving local user's identity status
  */
 export function mergeRemoteGroupWithLocal(

@@ -8,6 +8,9 @@ import {
   setActiveGroupId,
   decodeGroupFromUrl,
   getSplitIdFromUrl,
+  parseCurrentRoute,
+  updateBrowserUrl,
+  encodeGroupToUrl,
   INITIAL_DEFAULT_GROUP,
   crossTabSyncChannel,
   STORAGE_KEY,
@@ -16,6 +19,7 @@ import {
   pushGroupToCloud,
   fetchGroupFromCloud,
   pollGroupUpdates,
+  subscribeToSplitEvents,
   mergeRemoteGroupWithLocal,
 } from './utils/cloudSync';
 import { formatCurrency, calculateSimplifiedDebts } from './utils/debtSimplification';
@@ -101,26 +105,38 @@ export default function App() {
     applyTheme(nextTheme);
   };
 
-  const [groups, setGroups] = useState<Group[]>(() => loadAllGroups());
-  const [activeGroupId, setCurrentActiveGroupId] = useState<string>(() => {
-    const urlGroup = decodeGroupFromUrl();
-    if (urlGroup) {
-      return urlGroup.id;
+  // Initial Route Check
+  const initialRoute = parseCurrentRoute();
+
+  const [groups, setGroups] = useState<Group[]>(() => {
+    const loaded = loadAllGroups();
+    if (loaded.length === 0) {
+      saveAllGroups([INITIAL_DEFAULT_GROUP], false);
+      return [INITIAL_DEFAULT_GROUP];
     }
-    return getActiveGroupId();
+    return loaded;
   });
 
-  const [activeTab, setActiveTab] = useState<ActiveTab>('expenses');
+  const [activeGroupId, setCurrentActiveGroupId] = useState<string>(() => {
+    if (initialRoute.groupId) return initialRoute.groupId;
+    const stored = getActiveGroupId();
+    if (stored) return stored;
+    return INITIAL_DEFAULT_GROUP.id;
+  });
+
+  const [activeTab, setActiveTab] = useState<ActiveTab>(() => {
+    if (initialRoute.tab) return initialRoute.tab;
+    if (initialRoute.isSummary) return 'settle-up';
+    return 'expenses';
+  });
+
   const [tabDirection, setTabDirection] = useState<number>(1);
   const [showLanding, setShowLanding] = useState<boolean>(() => {
-    const urlGroup = decodeGroupFromUrl();
-    if (urlGroup) return false;
-    const initialGroups = loadAllGroups();
-    const activeId = getActiveGroupId();
-    if (initialGroups.length === 0 || !initialGroups.some((g) => g.id === activeId)) {
-      return true;
-    }
-    return false;
+    // Root URL ('/' or '#/welcome') strictly opens the welcome landing screen
+    if (initialRoute.isHome) return true;
+    if (initialRoute.groupId || initialRoute.isSummary) return false;
+    const all = loadAllGroups();
+    return all.length === 0;
   });
 
   const handleTabChange = (nextTab: ActiveTab) => {
@@ -129,6 +145,12 @@ export default function App() {
     const nextIdx = TAB_ORDER[nextTab] ?? 0;
     setTabDirection(nextIdx >= currentIdx ? 1 : -1);
     setActiveTab(nextTab);
+    updateBrowserUrl({ isHome: false, groupId: activeGroupId, tab: nextTab });
+  };
+
+  const handleGoHome = () => {
+    setShowLanding(true);
+    updateBrowserUrl({ isHome: true });
   };
 
   // Group Switcher / Edit popover dropdown state
@@ -257,11 +279,10 @@ export default function App() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // 1. Initial mount URL hash decoding and cloud synchronization
+  // 1. Initial mount and browser back/forward route synchronization
   useEffect(() => {
-    const splitIdFromUrl = getSplitIdFromUrl();
-    const urlGroup = decodeGroupFromUrl();
-    const targetGroupId = splitIdFromUrl || urlGroup?.id || activeGroupId;
+    const route = parseCurrentRoute();
+    const targetGroupId = route.groupId || (route.rawLegacyGroup ? route.rawLegacyGroup.id : null) || activeGroupId;
 
     // A. Sync initial local groups to cloud so backend is populated
     const local = loadAllGroups();
@@ -280,56 +301,85 @@ export default function App() {
             const updated = exists
               ? prev.map((g) => (g.id === merged.id ? merged : g))
               : [merged, ...prev];
-            saveAllGroups(updated, true);
+            saveAllGroups(updated, false);
             return updated;
           });
           setCurrentActiveGroupId(merged.id);
-          setActiveGroupId(merged.id, true);
-          setShowLanding(false);
+          setActiveGroupId(merged.id, false);
 
-          if (!savedClaimedId) {
+          if (!route.isHome) {
+            setShowLanding(false);
+          }
+
+          if (!savedClaimedId && !route.isHome) {
             setIsJoinModalOpen(true);
           }
         }
       });
     }
 
-    if (urlGroup) {
-      const savedClaimedId = localStorage.getItem(`nooswise_identity_${urlGroup.id}`);
-      const normalizedGroup: Group = {
-        ...urlGroup,
-        members: urlGroup.members.map((m) => {
-          if (savedClaimedId) {
-            return { ...m, isCurrentUser: m.id === savedClaimedId };
-          }
-          return { ...m, isCurrentUser: false };
-        }),
-      };
-
-      setGroups((prev) => {
-        const exists = prev.some((g) => g.id === normalizedGroup.id);
-        const updated = exists
-          ? prev.map((g) => (g.id === normalizedGroup.id ? normalizedGroup : g))
-          : [normalizedGroup, ...prev];
-        saveAllGroups(updated, true);
-        pushGroupToCloud(normalizedGroup);
-        return updated;
-      });
-
-      setCurrentActiveGroupId(normalizedGroup.id);
-      setActiveGroupId(normalizedGroup.id, true);
-      setShowLanding(false);
-
-      if (!savedClaimedId) {
-        setIsJoinModalOpen(true);
+    // C. Listen for browser back / forward navigation
+    const handlePopState = () => {
+      const currentRoute = parseCurrentRoute();
+      if (currentRoute.isHome) {
+        setShowLanding(true);
+        return;
       }
-    }
+
+      if (currentRoute.groupId) {
+        setCurrentActiveGroupId(currentRoute.groupId);
+        setActiveGroupId(currentRoute.groupId, false);
+        setShowLanding(false);
+        if (currentRoute.tab) {
+          setActiveTab(currentRoute.tab);
+        }
+      } else if (currentRoute.isSummary) {
+        setShowLanding(false);
+        setActiveTab('settle-up');
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    window.addEventListener('hashchange', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener('hashchange', handlePopState);
+    };
   }, []);
 
-  // 2. Real-Time Cloud Synchronization Polling (Polls active split for live changes)
+  // 2. Real-Time Cloud Synchronization via Server-Sent Events (SSE) + active polling fallback
   useEffect(() => {
-    if (!activeGroupId) return;
+    if (!activeGroupId || showLanding) return;
 
+    // A. Subscribe to real-time Server-Sent Events (instant live broadcast across devices/tabs)
+    const unsubscribeSSE = subscribeToSplitEvents(activeGroupId, (remoteGroup) => {
+      const savedClaimedId = localStorage.getItem(`nooswise_identity_${remoteGroup.id}`);
+      setGroups((prev) => {
+        const currentActive = prev.find((g) => g.id === activeGroupId);
+        const merged = mergeRemoteGroupWithLocal(currentActive || null, remoteGroup, savedClaimedId);
+
+        // Friendly live notifications
+        if (currentActive) {
+          if (remoteGroup.members.length > currentActive.members.length) {
+            const newMem = remoteGroup.members.find(
+              (rm) => !currentActive.members.some((lm) => lm.id === rm.id || lm.name.toLowerCase() === rm.name.toLowerCase())
+            );
+            if (newMem) showLiveToast(`✨ ${newMem.name} joined the split!`, '👋');
+          } else if ((remoteGroup.settlements?.length || 0) > (currentActive.settlements?.length || 0)) {
+            showLiveToast(`🎉 Settle-up payment recorded live!`, '✓');
+          } else if (remoteGroup.expenses.length > currentActive.expenses.length) {
+            showLiveToast(`💸 New expense: "${remoteGroup.expenses[0]?.title}"`, '✨');
+          }
+        }
+
+        const exists = prev.some((g) => g.id === merged.id);
+        const updated = exists ? prev.map((g) => (g.id === merged.id ? merged : g)) : [merged, ...prev];
+        saveAllGroups(updated, false);
+        return updated;
+      });
+    });
+
+    // B. Fast polling fallback every 1.5 seconds
     const intervalId = setInterval(async () => {
       const currentActive = groups.find((g) => g.id === activeGroupId);
       if (!currentActive) return;
@@ -340,18 +390,13 @@ export default function App() {
         const savedClaimedId = localStorage.getItem(`nooswise_identity_${remote.id}`);
         const merged = mergeRemoteGroupWithLocal(currentActive, remote, savedClaimedId);
 
-        // Detect changes for friendly notifications
         if (remote.members.length > currentActive.members.length) {
-          const newMembers = remote.members.filter(
-            (rm) => !currentActive.members.some((lm) => lm.id === rm.id || lm.name.toLowerCase() === rm.name.toLowerCase())
+          const newMem = remote.members.find(
+            (rm) => !currentActive.members.some((lm) => lm.id === rm.id)
           );
-          if (newMembers.length > 0) {
-            showLiveToast(`✨ ${newMembers[0].name} joined the split!`, '👋');
-          }
+          if (newMem) showLiveToast(`✨ ${newMem.name} joined the split!`, '👋');
         } else if ((remote.settlements?.length || 0) > (currentActive.settlements?.length || 0)) {
           showLiveToast(`🎉 Settle-up payment recorded!`, '✓');
-        } else if (remote.expenses.length > currentActive.expenses.length) {
-          showLiveToast(`💸 New expense added: "${remote.expenses[0]?.title}"`, '✨');
         }
 
         setGroups((prev) => {
@@ -360,10 +405,34 @@ export default function App() {
           return updated;
         });
       }
-    }, 2500);
+    }, 1500);
 
-    return () => clearInterval(intervalId);
-  }, [activeGroupId, groups]);
+    // C. Instant sync on window focus / visibility
+    const handleFocus = () => {
+      fetchGroupFromCloud(activeGroupId).then((remote) => {
+        if (remote) {
+          const savedClaimedId = localStorage.getItem(`nooswise_identity_${remote.id}`);
+          setGroups((prev) => {
+            const cur = prev.find((g) => g.id === activeGroupId);
+            const merged = mergeRemoteGroupWithLocal(cur || null, remote, savedClaimedId);
+            const updated = prev.map((g) => (g.id === merged.id ? merged : g));
+            saveAllGroups(updated, false);
+            return updated;
+          });
+        }
+      });
+    };
+
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleFocus);
+
+    return () => {
+      unsubscribeSSE();
+      clearInterval(intervalId);
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleFocus);
+    };
+  }, [activeGroupId, showLanding]);
 
   // 2. Multi-Window / Multi-Tab Synchronization via BroadcastChannel
   useEffect(() => {
@@ -429,44 +498,40 @@ export default function App() {
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
-  // 4. Listen for hash changes in URL
+  // 4. Listen for URL changes via hash or popstate
   useEffect(() => {
-    const handleHashChange = () => {
-      const urlGroup = decodeGroupFromUrl();
-      if (urlGroup) {
-        const savedClaimedId = localStorage.getItem(`nooswise_identity_${urlGroup.id}`);
-        const normalizedGroup: Group = {
-          ...urlGroup,
-          members: urlGroup.members.map((m) => {
-            if (savedClaimedId) {
-              return { ...m, isCurrentUser: m.id === savedClaimedId };
-            }
-            return { ...m, isCurrentUser: false };
-          }),
-        };
-
-        setGroups((prev) => {
-          const exists = prev.some((g) => g.id === normalizedGroup.id);
-          const updated = exists
-            ? prev.map((g) => (g.id === normalizedGroup.id ? normalizedGroup : g))
-            : [normalizedGroup, ...prev];
-          saveAllGroups(updated, true);
-          return updated;
-        });
-
-        setCurrentActiveGroupId(normalizedGroup.id);
-        setActiveGroupId(normalizedGroup.id, true);
+    const handleUrlChange = () => {
+      const route = parseCurrentRoute();
+      if (route.isHome) {
+        setShowLanding(true);
+        return;
+      }
+      if (route.groupId) {
+        setCurrentActiveGroupId(route.groupId);
+        setActiveGroupId(route.groupId, false);
         setShowLanding(false);
-
-        if (!savedClaimedId) {
-          setIsJoinModalOpen(true);
+        if (route.tab) {
+          setActiveTab(route.tab);
         }
       }
     };
 
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
+    window.addEventListener('hashchange', handleUrlChange);
+    window.addEventListener('popstate', handleUrlChange);
+    return () => {
+      window.removeEventListener('hashchange', handleUrlChange);
+      window.removeEventListener('popstate', handleUrlChange);
+    };
   }, []);
+
+  // Sync browser URL bar whenever activeGroupId, activeTab, or showLanding changes
+  useEffect(() => {
+    if (showLanding) {
+      updateBrowserUrl({ isHome: true });
+    } else if (activeGroupId) {
+      updateBrowserUrl({ isHome: false, groupId: activeGroupId, tab: activeTab });
+    }
+  }, [showLanding, activeGroupId, activeTab]);
 
   // Save changes to storage whenever groups change
   useEffect(() => {
