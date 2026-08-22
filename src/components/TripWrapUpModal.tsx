@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import confetti from 'canvas-confetti';
 import { Group } from '../types';
+import { encodeGroupToUrl } from '../utils/storage';
 import {
   formatCurrency,
   getPaymentSummaryTransfers,
@@ -176,6 +177,8 @@ export const TripWrapUpModal: React.FC<TripWrapUpModalProps> = ({
           .join('\n')
       : '• All balances are settled ($0.00)!';
 
+  const shareUrl = group ? encodeGroupToUrl(group) : '';
+
   const recapText = isAllSquare
     ? `🎉 ${group.name} · Trip Wrap-Up!
 ━━━━━━━━━━━━━━━━━━━━
@@ -187,7 +190,8 @@ ${biggestDebtor ? `👑 Top Tab Holder: ${biggestDebtor.member.name} (had the be
 ${transfers.length > 0 ? transfers.map((t) => `• ${t.fromMemberName} paid ${formatCurrency(t.amount, t.currency)} to ${t.toMemberName}`).join('\n') : '• Everyone was square!'}
 
 ✨ All debts settled & everyone is 100% square!
-Nooswise · no spreadsheets needed ✨`
+${shareUrl ? `\nView Split: ${shareUrl}\n` : ''}
+nooswise · frictionless bill splitting ✨`
     : `📊 ${group.name} · Who Owes Who Summary
 ━━━━━━━━━━━━━━━━━━━━
 💰 Total Tab: ${formattedTotal} (${expenseCount} receipts)
@@ -198,8 +202,8 @@ ${biggestCreditor ? `🤑 Owed the Most: ${biggestCreditor.member.name} (${forma
 ⏳ Pending Transfers to Square Up (${debts.length} simple steps):
 ${pendingDebtsLines}
 
-✨ Let's settle up and square the score!
-Nooswise · split bills, stay friends ✨`;
+${shareUrl ? `View & Settle: ${shareUrl}\n` : ''}
+nooswise · split bills, stay friends ✨`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(recapText);

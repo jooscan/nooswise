@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { Group, Member } from '../types';
 import { CuteAvatarBadge } from './CuteAvatarBadge';
 import { X, Check, UserPlus, Sparkles, ArrowRight, Plus } from 'lucide-react';
@@ -25,24 +26,30 @@ export const JoinGroupModal: React.FC<JoinGroupModalProps> = ({
     e.preventDefault();
     if (!newName.trim()) return;
 
-    // Add friend and stay in modal so user can add more people
-    onAddMember(newName.trim(), false);
+    // Add person and claim immediately as current user
+    onAddMember(newName.trim(), true);
     setNewName('');
-    // Keep focus in input to easily type next person
-    setTimeout(() => {
-      inputRef.current?.focus();
-    }, 50);
+    onClose();
   };
 
   const handleSelectYou = (m: Member) => {
     onClaimIdentity(m.id);
+    onClose();
   };
 
   if (!isOpen || !group) return null;
 
+  const currentMember = group.members.find((m) => m.isCurrentUser);
+
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/50 dark:bg-black/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-150">
-      <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-[32px] p-6 sm:p-8 shadow-2xl border border-slate-200 dark:border-slate-800 my-auto relative text-slate-900 dark:text-slate-100 animate-in zoom-in-95 duration-150 transition-colors flex flex-col gap-4">
+    <div className="fixed inset-0 z-50 bg-slate-950/60 dark:bg-black/85 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 15 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 15 }}
+        transition={{ type: 'spring', stiffness: 420, damping: 28 }}
+        className="bg-white dark:bg-slate-900 w-full max-w-md rounded-[32px] p-6 sm:p-8 shadow-2xl border border-slate-200 dark:border-slate-800 my-auto relative text-slate-900 dark:text-slate-100 transition-colors flex flex-col gap-4"
+      >
         {/* Close Button */}
         <button
           onClick={onClose}
@@ -55,31 +62,34 @@ export const JoinGroupModal: React.FC<JoinGroupModalProps> = ({
         <div className="flex items-center gap-2">
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800 shadow-2xs">
             <Sparkles className="w-3.5 h-3.5 text-sky-500" />
-            <span>Welcome to the group</span>
+            <span>Joined "{group.name}"</span>
           </span>
         </div>
 
         {/* Heading */}
         <div>
           <h2 className="font-serif-display text-2xl sm:text-3xl text-slate-900 dark:text-slate-100 font-normal tracking-tight">
-            Who are you in {group.name}?
+            Who are you?
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Add friends or select the checkmark on the right to signify which person is you.
+            Tap your name below so your balances and payments are personalized for you.
           </p>
         </div>
 
-        {/* Member List with Checkmarks */}
-        <div className="flex flex-col gap-2 max-h-56 overflow-y-auto pr-1">
+        {/* Member List with Immediate Selection */}
+        <div className="flex flex-col gap-2 max-h-60 overflow-y-auto pr-1">
           {group.members.map((m) => {
             const isCurrentlyYou = m.isCurrentUser;
             return (
-              <div
+              <motion.div
                 key={m.id}
+                whileHover={{ scale: 1.015, x: 2 }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ type: 'spring', stiffness: 450, damping: 25 }}
                 onClick={() => handleSelectYou(m)}
-                className={`w-full p-3 rounded-2xl flex items-center justify-between transition-all cursor-pointer border text-left ${
+                className={`w-full p-3 rounded-2xl flex items-center justify-between transition-colors cursor-pointer border text-left ${
                   isCurrentlyYou
-                    ? 'bg-sky-50/60 dark:bg-sky-950/40 text-slate-900 dark:text-slate-100 border-sky-300 dark:border-sky-700 font-semibold shadow-2xs'
+                    ? 'bg-sky-50 dark:bg-sky-950/50 text-slate-900 dark:text-slate-100 border-sky-300 dark:border-sky-700 font-semibold shadow-2xs'
                     : 'bg-slate-50 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700'
                 }`}
               >
@@ -90,75 +100,72 @@ export const JoinGroupModal: React.FC<JoinGroupModalProps> = ({
                       {m.name}
                     </span>
                     <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                      {isCurrentlyYou ? 'This is you' : 'Tap checkmark to make this you'}
+                      {isCurrentlyYou ? 'Currently you' : 'Tap to enter as ' + m.name}
                     </span>
                   </div>
                 </div>
 
-                {/* Checkmark Button on Right */}
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleSelectYou(m);
-                  }}
-                  title={isCurrentlyYou ? "You're selected as this person" : "Click to select yourself"}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer shrink-0 ${
+                {/* Select button */}
+                <div
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold shrink-0 transition-colors ${
                     isCurrentlyYou
                       ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 shadow-xs'
-                      : 'bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-300 dark:border-slate-700 hover:text-slate-900 dark:hover:text-slate-100 hover:border-slate-400'
+                      : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-600 group-hover:border-slate-400'
                   }`}
                 >
-                  <div
-                    className={`w-4 h-4 rounded-full flex items-center justify-center ${
-                      isCurrentlyYou
-                        ? 'bg-emerald-400 text-slate-900'
-                        : 'border border-slate-400 dark:border-slate-500'
-                    }`}
-                  >
-                    {isCurrentlyYou && <Check className="w-2.5 h-2.5 stroke-[3]" />}
-                  </div>
-                  <span>{isCurrentlyYou ? 'You' : 'Select'}</span>
-                </button>
-              </div>
+                  {isCurrentlyYou ? (
+                    <>
+                      <div className="w-3.5 h-3.5 rounded-full bg-emerald-400 text-slate-900 flex items-center justify-center">
+                        <Check className="w-2.5 h-2.5 stroke-[3]" />
+                      </div>
+                      <span>You</span>
+                    </>
+                  ) : (
+                    <span>This is me</span>
+                  )}
+                </div>
+              </motion.div>
             );
           })}
         </div>
 
-        {/* Add Friend Input (Stays on screen for multiple additions) */}
-        <form onSubmit={handleAddPerson} className="pt-2 flex flex-col gap-1.5">
+        {/* Not in list? Add Yourself */}
+        <form onSubmit={handleAddPerson} className="pt-2 flex flex-col gap-1.5 border-t border-slate-100 dark:border-slate-800">
           <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-            Add Friend or Yourself
+            Not on the list? Add yourself
           </label>
           <div className="flex items-center gap-2">
             <input
               ref={inputRef}
               type="text"
-              placeholder="e.g. Maya, Sam, Alex"
+              placeholder="Your name (e.g. Alex, Sam)"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               className="flex-1 bg-slate-50 dark:bg-slate-800 text-xs font-semibold text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 px-3.5 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-400 transition-all shadow-2xs"
             />
-            <button
+            <motion.button
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.95 }}
               type="submit"
               disabled={!newName.trim()}
-              className="bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-xs px-4 py-3 rounded-2xl font-semibold hover:bg-slate-800 dark:hover:bg-white disabled:opacity-40 transition-all flex items-center gap-1 shrink-0 cursor-pointer shadow-xs active:scale-95"
+              className="bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-xs px-4 py-3 rounded-2xl font-semibold hover:bg-slate-800 dark:hover:bg-white disabled:opacity-40 transition-all flex items-center gap-1.5 shrink-0 cursor-pointer shadow-xs"
             >
               <Plus className="w-3.5 h-3.5" />
-              <span>Add</span>
-            </button>
+              <span>Join Split</span>
+            </motion.button>
           </div>
         </form>
 
-        {/* Bottom Continue Button */}
+        {/* Bottom Continue / Dismiss Button */}
         <button
           onClick={onClose}
-          className="w-full mt-2 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-xs font-semibold py-3.5 rounded-full hover:bg-slate-800 dark:hover:bg-white transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md active:scale-98"
+          className="w-full mt-1 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold py-3 rounded-full transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
         >
-          <span>Continue to Split</span>
-          <ArrowRight className="w-4 h-4" />
+          <span>{currentMember ? `Continue as ${currentMember.name}` : 'Just viewing for now'}</span>
+          <ArrowRight className="w-3.5 h-3.5" />
         </button>
-      </div>
+      </motion.div>
     </div>
   );
 };
+

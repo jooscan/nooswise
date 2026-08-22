@@ -1,5 +1,7 @@
+import LZString from 'lz-string';
 import { Group, Member, Expense, SettlementRecord } from '../types';
 import { CUTE_AVATARS, getCuteAvatarByCharacter } from './avatars';
+import { formatCurrency, calculateMemberBalances } from './debtSimplification';
 
 export const INITIAL_DEFAULT_GROUP: Group = {
   id: 'weekend-getaway',
@@ -143,40 +145,24 @@ export const crossTabSyncChannel =
     ? new BroadcastChannel('nooswise_cross_tab_sync')
     : null;
 
+/**
+ * Load all user-saved groups from localStorage.
+ * Every new device/browser starts as a clean slate without default sample data.
+ */
 export function loadAllGroups(): Group[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) {
-      saveAllGroups([INITIAL_DEFAULT_GROUP]);
-      return [INITIAL_DEFAULT_GROUP];
+      return [];
     }
     const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed) && parsed.length > 0) {
-      // Ensure existing cached default group has member payment handles
-      const upgraded = parsed.map((g: Group) => {
-        if (g.id === 'weekend-getaway') {
-          const members = g.members.map((m) => {
-            if (m.id === 'm-alex' && !m.email && !m.paymentHandle) {
-              return { ...m, email: 'alex.m@gmail.com', paymentHandle: 'alex.m@gmail.com' };
-            }
-            if (m.id === 'm-sarah' && !m.email && !m.paymentHandle) {
-              return { ...m, email: 'joanna.n@gmail.com', paymentHandle: 'joanna.n@gmail.com' };
-            }
-            if (m.id === 'm-michael' && !m.email && !m.paymentHandle) {
-              return { ...m, email: 'michael.j@gmail.com', paymentHandle: 'michael.j@gmail.com' };
-            }
-            return m;
-          });
-          return { ...g, members };
-        }
-        return g;
-      });
-      return upgraded;
+    if (Array.isArray(parsed)) {
+      return parsed;
     }
-    return [INITIAL_DEFAULT_GROUP];
+    return [];
   } catch (e) {
     console.error('Error loading groups from storage', e);
-    return [INITIAL_DEFAULT_GROUP];
+    return [];
   }
 }
 
@@ -197,9 +183,9 @@ export function saveAllGroups(groups: Group[], broadcast: boolean = true): void 
 
 export function getActiveGroupId(): string {
   try {
-    return localStorage.getItem(ACTIVE_GROUP_KEY) || INITIAL_DEFAULT_GROUP.id;
+    return localStorage.getItem(ACTIVE_GROUP_KEY) || '';
   } catch {
-    return INITIAL_DEFAULT_GROUP.id;
+    return '';
   }
 }
 
@@ -218,64 +204,75 @@ export function setActiveGroupId(id: string, broadcast: boolean = true): void {
 }
 
 /**
- * Encode group/split to shareable URL hash with clean, compact serialization
+ * Encode group/split to an ultra-compact, shortened shareable URL using LZ compression.
  */
 export function encodeGroupToUrl(group: Group): string {
   try {
     if (!group) return typeof window !== 'undefined' ? window.location.href : '';
 
-    // Create compact payload (strip large repetitive strings)
-    const compactPayload = {
+    // Create minimal, compact payload (omit empty fields to minimize payload size)
+    const compactPayload: any = {
       i: group.id,
       n: group.name,
       c: group.currency || 'CAD',
-      m: (group.members || []).map((m) => ({
-        i: m.id,
-        n: m.name,
-        in: m.initials,
-        cn: m.characterName || 'Eevee',
-        e: m.email || '',
-        p: m.paymentHandle || '',
-      })),
-      x: (group.expenses || []).map((e) => ({
-        i: e.id,
-        t: e.title,
-        a: e.amount,
-        c: e.currency,
-        p: e.paidByMemberId,
-        cat: e.category,
-        d: e.date,
-        st: e.splitType,
-        s: e.splits,
-        nt: e.notes || '',
-        oa: e.originalAmount,
-        oc: e.originalCurrency,
-        r: e.exchangeRate,
-      })),
-      s: (group.settlements || []).map((s) => ({
-        i: s.id,
-        f: s.fromMemberId,
-        t: s.toMemberId,
-        a: s.amount,
-        c: s.currency,
-        d: s.date,
-        m: s.paymentMethod,
-        n: s.note,
-      })),
+      m: (group.members || []).map((m) => {
+        const item: any = {
+          i: m.id,
+          n: m.name,
+        };
+        if (m.initials && m.initials !== m.name.slice(0, 2).toUpperCase()) {
+          item.in = m.initials;
+        }
+        if (m.characterName && m.characterName !== 'Eevee') {
+          item.cn = m.characterName;
+        }
+        if (m.email) item.e = m.email;
+        if (m.paymentHandle && m.paymentHandle !== m.email) item.p = m.paymentHandle;
+        return item;
+      }),
+      x: (group.expenses || []).map((e) => {
+        const exp: any = {
+          i: e.id,
+          t: e.title,
+          a: e.amount,
+          p: e.paidByMemberId,
+          cat: e.category,
+          d: e.date,
+          st: e.splitType,
+          s: (e.splits || []).map((sp) => ({ m: sp.memberId, a: sp.amount })),
+        };
+        if (e.currency && e.currency !== group.currency) exp.c = e.currency;
+        if (e.notes) exp.nt = e.notes;
+        if (e.originalAmount) exp.oa = e.originalAmount;
+        if (e.originalCurrency) exp.oc = e.originalCurrency;
+        if (e.exchangeRate) exp.r = e.exchangeRate;
+        return exp;
+      }),
     };
 
-    const jsonStr = JSON.stringify(compactPayload);
-    // Base64 encode for clean URL hash
-    let encoded = '';
-    try {
-      encoded = btoa(encodeURIComponent(jsonStr));
-    } catch {
-      encoded = encodeURIComponent(jsonStr);
+    if (group.settlements && group.settlements.length > 0) {
+      compactPayload.s = group.settlements.map((s) => {
+        const setItem: any = {
+          i: s.id,
+          f: s.fromMemberId,
+          t: s.toMemberId,
+          a: s.amount,
+          d: s.date,
+          m: s.paymentMethod,
+        };
+        if (s.currency && s.currency !== group.currency) setItem.c = s.currency;
+        if (s.note) setItem.n = s.note;
+        return setItem;
+      });
     }
+
+    const jsonStr = JSON.stringify(compactPayload);
+    // Ultra-compact URI safe compression
+    const compressed = LZString.compressToEncodedURIComponent(jsonStr);
 
     const base =
       typeof window !== 'undefined' ? window.location.href.split('#')[0] : '';
-    return `${base}#split=${encoded}`;
+    return `${base}#s=${compressed}`;
   } catch (e) {
     console.error('Error encoding split to URL', e);
     return typeof window !== 'undefined' ? window.location.href : '';
@@ -283,18 +280,23 @@ export function encodeGroupToUrl(group: Group): string {
 }
 
 /**
- * Decode group/split from URL hash with backward and forward compatibility
+ * Decode group/split from URL hash with full backwards & forwards compatibility
  */
 export function decodeGroupFromUrl(): Group | null {
   try {
     if (typeof window === 'undefined') return null;
     const hash = window.location.hash;
-    if (!hash || (!hash.includes('#split=') && !hash.includes('#group='))) {
+    if (!hash || (!hash.includes('#s=') && !hash.includes('#split=') && !hash.includes('#group='))) {
       return null;
     }
 
     let raw = '';
-    if (hash.includes('#split=')) {
+    let isLZ = false;
+
+    if (hash.includes('#s=')) {
+      raw = hash.split('#s=')[1];
+      isLZ = true;
+    } else if (hash.includes('#split=')) {
       raw = hash.split('#split=')[1];
     } else if (hash.includes('#group=')) {
       raw = hash.split('#group=')[1];
@@ -304,20 +306,45 @@ export function decodeGroupFromUrl(): Group | null {
 
     let parsed: any = null;
 
-    // Try btoa decoded JSON first
-    try {
-      const decodedStr = decodeURIComponent(atob(raw));
-      parsed = JSON.parse(decodedStr);
-    } catch {
+    // 1. Try LZString decompression first
+    if (isLZ) {
       try {
-        const decodedUri = decodeURIComponent(raw);
-        parsed = JSON.parse(decodedUri);
+        const decompressed = LZString.decompressFromEncodedURIComponent(raw);
+        if (decompressed) {
+          parsed = JSON.parse(decompressed);
+        }
+      } catch (err) {
+        console.warn('LZ decompression failed, trying fallback', err);
+      }
+    }
+
+    // 2. If not parsed yet, try LZ on raw (in case of #split= with LZ)
+    if (!parsed) {
+      try {
+        const decompressed = LZString.decompressFromEncodedURIComponent(raw);
+        if (decompressed) {
+          parsed = JSON.parse(decompressed);
+        }
       } catch {
-        // Fallback standard parse
+        // Continue to legacy formats
+      }
+    }
+
+    // 3. Try standard Base64 URI decode (legacy format)
+    if (!parsed) {
+      try {
+        const decodedStr = decodeURIComponent(atob(raw));
+        parsed = JSON.parse(decodedStr);
+      } catch {
         try {
-          parsed = JSON.parse(raw);
+          const decodedUri = decodeURIComponent(raw);
+          parsed = JSON.parse(decodedUri);
         } catch {
-          return null;
+          try {
+            parsed = JSON.parse(raw);
+          } catch {
+            return null;
+          }
         }
       }
     }
@@ -329,30 +356,36 @@ export function decodeGroupFromUrl(): Group | null {
       const fullMembers: Member[] = parsed.m.map((m: any, idx: number) => {
         const charName = m.cn || 'Eevee';
         const cute = getCuteAvatarByCharacter(charName);
+        const memberName = m.n || 'Friend';
         return {
           id: m.i || `m-${idx}`,
-          name: m.n || 'Friend',
-          isCurrentUser: idx === 0,
-          initials: m.in || (m.n ? m.n.slice(0, 2).toUpperCase() : 'FR'),
+          name: memberName,
+          isCurrentUser: false, // Will be resolved by user's claimed identity
+          initials: m.in || memberName.slice(0, 2).toUpperCase(),
           characterName: cute.characterName,
           avatarUrl: cute.spriteUrl,
           avatarEmoji: cute.emoji,
           avatarBg: cute.bgGradient,
           email: m.e || '',
-          paymentHandle: m.p || '',
+          paymentHandle: m.p || m.e || '',
         };
       });
+
+      const groupCurrency = parsed.c || 'CAD';
 
       const fullExpenses: Expense[] = (parsed.x || []).map((e: any) => ({
         id: e.i || `exp-${Date.now()}-${Math.random()}`,
         title: e.t || 'Expense',
         amount: Number(e.a) || 0,
-        currency: e.c || parsed.c || 'CAD',
+        currency: e.c || groupCurrency,
         paidByMemberId: e.p || fullMembers[0]?.id,
         category: e.cat || 'other',
         date: e.d || 'Today',
         splitType: e.st || 'equally',
-        splits: e.s || [],
+        splits: (e.s || []).map((sp: any) => ({
+          memberId: sp.m || sp.memberId,
+          amount: Number(sp.a ?? sp.amount) || 0,
+        })),
         notes: e.nt || '',
         originalAmount: e.oa,
         originalCurrency: e.oc,
@@ -361,19 +394,19 @@ export function decodeGroupFromUrl(): Group | null {
 
       const fullSettlements: SettlementRecord[] = (parsed.s || []).map((s: any) => ({
         id: s.i || `set-${Date.now()}`,
-        fromMemberId: s.f,
-        toMemberId: s.t,
-        amount: Number(s.a) || 0,
-        currency: s.c || parsed.c || 'CAD',
-        date: s.d || new Date().toISOString(),
-        paymentMethod: s.m || 'e-Transfer',
-        note: s.n,
+        fromMemberId: s.f || s.fromMemberId,
+        toMemberId: s.t || s.toMemberId,
+        amount: Number(s.a ?? s.amount) || 0,
+        currency: s.c || groupCurrency,
+        date: s.d || s.date || new Date().toISOString(),
+        paymentMethod: s.m || s.paymentMethod || 'e-Transfer',
+        note: s.n || s.note,
       }));
 
       return {
         id: parsed.i,
         name: parsed.n,
-        currency: parsed.c || 'CAD',
+        currency: groupCurrency,
         members: fullMembers,
         expenses: fullExpenses,
         settlements: fullSettlements,
@@ -395,7 +428,7 @@ export function decodeGroupFromUrl(): Group | null {
             avatarBg: m.avatarBg || cute.bgGradient,
             characterName: m.characterName || cute.characterName,
             email: m.email || '',
-            paymentHandle: m.paymentHandle || '',
+            paymentHandle: m.paymentHandle || m.email || '',
           };
         }),
       };
@@ -405,3 +438,43 @@ export function decodeGroupFromUrl(): Group | null {
   }
   return null;
 }
+
+/**
+ * Draft a cute, friendly invitation message for group chat sharing.
+ */
+export function getShareInviteMessage(group: Group, senderName?: string): string {
+  const url = encodeGroupToUrl(group);
+  const author = senderName ? senderName.trim() : (group.members[0]?.name || 'Your friend');
+  return `🦔 ${author} invited you to join "${group.name}" on nooswise! ✨\n\nTap the link to see what you owe, add expenses, and settle up easily:\n${url}`;
+}
+
+/**
+ * Formatted expense summary breakdown with cute invite footer.
+ */
+export function getShareBreakdownText(group: Group, senderName?: string): string {
+  const url = encodeGroupToUrl(group);
+  const total = (group.expenses || []).reduce((sum, e) => sum + (e.amount || 0), 0);
+  const balances = calculateMemberBalances(group);
+  const author = senderName ? senderName.trim() : (group.members[0]?.name || 'Your friend');
+
+  return `✨ nooswise split: ${group.name} ✨
+Total: ${formatCurrency(total, group.currency || 'CAD')} (${(group.expenses || []).length} items)
+
+Balances:
+${balances
+  .map(
+    (b) =>
+      `• ${b.member.name}: ${
+        b.netBalance > 0.009
+          ? `Gets ${formatCurrency(b.netBalance, group.currency || 'CAD')}`
+          : b.netBalance < -0.009
+          ? `Owes ${formatCurrency(Math.abs(b.netBalance), group.currency || 'CAD')}`
+          : 'Settled ✓'
+      }`
+  )
+  .join('\n')}
+
+View & Settle (${author} invited you):
+${url}`;
+}
+

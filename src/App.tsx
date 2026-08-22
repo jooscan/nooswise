@@ -105,7 +105,16 @@ export default function App() {
 
   const [activeTab, setActiveTab] = useState<ActiveTab>('expenses');
   const [tabDirection, setTabDirection] = useState<number>(1);
-  const [showLanding, setShowLanding] = useState<boolean>(false);
+  const [showLanding, setShowLanding] = useState<boolean>(() => {
+    const urlGroup = decodeGroupFromUrl();
+    if (urlGroup) return false;
+    const initialGroups = loadAllGroups();
+    const activeId = getActiveGroupId();
+    if (initialGroups.length === 0 || !initialGroups.some((g) => g.id === activeId)) {
+      return true;
+    }
+    return false;
+  });
 
   const handleTabChange = (nextTab: ActiveTab) => {
     if (nextTab === activeTab) return;
@@ -243,8 +252,8 @@ export default function App() {
           if (savedClaimedId) {
             return { ...m, isCurrentUser: m.id === savedClaimedId };
           }
-          // If no identity claimed yet on this browser, show join modal
-          return { ...m, isCurrentUser: idx === 0 };
+          // If no identity claimed yet on this browser, keep isCurrentUser false
+          return { ...m, isCurrentUser: false };
         }),
       };
 
@@ -259,6 +268,7 @@ export default function App() {
 
       setCurrentActiveGroupId(normalizedGroup.id);
       setActiveGroupId(normalizedGroup.id, true);
+      setShowLanding(false);
 
       // If user hasn't claimed an identity yet for this shared group, prompt them
       if (!savedClaimedId) {
@@ -339,11 +349,11 @@ export default function App() {
         const savedClaimedId = localStorage.getItem(`nooswise_identity_${urlGroup.id}`);
         const normalizedGroup: Group = {
           ...urlGroup,
-          members: urlGroup.members.map((m, idx) => {
+          members: urlGroup.members.map((m) => {
             if (savedClaimedId) {
               return { ...m, isCurrentUser: m.id === savedClaimedId };
             }
-            return { ...m, isCurrentUser: idx === 0 };
+            return { ...m, isCurrentUser: false };
           }),
         };
 
@@ -358,6 +368,11 @@ export default function App() {
 
         setCurrentActiveGroupId(normalizedGroup.id);
         setActiveGroupId(normalizedGroup.id, true);
+        setShowLanding(false);
+
+        if (!savedClaimedId) {
+          setIsJoinModalOpen(true);
+        }
       }
     };
 
@@ -372,10 +387,10 @@ export default function App() {
 
   // Current active group
   const activeGroup =
-    groups.find((g) => g.id === activeGroupId) || groups[0] || INITIAL_DEFAULT_GROUP;
+    groups.find((g) => g.id === activeGroupId) || groups[0];
 
   const currentMember =
-    activeGroup.members.find((m) => m.isCurrentUser) || activeGroup.members[0];
+    activeGroup?.members?.find((m) => m.isCurrentUser) || activeGroup?.members?.[0];
 
   const handleCreateGroup = (
     name: string,
@@ -545,15 +560,15 @@ export default function App() {
 
   const handleDeleteGroup = (groupId: string) => {
     const remaining = groups.filter((g) => g.id !== groupId);
+    setGroups(remaining);
+    saveAllGroups(remaining, true);
     if (remaining.length === 0) {
-      const fallback = [INITIAL_DEFAULT_GROUP];
-      setGroups(fallback);
-      saveAllGroups(fallback, true);
-      setCurrentActiveGroupId(INITIAL_DEFAULT_GROUP.id);
+      setCurrentActiveGroupId('');
+      setActiveGroupId('', true);
+      setShowLanding(true);
     } else {
-      setGroups(remaining);
-      saveAllGroups(remaining, true);
       setCurrentActiveGroupId(remaining[0].id);
+      setActiveGroupId(remaining[0].id, true);
     }
     setActiveTab('expenses');
   };
@@ -563,6 +578,7 @@ export default function App() {
     saveAllGroups([INITIAL_DEFAULT_GROUP], true);
     setCurrentActiveGroupId(INITIAL_DEFAULT_GROUP.id);
     setActiveGroupId(INITIAL_DEFAULT_GROUP.id, true);
+    setShowLanding(false);
   };
 
   // Add / Edit Expense
@@ -639,8 +655,8 @@ export default function App() {
     });
   };
 
-  // If user navigated to landing screen
-  if (showLanding) {
+  // If user navigated to landing screen or no split is selected
+  if (showLanding || !activeGroup) {
     return (
       <LandingHero
         existingGroups={groups}
