@@ -7,10 +7,17 @@ import {
   getActiveGroupId,
   setActiveGroupId,
   decodeGroupFromUrl,
+  getSplitIdFromUrl,
   INITIAL_DEFAULT_GROUP,
   crossTabSyncChannel,
   STORAGE_KEY,
 } from './utils/storage';
+import {
+  pushGroupToCloud,
+  fetchGroupFromCloud,
+  pollGroupUpdates,
+  mergeRemoteGroupWithLocal,
+} from './utils/cloudSync';
 import { formatCurrency, calculateSimplifiedDebts } from './utils/debtSimplification';
 import { getRandomAvatar } from './utils/avatars';
 import { getInitialTheme, applyTheme, Theme } from './utils/theme';
@@ -146,6 +153,17 @@ export default function App() {
     amount: number;
   } | null>(null);
 
+  // Live Toast Notification
+  const [liveToast, setLiveToast] = useState<{ id: number; message: string; icon?: string } | null>(null);
+
+  const showLiveToast = (message: string, icon: string = '✨') => {
+    const id = Date.now();
+    setLiveToast({ id, message, icon });
+    setTimeout(() => {
+      setLiveToast((current) => (current?.id === id ? null : current));
+    }, 4500);
+  };
+
   // Global Keyboard Shortcuts (seamless keyboard controls)
   useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
@@ -239,20 +257,51 @@ export default function App() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // 1. Initial mount URL hash decoding
+  // 1. Initial mount URL hash decoding and cloud synchronization
   useEffect(() => {
+    const splitIdFromUrl = getSplitIdFromUrl();
     const urlGroup = decodeGroupFromUrl();
+    const targetGroupId = splitIdFromUrl || urlGroup?.id || activeGroupId;
+
+    // A. Sync initial local groups to cloud so backend is populated
+    const local = loadAllGroups();
+    if (local.length > 0) {
+      local.forEach((g) => pushGroupToCloud(g));
+    }
+
+    // B. If a specific split is requested via URL or active group, fetch latest state from Cloud
+    if (targetGroupId) {
+      fetchGroupFromCloud(targetGroupId).then((remoteGroup) => {
+        if (remoteGroup) {
+          const savedClaimedId = localStorage.getItem(`nooswise_identity_${remoteGroup.id}`);
+          const merged = mergeRemoteGroupWithLocal(null, remoteGroup, savedClaimedId);
+          setGroups((prev) => {
+            const exists = prev.some((g) => g.id === merged.id);
+            const updated = exists
+              ? prev.map((g) => (g.id === merged.id ? merged : g))
+              : [merged, ...prev];
+            saveAllGroups(updated, true);
+            return updated;
+          });
+          setCurrentActiveGroupId(merged.id);
+          setActiveGroupId(merged.id, true);
+          setShowLanding(false);
+
+          if (!savedClaimedId) {
+            setIsJoinModalOpen(true);
+          }
+        }
+      });
+    }
+
     if (urlGroup) {
       const savedClaimedId = localStorage.getItem(`nooswise_identity_${urlGroup.id}`);
-
-      // Update group members so the claimed ID has isCurrentUser: true
       const normalizedGroup: Group = {
         ...urlGroup,
-        members: urlGroup.members.map((m, idx) => {
+        members: urlGroup.members.map((m) => {
           if (savedClaimedId) {
             return { ...m, isCurrentUser: m.id === savedClaimedId };
           }
-          // If no identity claimed yet on this browser, keep isCurrentUser false
           return { ...m, isCurrentUser: false };
         }),
       };
@@ -263,6 +312,7 @@ export default function App() {
           ? prev.map((g) => (g.id === normalizedGroup.id ? normalizedGroup : g))
           : [normalizedGroup, ...prev];
         saveAllGroups(updated, true);
+        pushGroupToCloud(normalizedGroup);
         return updated;
       });
 
@@ -270,12 +320,50 @@ export default function App() {
       setActiveGroupId(normalizedGroup.id, true);
       setShowLanding(false);
 
-      // If user hasn't claimed an identity yet for this shared group, prompt them
       if (!savedClaimedId) {
         setIsJoinModalOpen(true);
       }
     }
   }, []);
+
+  // 2. Real-Time Cloud Synchronization Polling (Polls active split for live changes)
+  useEffect(() => {
+    if (!activeGroupId) return;
+
+    const intervalId = setInterval(async () => {
+      const currentActive = groups.find((g) => g.id === activeGroupId);
+      if (!currentActive) return;
+
+      const pollRes = await pollGroupUpdates(activeGroupId, currentActive.updatedAt);
+      if (pollRes.updated && pollRes.group) {
+        const remote = pollRes.group;
+        const savedClaimedId = localStorage.getItem(`nooswise_identity_${remote.id}`);
+        const merged = mergeRemoteGroupWithLocal(currentActive, remote, savedClaimedId);
+
+        // Detect changes for friendly notifications
+        if (remote.members.length > currentActive.members.length) {
+          const newMembers = remote.members.filter(
+            (rm) => !currentActive.members.some((lm) => lm.id === rm.id || lm.name.toLowerCase() === rm.name.toLowerCase())
+          );
+          if (newMembers.length > 0) {
+            showLiveToast(`✨ ${newMembers[0].name} joined the split!`, '👋');
+          }
+        } else if ((remote.settlements?.length || 0) > (currentActive.settlements?.length || 0)) {
+          showLiveToast(`🎉 Settle-up payment recorded!`, '✓');
+        } else if (remote.expenses.length > currentActive.expenses.length) {
+          showLiveToast(`💸 New expense added: "${remote.expenses[0]?.title}"`, '✨');
+        }
+
+        setGroups((prev) => {
+          const updated = prev.map((g) => (g.id === merged.id ? merged : g));
+          saveAllGroups(updated, false);
+          return updated;
+        });
+      }
+    }, 2500);
+
+    return () => clearInterval(intervalId);
+  }, [activeGroupId, groups]);
 
   // 2. Multi-Window / Multi-Tab Synchronization via BroadcastChannel
   useEffect(() => {
@@ -455,6 +543,7 @@ export default function App() {
     const updated = [newGroup, ...groups];
     setGroups(updated);
     saveAllGroups(updated, true);
+    pushGroupToCloud(newGroup);
     setCurrentActiveGroupId(newId);
     setActiveGroupId(newId, true);
     setShowLanding(false);
@@ -529,9 +618,14 @@ export default function App() {
   };
 
   const handleUpdateGroup = (updatedGroup: Group) => {
-    const updated = groups.map((g) => (g.id === updatedGroup.id ? updatedGroup : g));
+    const groupWithTimestamp = {
+      ...updatedGroup,
+      updatedAt: new Date().toISOString(),
+    };
+    const updated = groups.map((g) => (g.id === groupWithTimestamp.id ? groupWithTimestamp : g));
     setGroups(updated);
     saveAllGroups(updated, true);
+    pushGroupToCloud(groupWithTimestamp);
   };
 
   const handleToggleArchive = (groupId: string = activeGroupId) => {
@@ -1118,6 +1212,22 @@ export default function App() {
           totalRemainingDebtors={activeGroup ? calculateSimplifiedDebts(activeGroup).length : 1}
         />
       )}
+
+      {/* Floating Live Sync Toast Notification */}
+      <AnimatePresence>
+        {liveToast && (
+          <motion.div
+            initial={{ opacity: 0, y: 30, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.95 }}
+            transition={{ type: 'spring', stiffness: 450, damping: 28 }}
+            className="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 bg-slate-900/95 dark:bg-white/95 text-white dark:text-slate-900 rounded-2xl shadow-xl border border-slate-700/40 dark:border-slate-200/50 backdrop-blur-md text-xs font-semibold pointer-events-none"
+          >
+            <span className="text-base">{liveToast.icon || '✨'}</span>
+            <span>{liveToast.message}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

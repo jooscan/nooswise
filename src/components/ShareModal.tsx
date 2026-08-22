@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { Group } from '../types';
 import { encodeGroupToUrl, getShareInviteMessage, getShareBreakdownText } from '../utils/storage';
 import { formatCurrency, calculateMemberBalances } from '../utils/debtSimplification';
+import { shortenUrl, getCachedShortUrl } from '../utils/urlShortener';
+import { copyToClipboard } from '../utils/clipboard';
 import { QRCodeSVG } from 'qrcode.react';
 import {
   X,
@@ -14,6 +16,7 @@ import {
   QrCode,
   Sparkles,
   MessageSquare,
+  Loader2,
 } from 'lucide-react';
 
 interface ShareModalProps {
@@ -30,8 +33,57 @@ export const ShareModal: React.FC<ShareModalProps> = ({
   const [copiedInvite, setCopiedInvite] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const [copiedSummary, setCopiedSummary] = useState(false);
+  const [shortLink, setShortLink] = useState<string>('');
+  const [isShortening, setIsShortening] = useState<boolean>(false);
 
-  React.useEffect(() => {
+  // Generate clean full URL
+  const fullShareUrl = React.useMemo(() => {
+    if (!group) return '';
+    try {
+      return encodeGroupToUrl(group);
+    } catch {
+      return typeof window !== 'undefined' ? window.location.href : '';
+    }
+  }, [group]);
+
+  // Asynchronously request a shortened link on mount / group change
+  useEffect(() => {
+    if (!isOpen || !fullShareUrl) return;
+
+    // Check if we already have a cached short link
+    const cached = getCachedShortUrl(fullShareUrl);
+    if (cached) {
+      setShortLink(cached);
+      setIsShortening(false);
+      return;
+    }
+
+    // Set initial fallback to full url, then fetch short url
+    setShortLink(fullShareUrl);
+    setIsShortening(true);
+    let isCancelled = false;
+
+    shortenUrl(fullShareUrl)
+      .then((shortened) => {
+        if (!isCancelled && shortened) {
+          setShortLink(shortened);
+        }
+      })
+      .catch((err) => {
+        console.warn('Could not shorten URL:', err);
+      })
+      .finally(() => {
+        if (!isCancelled) {
+          setIsShortening(false);
+        }
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [isOpen, fullShareUrl]);
+
+  useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -47,33 +99,17 @@ export const ShareModal: React.FC<ShareModalProps> = ({
 
   const currentMember = group.members.find((m) => m.isCurrentUser);
   const senderName = currentMember?.name || 'A friend';
+  const effectiveShareUrl = shortLink || fullShareUrl || (typeof window !== 'undefined' ? window.location.href : '');
 
-  // Generate clean shortened shareable link
-  let shareUrl = '';
-  try {
-    shareUrl = encodeGroupToUrl(group);
-  } catch (err) {
-    console.error('Error creating share url:', err);
-    shareUrl = typeof window !== 'undefined' ? window.location.href : '';
-  }
-
-  const copyToClipboard = (text: string) => {
-    if (navigator?.clipboard?.writeText) {
-      navigator.clipboard.writeText(text);
-    } else {
-      const textarea = document.createElement('textarea');
-      textarea.value = text;
-      document.body.appendChild(textarea);
-      textarea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textarea);
-    }
-  };
-
-  const handleCopyInviteMessage = () => {
+  const handleCopyInviteMessage = async () => {
     try {
-      const inviteMsg = getShareInviteMessage(group, senderName);
-      copyToClipboard(inviteMsg);
+      let urlToUse = effectiveShareUrl;
+      if (isShortening) {
+        urlToUse = await shortenUrl(fullShareUrl);
+        setShortLink(urlToUse);
+      }
+      const inviteMsg = getShareInviteMessage(group, senderName, urlToUse);
+      await copyToClipboard(inviteMsg);
       setCopiedInvite(true);
       setTimeout(() => setCopiedInvite(false), 2500);
     } catch (e) {
@@ -81,10 +117,14 @@ export const ShareModal: React.FC<ShareModalProps> = ({
     }
   };
 
-  const handleCopyLinkOnly = () => {
+  const handleCopyLinkOnly = async () => {
     try {
-      const urlToCopy = shareUrl || window.location.href;
-      copyToClipboard(urlToCopy);
+      let urlToCopy = effectiveShareUrl;
+      if (isShortening) {
+        urlToCopy = await shortenUrl(fullShareUrl);
+        setShortLink(urlToCopy);
+      }
+      await copyToClipboard(urlToCopy);
       setCopiedLink(true);
       setTimeout(() => setCopiedLink(false), 2500);
     } catch (e) {
@@ -92,10 +132,15 @@ export const ShareModal: React.FC<ShareModalProps> = ({
     }
   };
 
-  const handleCopySummary = () => {
+  const handleCopySummary = async () => {
     try {
-      const summaryText = getShareBreakdownText(group, senderName);
-      copyToClipboard(summaryText);
+      let urlToUse = effectiveShareUrl;
+      if (isShortening) {
+        urlToUse = await shortenUrl(fullShareUrl);
+        setShortLink(urlToUse);
+      }
+      const summaryText = getShareBreakdownText(group, senderName, urlToUse);
+      await copyToClipboard(summaryText);
       setCopiedSummary(true);
       setTimeout(() => setCopiedSummary(false), 2500);
     } catch (e) {
@@ -118,6 +163,8 @@ export const ShareModal: React.FC<ShareModalProps> = ({
       console.error(e);
     }
   };
+
+  const isShortened = effectiveShareUrl.length < 50 && (effectiveShareUrl.startsWith('http://') || effectiveShareUrl.startsWith('https://'));
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-950/60 dark:bg-black/85 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
@@ -164,10 +211,11 @@ export const ShareModal: React.FC<ShareModalProps> = ({
               <Sparkles className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-xs font-bold tracking-wide">
-                {copiedInvite ? 'Copied Cute Message! ✨' : 'Copy Invite Message 🦔'}
+              <p className="text-xs font-bold tracking-wide flex items-center gap-1.5">
+                <span>{copiedInvite ? 'Copied Cute Message! ✨' : 'Copy Invite Message 🦔'}</span>
+                {isShortening && <Loader2 className="w-3 h-3 animate-spin text-white/80" />}
               </p>
-              <p className="text-[11px] text-sky-100 font-normal">
+              <p className="text-[11px] text-sky-100 font-normal truncate max-w-[220px]">
                 "{senderName} invited you to join {group.name}!"
               </p>
             </div>
@@ -181,7 +229,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
         <div className="bg-slate-50 dark:bg-slate-800/80 rounded-2xl p-4 border border-slate-200 dark:border-slate-700/80 flex items-center gap-4 shadow-2xs">
           <div className="p-2 bg-white rounded-xl shadow-xs border border-slate-200 shrink-0">
             <QRCodeSVG
-              value={shareUrl || window.location.href}
+              value={effectiveShareUrl}
               size={84}
               level="L"
               includeMargin={false}
@@ -202,16 +250,23 @@ export const ShareModal: React.FC<ShareModalProps> = ({
         {/* Short Direct Link Copy */}
         <div className="bg-slate-50 dark:bg-slate-800/80 rounded-2xl p-3 border border-slate-200 dark:border-slate-700/80 flex flex-col gap-1.5 shadow-2xs">
           <div className="flex items-center justify-between">
-            <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-              Short Link
+            <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 flex items-center gap-1">
+              <span>Short Link</span>
+              {isShortened && (
+                <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-semibold lowercase">
+                  mini url
+                </span>
+              )}
             </label>
-            <span className="text-[10px] text-slate-400">Instant access</span>
+            <span className="text-[10px] text-slate-400">
+              {isShortening ? 'Shortening link...' : 'Instant access'}
+            </span>
           </div>
           <div className="flex items-center gap-2">
             <input
               type="text"
               readOnly
-              value={shareUrl || window.location.href}
+              value={effectiveShareUrl}
               onClick={(e) => (e.target as HTMLInputElement).select()}
               className="flex-1 bg-white dark:bg-slate-900 text-xs font-mono text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 border border-slate-200 dark:border-slate-700 focus:outline-none select-all truncate"
             />

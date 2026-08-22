@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { Member } from '../types';
 import { formatCurrency } from '../utils/debtSimplification';
+import { copyToClipboard } from '../utils/clipboard';
 import { CuteAvatarBadge } from './CuteAvatarBadge';
 import { X, Copy, Check, MessageCircle, Heart, Sparkles } from 'lucide-react';
 
@@ -84,8 +85,8 @@ export const RemindModal: React.FC<RemindModalProps> = ({
     setCustomMessage(playfulVariations[nextIdx]);
   };
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(customMessage);
+  const handleCopy = async () => {
+    await copyToClipboard(customMessage);
     setCopied(true);
     setTimeout(() => setCopied(false), 2500);
   };

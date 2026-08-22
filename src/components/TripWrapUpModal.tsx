@@ -1,7 +1,9 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import confetti from 'canvas-confetti';
 import { Group } from '../types';
 import { encodeGroupToUrl } from '../utils/storage';
+import { shortenUrl, getCachedShortUrl } from '../utils/urlShortener';
+import { copyToClipboard } from '../utils/clipboard';
 import {
   formatCurrency,
   getPaymentSummaryTransfers,
@@ -177,7 +179,26 @@ export const TripWrapUpModal: React.FC<TripWrapUpModalProps> = ({
           .join('\n')
       : '• All balances are settled ($0.00)!';
 
-  const shareUrl = group ? encodeGroupToUrl(group) : '';
+  const fullShareUrl = useMemo(() => (group ? encodeGroupToUrl(group) : ''), [group]);
+  const [shortShareUrl, setShortShareUrl] = useState<string>(() => getCachedShortUrl(fullShareUrl) || fullShareUrl);
+
+  useEffect(() => {
+    if (!isOpen || !fullShareUrl) return;
+    const cached = getCachedShortUrl(fullShareUrl);
+    if (cached) {
+      setShortShareUrl(cached);
+      return;
+    }
+    let isCancelled = false;
+    shortenUrl(fullShareUrl).then((res) => {
+      if (!isCancelled && res) setShortShareUrl(res);
+    }).catch(() => {});
+    return () => {
+      isCancelled = true;
+    };
+  }, [isOpen, fullShareUrl]);
+
+  const shareUrl = shortShareUrl || fullShareUrl;
 
   const recapText = isAllSquare
     ? `🎉 ${group.name} · Trip Wrap-Up!
@@ -205,8 +226,8 @@ ${pendingDebtsLines}
 ${shareUrl ? `View & Settle: ${shareUrl}\n` : ''}
 nooswise · split bills, stay friends ✨`;
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(recapText);
+  const handleCopy = async () => {
+    await copyToClipboard(recapText);
     setCopied(true);
     setTimeout(() => setCopied(false), 2500);
   };

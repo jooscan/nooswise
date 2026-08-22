@@ -9,6 +9,7 @@ import {
 import { CuteAvatarBadge } from './CuteAvatarBadge';
 import { CircularFinancingModal } from './CircularFinancingModal';
 import { RemindModal } from './RemindModal';
+import { copyToClipboard } from '../utils/clipboard';
 import confetti from 'canvas-confetti';
 import {
   Check,
@@ -112,17 +113,17 @@ export const SettleUpView: React.FC<SettleUpViewProps> = ({
     setTimeout(() => setToastMessage(null), 3000);
   };
 
-  const handleCopyPaymentDetails = (debt: SimplifiedDebt) => {
+  const handleCopyPaymentDetails = async (debt: SimplifiedDebt) => {
     const email = debt.toMember.paymentHandle || debt.toMember.email || '';
     const formatted = formatCurrency(debt.amount, group.currency);
 
     if (email) {
       const fullPaymentSnippet = `Interac e-Transfer: ${email}\nAmount: ${formatted}`;
-      navigator.clipboard.writeText(fullPaymentSnippet);
+      await copyToClipboard(fullPaymentSnippet);
       setCopiedId(`full-${debt.id}`);
       showToast(`Copied payment details (${email})!`);
     } else {
-      navigator.clipboard.writeText(`Amount: ${formatted}`);
+      await copyToClipboard(`Amount: ${formatted}`);
       setCopiedId(`full-${debt.id}`);
       showToast(`Copied amount: ${formatted}`);
     }

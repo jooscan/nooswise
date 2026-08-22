@@ -6,6 +6,7 @@ import {
   PaymentTransferSummary,
 } from '../utils/debtSimplification';
 import { CuteAvatarBadge } from './CuteAvatarBadge';
+import { copyToClipboard } from '../utils/clipboard';
 import {
   X,
   ArrowRight,
@@ -57,8 +58,8 @@ ${transferLines}
 Nooswise · no spreadsheets needed ✨`
     : '';
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(textToCopy);
+  const handleCopy = async () => {
+    await copyToClipboard(textToCopy);
     setCopied(true);
     setTimeout(() => setCopied(false), 2500);
   };
