@@ -31,33 +31,33 @@ export const ExpenseCard: React.FC<ExpenseCardProps> = ({
     switch (category) {
       case 'food':
         return {
-          icon: <Utensils className="w-5 h-5" strokeWidth={1.8} />,
-          bg: 'bg-sky-100/80 dark:bg-sky-950/70 text-sky-700 dark:text-sky-300',
+          icon: <Utensils className="w-5 h-5 text-[#16273F] dark:text-[#B4D0EE]" strokeWidth={1.8} />,
+          bg: 'bg-[#E7F0FB] dark:bg-[#203652]',
         };
       case 'travel':
         return {
-          icon: <Plane className="w-5 h-5" strokeWidth={1.8} />,
-          bg: 'bg-indigo-100/80 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300',
+          icon: <Plane className="w-5 h-5 text-[#16273F] dark:text-[#B4D0EE]" strokeWidth={1.8} />,
+          bg: 'bg-[#B4D0EE]/40 dark:bg-[#203652]',
         };
       case 'home':
         return {
-          icon: <Home className="w-5 h-5" strokeWidth={1.8} />,
-          bg: 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300',
+          icon: <Home className="w-5 h-5 text-[#16273F] dark:text-[#B4D0EE]" strokeWidth={1.8} />,
+          bg: 'bg-[#E7F0FB] dark:bg-[#203652]',
         };
       case 'drinks':
         return {
-          icon: <Wine className="w-5 h-5" strokeWidth={1.8} />,
-          bg: 'bg-purple-100/80 dark:bg-purple-950/70 text-purple-700 dark:text-purple-300',
+          icon: <Wine className="w-5 h-5 text-[#16273F] dark:text-[#E88A72]" strokeWidth={1.8} />,
+          bg: 'bg-[#E88A72]/20 dark:bg-[#203652]',
         };
       case 'entertainment':
         return {
-          icon: <Ticket className="w-5 h-5" strokeWidth={1.8} />,
-          bg: 'bg-teal-100/80 dark:bg-teal-950/70 text-teal-700 dark:text-teal-300',
+          icon: <Ticket className="w-5 h-5 text-[#16273F] dark:text-[#A9C1A5]" strokeWidth={1.8} />,
+          bg: 'bg-[#A9C1A5]/20 dark:bg-[#203652]',
         };
       default:
         return {
-          icon: <Receipt className="w-5 h-5" strokeWidth={1.8} />,
-          bg: 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300',
+          icon: <Receipt className="w-5 h-5 text-[#16273F] dark:text-[#B4D0EE]" strokeWidth={1.8} />,
+          bg: 'bg-[#E7F0FB] dark:bg-[#203652]',
         };
     }
   };
@@ -68,23 +68,23 @@ export const ExpenseCard: React.FC<ExpenseCardProps> = ({
     switch (expense.splitType) {
       case 'exact':
         return {
-          label: 'Exact',
-          bg: 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700',
+          label: 'Exact split',
+          bg: 'bg-[#E7F0FB] dark:bg-[#203652] text-[#16273F] dark:text-[#B4D0EE] border border-[#DCE6F2] dark:border-[#2A4365]',
         };
       case 'percentage':
         return {
-          label: 'Percent',
-          bg: 'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-800',
+          label: 'Percent split',
+          bg: 'bg-[#E7F0FB] dark:bg-[#203652] text-[#16273F] dark:text-[#B4D0EE] border border-[#DCE6F2] dark:border-[#2A4365]',
         };
       case 'shares':
         return {
-          label: 'Shares',
-          bg: 'bg-sky-50 dark:bg-sky-950/50 text-sky-700 dark:text-sky-300 border border-sky-100 dark:border-sky-800',
+          label: 'Shares split',
+          bg: 'bg-[#E7F0FB] dark:bg-[#203652] text-[#16273F] dark:text-[#B4D0EE] border border-[#DCE6F2] dark:border-[#2A4365]',
         };
       default:
         return {
           label: 'Split equally',
-          bg: 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200/80 dark:border-slate-700/80',
+          bg: 'bg-[#E7F0FB] dark:bg-[#203652] text-[#6E8CB4] dark:text-[#B4D0EE] border border-[#DCE6F2] dark:border-[#2A4365]',
         };
     }
   };
@@ -103,42 +103,42 @@ export const ExpenseCard: React.FC<ExpenseCardProps> = ({
       whileTap={{ scale: 0.985 }}
       transition={{ type: 'spring', stiffness: 450, damping: 28 }}
       onClick={() => onSelect(expense)}
-      className="bg-white dark:bg-slate-900 rounded-2xl p-4 md:p-5 flex items-center justify-between transition-colors duration-200 group cursor-pointer border border-slate-200/90 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-2xs hover:shadow-md"
+      className="bg-white dark:bg-[#16273F] rounded-[22px] p-4 md:p-5 flex items-center justify-between transition-colors duration-200 group cursor-pointer border border-[#DCE6F2] dark:border-[#2A4365] hover:border-[#B4D0EE] dark:hover:border-[#3B5B88] shadow-2xs hover:shadow-md"
       role="button"
       tabIndex={0}
     >
       <div className="flex items-center gap-3.5 md:gap-4 min-w-0">
         {/* Category Icon */}
         <div
-          className={`w-11 h-11 rounded-2xl ${iconInfo.bg} flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 shadow-2xs border border-transparent dark:border-slate-700/60`}
+          className={`w-11 h-11 rounded-[14px] ${iconInfo.bg} flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 shadow-2xs border border-[#DCE6F2]/60 dark:border-[#2A4365]`}
         >
           {iconInfo.icon}
         </div>
 
         {/* Details */}
         <div className="min-w-0">
-          <h4 className="font-semibold text-base text-slate-900 dark:text-slate-100 group-hover:text-black dark:group-hover:text-white transition-colors truncate">
+          <h4 className="font-semibold text-base text-[#16273F] dark:text-white group-hover:opacity-90 transition-colors truncate">
             {expense.title}
           </h4>
 
-          <div className="flex items-center gap-2 mt-0.5 flex-wrap text-xs md:text-sm text-slate-500 dark:text-slate-400">
+          <div className="flex items-center gap-2 mt-0.5 flex-wrap text-xs md:text-sm text-[#6E8CB4] dark:text-[#B4D0EE]">
             <div className="flex items-center gap-1.5">
               {payer && (
                 <CuteAvatarBadge member={payer} size="sm" showEmoji={false} />
               )}
               <span>
-                Paid by <span className="font-medium text-slate-800 dark:text-slate-200">{payerName}</span>
+                <strong className="text-[#16273F] dark:text-white font-medium">{payerName}</strong> covered this
               </span>
             </div>
             <span>•</span>
-            <span className="text-slate-400 dark:text-slate-500">{expense.date}</span>
+            <span className="text-[#6E8CB4] dark:text-slate-400">{expense.date}</span>
           </div>
 
           {/* Foreign currency converted indicator badge */}
           {isConverted && (
-            <div className="mt-1 flex items-center gap-1 text-[11px] font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md inline-flex border border-slate-200 dark:border-slate-700">
+            <div className="mt-1 flex items-center gap-1 text-[11px] font-medium text-[#16273F] dark:text-slate-300 bg-[#E7F0FB] dark:bg-[#203652] px-2.5 py-0.5 rounded-full inline-flex border border-[#DCE6F2] dark:border-[#2A4365]">
               <span>Paid {formatMoney(expense.originalAmount!, expense.originalCurrency)}</span>
-              <span className="text-slate-400 dark:text-slate-500">
+              <span className="text-[#6E8CB4]">
                 (converted to {group.currency || 'CAD'})
               </span>
             </div>
@@ -148,11 +148,11 @@ export const ExpenseCard: React.FC<ExpenseCardProps> = ({
 
       {/* Amount & Split Tag */}
       <div className="text-right flex flex-col items-end shrink-0 pl-3">
-        <p className="font-serif-display text-lg md:text-xl font-medium text-slate-900 dark:text-slate-100 whitespace-nowrap">
+        <p className="font-sans font-bold text-lg md:text-xl text-[#16273F] dark:text-white whitespace-nowrap tracking-tight">
           {formatCurrency(expense.amount, expense.currency || group.currency)}
         </p>
         <span
-          className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-medium tracking-wide mt-1 whitespace-nowrap ${badge.bg}`}
+          className={`inline-block px-3 py-0.5 rounded-full text-[11px] font-medium tracking-wide mt-1 whitespace-nowrap ${badge.bg}`}
         >
           {badge.label}
         </span>

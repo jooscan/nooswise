@@ -424,7 +424,7 @@ export const SettleUpView: React.FC<SettleUpViewProps> = ({
                           <span className="text-[10px] uppercase font-bold text-slate-400 block">
                             Amount Due
                           </span>
-                          <span className="font-serif-display text-2xl md:text-3xl text-slate-900 dark:text-slate-100">
+                          <span className="font-sans font-bold text-2xl md:text-3xl text-slate-900 dark:text-slate-100 tracking-tight">
                             {formatCurrency(debt.amount, group.currency)}
                           </span>
                         </div>
@@ -494,7 +494,7 @@ export const SettleUpView: React.FC<SettleUpViewProps> = ({
                         <span className="text-[10px] uppercase font-bold text-slate-400 block">
                           You'll Receive
                         </span>
-                        <span className="font-serif-display text-2xl md:text-3xl text-emerald-600 dark:text-emerald-400">
+                        <span className="font-sans font-bold text-2xl md:text-3xl text-emerald-600 dark:text-emerald-400 tracking-tight">
                           {formatCurrency(debt.amount, group.currency)}
                         </span>
                       </div>
@@ -551,7 +551,7 @@ export const SettleUpView: React.FC<SettleUpViewProps> = ({
                     </div>
 
                     <div className="flex items-center justify-between sm:justify-end gap-3">
-                      <span className="font-serif-display text-base font-semibold text-slate-900 dark:text-slate-100">
+                      <span className="font-sans font-bold text-sm sm:text-base text-slate-900 dark:text-slate-100 tracking-tight">
                         {formatCurrency(debt.amount, group.currency)}
                       </span>
                     </div>

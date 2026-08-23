@@ -4,8 +4,8 @@
 
 @layer base {
   :root {
-    --font-serif: 'Libre Caslon Text', Georgia, serif;
-    --font-sans: 'Hanken Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-serif: 'Instrument Serif', Georgia, serif;
+    --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     color-scheme: light;
   }
 
@@ -15,21 +15,30 @@
 
   body {
     font-family: var(--font-sans);
-    background-color: #f8fafc;
-    color: #0f172a;
+    background-color: #F7FAFD;
+    color: #16273F;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     transition: background-color 0.2s ease, color 0.2s ease;
   }
 
   html.dark body {
-    background-color: #090d16;
-    color: #f1f5f9;
+    background-color: #0c1524;
+    color: #F7FAFD;
   }
 
-  h1, h2, h3, .font-serif-display {
+  .font-display, .font-serif-display {
     font-family: var(--font-serif);
+    letter-spacing: -0.02em;
   }
+}
+
+.brand-card-shadow {
+  box-shadow: 0 18px 40px -22px rgba(22, 39, 63, 0.35);
+}
+
+html.dark .brand-card-shadow {
+  box-shadow: 0 18px 40px -22px rgba(0, 0, 0, 0.6);
 }
 
 .material-symbols-outlined {
@@ -43,23 +52,23 @@
 }
 
 .glass-panel {
-  background: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(226, 232, 240, 0.8);
+  border: 1px solid #DCE6F2;
 }
 
 html.dark .glass-panel {
-  background: rgba(15, 23, 42, 0.85);
-  border: 1px solid rgba(51, 65, 85, 0.6);
+  background: rgba(22, 39, 63, 0.92);
+  border: 1px solid rgba(110, 140, 180, 0.25);
 }
 
 .soft-shadow {
-  box-shadow: 0 10px 30px -10px rgba(15, 23, 42, 0.04);
+  box-shadow: 0 18px 40px -22px rgba(22, 39, 63, 0.25);
 }
 
 html.dark .soft-shadow {
-  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 18px 40px -22px rgba(0, 0, 0, 0.5);
 }
 
 .soft-shadow-hover {
@@ -67,19 +76,15 @@ html.dark .soft-shadow {
 }
 
 .soft-shadow-hover:hover {
-  box-shadow: 0 16px 40px -12px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 20px 48px -18px rgba(22, 39, 63, 0.35);
   transform: translateY(-2px);
 }
 
 html.dark .soft-shadow-hover:hover {
-  box-shadow: 0 16px 40px -12px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 20px 48px -18px rgba(0, 0, 0, 0.65);
 }
 
-.card-elevation {
-  box-shadow: 0 20px 50px -15px rgba(15, 23, 42, 0.06);
-}
-
-/* Custom scrollbar in cool silver tones */
+/* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -90,18 +95,18 @@ html.dark .soft-shadow-hover:hover {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: #B4D0EE;
   border-radius: 9999px;
 }
 
 html.dark ::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: #2A4365;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #6E8CB4;
 }
 
 html.dark ::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  background: #3B5B88;
 }

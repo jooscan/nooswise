@@ -319,23 +319,66 @@ export function parseCurrentRoute(): ParsedRoute {
 }
 
 /**
- * Extract split ID from current URL (hash or path or query)
+ * Extract split ID from current URL (search query, hash, or pathname)
  */
 export function getSplitIdFromUrl(): string | null {
-  const route = parseCurrentRoute();
-  return route.groupId;
+  if (typeof window === 'undefined') return null;
+
+  try {
+    // 1. Check query parameter ?s=trip or ?split=trip or ?id=trip
+    const searchParams = new URLSearchParams(window.location.search);
+    const querySplitId = searchParams.get('s') || searchParams.get('split') || searchParams.get('id');
+    if (querySplitId) {
+      return decodeURIComponent(querySplitId);
+    }
+
+    // 2. Check hash or path parts
+    const hash = window.location.hash.replace(/^#\/?/, '').replace(/\/+$/, '');
+    const pathname = window.location.pathname.replace(/^\/+|\/+$/g, '');
+    const hashParts = hash ? hash.split('/') : [];
+    const pathParts = pathname && pathname !== 'index.html' ? pathname.split('/') : [];
+    const parts = hashParts.length > 0 ? hashParts : pathParts;
+
+    if (parts.length > 0) {
+      let rawGroupId = parts[0];
+      if (rawGroupId === 's' && parts.length > 1) {
+        rawGroupId = parts[1];
+      }
+
+      if (
+        rawGroupId &&
+        !rawGroupId.startsWith('api') &&
+        !rawGroupId.startsWith('assets') &&
+        !rawGroupId.endsWith('.js') &&
+        !rawGroupId.endsWith('.css') &&
+        rawGroupId !== 'index.html' &&
+        rawGroupId !== 'welcome' &&
+        rawGroupId !== 'home' &&
+        rawGroupId !== 'summary' &&
+        rawGroupId !== 'settle-up'
+      ) {
+        if (!rawGroupId.startsWith('s=')) {
+          return decodeURIComponent(rawGroupId);
+        }
+      }
+    }
+  } catch (e) {
+    console.warn('Error reading split ID from URL', e);
+  }
+
+  return null;
 }
 
 /**
  * Encode group/split to a clean shareable URL
- * Formats as https://nooswise.netlify.app/#/[groupId] so that it opens reliably on every host without 404
+ * Uses query parameter ?s=[groupId] so URL shorteners (TinyURL) & external apps reliably preserve the split ID.
  */
 export function encodeGroupToUrl(group: Group, isSummary: boolean = false): string {
   try {
     if (!group) return typeof window !== 'undefined' ? window.location.href : '';
     const base = typeof window !== 'undefined' ? window.location.origin : 'https://nooswise.netlify.app';
-    const sub = isSummary ? '/summary' : '';
-    return `${base}/#/${encodeURIComponent(group.id)}${sub}`;
+    const sub = isSummary ? '&tab=summary' : '';
+    return `${base}/?s=${encodeURIComponent(group.id)}${sub}`;
   } catch (e) {
     console.error('Error encoding split to URL', e);
     return typeof window !== 'undefined' ? window.location.href : '';
@@ -354,23 +397,23 @@ export function updateBrowserUrl(options: {
 
   try {
     if (options.isHome) {
-      if (window.location.hash && window.location.hash !== '#/' && window.location.hash !== '') {
+      if (window.location.search || (window.location.hash && window.location.hash !== '#/' && window.location.hash !== '')) {
         window.history.replaceState(null, '', '/');
       }
       return;
     }
 
     if (options.groupId) {
-      let subPath = '';
+      let subQuery = '';
       if (options.tab === 'settle-up') {
-        subPath = '/summary';
+        subQuery = '&tab=summary';
       } else if (options.tab === 'settings') {
-        subPath = '/settings';
+        subQuery = '&tab=settings';
       }
 
-      const newHash = `#/${encodeURIComponent(options.groupId)}${subPath}`;
-      if (window.location.hash !== newHash) {
-        window.history.replaceState(null, '', newHash);
+      const newSearch = `?s=${encodeURIComponent(options.groupId)}${subQuery}`;
+      if (window.location.search !== newSearch) {
+        window.history.replaceState(null, '', newSearch);
       }
     }
   } catch {
@@ -389,27 +432,8 @@ export function decodeGroupFromUrl(): Group | null {
   try {
     if (typeof window === 'undefined') return null;
     const hash = window.location.hash;
-    const splitId = getSplitIdFromUrl();
 
-    // If it's a short URL ID reference (#/s/xyz)
-    if (splitId && !hash.includes('#s=N4')) {
-      const localGroups = loadAllGroups();
-      const existing = localGroups.find((g) => g.id === splitId);
-      if (existing) return existing;
-
-      // Temporary placeholder while cloud fetch completes
-      return {
-        id: splitId,
-        name: splitId.replace(/-/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase()),
-        currency: 'CAD',
-        members: [],
-        expenses: [],
-        settlements: [],
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-    }
-
+    // Only process when hash contains a serialized group payload
     if (!hash || (!hash.includes('#s=') && !hash.includes('#split=') && !hash.includes('#group='))) {
       return null;
     }
@@ -562,17 +586,17 @@ export function decodeGroupFromUrl(): Group | null {
 }
 
 /**
- * Draft a cute, friendly invitation message for group chat sharing.
+ * Draft a warm, friendly invitation message for group chat sharing.
  */
 export function getShareInviteMessage(group: Group, senderName?: string, overrideUrl?: string): string {
   const fullUrl = encodeGroupToUrl(group);
   const url = overrideUrl || getCachedShortUrl(fullUrl) || fullUrl;
   const author = senderName ? senderName.trim() : (group.members[0]?.name || 'Your friend');
-  return `🦔 ${author} invited you to join "${group.name}" on nooswise! ✨\n\nTap the link to see what you owe, add expenses, and settle up easily:\n${url}`;
+  return `🎈 ${author} invited you to "${group.name}" on nooswise.\n\nOne link, no app, everyone square. Tap to see where we stand and settle up:\n${url}`;
 }
 
 /**
- * Formatted expense summary breakdown with cute invite footer.
+ * Formatted expense summary breakdown with warm brand copy.
  */
 export function getShareBreakdownText(group: Group, senderName?: string, overrideUrl?: string): string {
   const fullUrl = encodeGroupToUrl(group);
@@ -581,7 +605,7 @@ export function getShareBreakdownText(group: Group, senderName?: string, overrid
   const balances = calculateMemberBalances(group);
   const author = senderName ? senderName.trim() : (group.members[0]?.name || 'Your friend');
 
-  return `✨ nooswise split: ${group.name} ✨
+  return `nooswise · ${group.name}
 Total: ${formatCurrency(total, group.currency || 'CAD')} (${(group.expenses || []).length} items)
 
 Balances:
@@ -593,11 +617,11 @@ ${balances
           ? `Gets ${formatCurrency(b.netBalance, group.currency || 'CAD')}`
           : b.netBalance < -0.009
           ? `Owes ${formatCurrency(Math.abs(b.netBalance), group.currency || 'CAD')}`
-          : 'Settled ✓'
+          : "Square ✓"
       }`
   )
   .join('\n')}
 
-View & Settle (${author} invited you):
+View & settle (${author} sent this):
 ${url}`;
 }

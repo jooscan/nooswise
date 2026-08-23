@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { Group, Member } from '../types';
 import { CuteAvatarBadge } from './CuteAvatarBadge';
+import { CurrencyPicker } from './CurrencyPicker';
 import { ThemeToggle } from './ThemeToggle';
 import { Theme } from '../utils/theme';
 import { getRandomAvatar, CUTE_AVATARS } from '../utils/avatars';
@@ -237,18 +238,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             <label className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 block mb-1.5">
               Default Group Currency
             </label>
-            <select
+            <CurrencyPicker
               value={currency}
-              onChange={(e) => setCurrency(e.target.value)}
-              className="w-full bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-medium text-sm rounded-2xl px-4 py-3 border border-slate-200 dark:border-slate-700 focus:bg-white dark:focus:bg-slate-800 focus:border-slate-400 dark:focus:border-slate-500 focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-600 focus:outline-none cursor-pointer transition-colors"
-            >
-              <option value="CAD">CAD ($ - Canadian Dollar)</option>
-              <option value="USD">USD ($ - US Dollar)</option>
-              <option value="EUR">EUR (€ - Euro)</option>
-              <option value="GBP">GBP (£ - British Pound)</option>
-              <option value="AUD">AUD ($ - Australian Dollar)</option>
-              <option value="JPY">JPY (¥ - Japanese Yen)</option>
-            </select>
+              onChange={(newCurr) => setCurrency(newCurr)}
+              size="lg"
+              className="w-full"
+            />
           </div>
         </div>
 

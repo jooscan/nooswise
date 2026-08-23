@@ -40,6 +40,7 @@ import { RemindModal } from './components/RemindModal';
 import { TripWrapUpModal } from './components/TripWrapUpModal';
 import { PaymentSummaryModal } from './components/PaymentSummaryModal';
 import { KeyboardShortcutsModal } from './components/KeyboardShortcutsModal';
+import { BrandPhilosophyModal } from './components/BrandPhilosophyModals';
 import {
   Plus,
   Share2,
@@ -50,6 +51,7 @@ import {
   UserCheck,
   Archive,
   RotateCcw,
+  Sparkles,
 } from 'lucide-react';
 
 const TAB_ORDER: Record<ActiveTab, number> = {
@@ -164,6 +166,7 @@ export default function App() {
   const [isTripWrapUpOpen, setIsTripWrapUpOpen] = useState(false);
   const [isPaymentSummaryOpen, setIsPaymentSummaryOpen] = useState(false);
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
+  const [brandPhilosophyModalType, setBrandPhilosophyModalType] = useState<'how-it-works' | 'why-no-app' | null>(null);
 
   // Remind Modal state
   const [remindTarget, setRemindTarget] = useState<{
@@ -810,6 +813,16 @@ export default function App() {
     });
   };
 
+  const handleRenameGroup = (newName: string) => {
+    if (!activeGroup || !newName.trim()) return;
+    const updated = {
+      ...activeGroup,
+      name: newName.trim(),
+      updatedAt: new Date().toISOString(),
+    };
+    handleUpdateGroup(updated);
+  };
+
   // If user navigated to landing screen or no split is selected
   if (showLanding || !activeGroup) {
     return (
@@ -824,8 +837,8 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col md:flex-row antialiased selection:bg-slate-200 dark:selection:bg-slate-800 transition-colors">
-      {/* Side Navigation for Desktop & Mobile Bars */}
+    <div className="min-h-screen bg-[#F7FAFD] dark:bg-[#0c1524] text-[#16273F] dark:text-[#F7FAFD] flex flex-col md:flex-row antialiased selection:bg-[#B4D0EE] dark:selection:bg-[#203652] transition-colors">
+      {/* Side Navigation for Desktop & Mobile Tabs */}
       <Sidebar
         activeTab={activeTab}
         onTabChange={handleTabChange}
@@ -835,234 +848,235 @@ export default function App() {
         theme={theme}
         onToggleTheme={handleToggleTheme}
         onOpenShortcuts={() => setIsShortcutsOpen(true)}
+        group={activeGroup}
+        onInviteFriends={() => setIsShareModalOpen(true)}
+        onMemberClick={(m) => handleClaimIdentity(m.id)}
+        onSwitchIdentityClick={() => setIsJoinModalOpen(true)}
       />
 
       {/* Main Content Area */}
-      <main className="flex-1 px-5 sm:px-8 md:px-10 lg:px-14 py-6 md:py-8 max-w-7xl mx-auto w-full pb-28 md:pb-12 overflow-hidden">
-        <AnimatePresence mode="wait" custom={tabDirection}>
-          {/* TAB 1: EXPENSES VIEW (WITH HERO BALANCE HIERARCHY) */}
-          {activeTab === 'expenses' && (
-            <motion.div
-              key="expenses"
-              custom={tabDirection}
-              variants={liquidGlassVariants}
-              initial="initial"
-              animate="animate"
-              exit="exit"
-              className="flex flex-col gap-7"
-            >
-              {/* Split Title & Header Bar */}
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div className="relative" ref={dropdownRef}>
-                  {/* Event Name & Chevron Dropdown Trigger */}
-                  <div className="flex items-center gap-3">
+      <main className="flex-1 px-4 sm:px-6 md:px-8 lg:px-10 py-6 md:py-8 w-full max-w-7xl mx-auto pb-28 md:pb-12 overflow-hidden">
+        {/* Clean Split Header in Main View */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+          {/* Split Title with Switcher / Rename */}
+          <div className="flex items-center gap-3 relative" ref={dropdownRef}>
+            {isRenamingGroup ? (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (renamedTitle.trim()) {
+                    handleRenameGroup(renamedTitle.trim());
+                  }
+                  setIsRenamingGroup(false);
+                }}
+                className="flex items-center gap-2"
+              >
+                <input
+                  type="text"
+                  autoFocus
+                  value={renamedTitle}
+                  onChange={(e) => setRenamedTitle(e.target.value)}
+                  className="bg-white dark:bg-[#16273F] text-[#16273F] dark:text-white font-display text-2xl sm:text-3xl px-3 py-1 rounded-xl border border-[#DCE6F2] dark:border-[#2A4365] focus:outline-none focus:ring-2 focus:ring-[#B4D0EE]"
+                />
+                <button
+                  type="submit"
+                  className="w-8 h-8 rounded-full bg-[#16273F] dark:bg-white text-white dark:text-[#16273F] flex items-center justify-center cursor-pointer shadow-xs"
+                >
+                  <Check className="w-4 h-4" />
+                </button>
+              </form>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  setRenamedTitle(activeGroup.name);
+                  setIsGroupDropdownOpen(!isGroupDropdownOpen);
+                }}
+                className="flex items-center gap-2 text-left group cursor-pointer"
+                title="Switch or rename split"
+              >
+                <h2 className="font-display text-2xl sm:text-3xl lg:text-4xl text-[#16273F] dark:text-white tracking-tight group-hover:opacity-85 transition-opacity">
+                  {activeGroup.name}
+                </h2>
+                <ChevronDown
+                  className={`w-4 h-4 text-[#6E8CB4] transition-transform ${
+                    isGroupDropdownOpen ? 'rotate-180' : ''
+                  }`}
+                />
+              </button>
+            )}
+
+            {/* Split Switcher Dropdown */}
+            <AnimatePresence>
+              {isGroupDropdownOpen && !isRenamingGroup && (
+                <motion.div
+                  initial={{ opacity: 0, y: -6, scale: 0.96 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -4, scale: 0.96 }}
+                  transition={{ type: 'spring', stiffness: 450, damping: 30 }}
+                  className="absolute z-50 left-0 top-full mt-2 w-72 bg-white dark:bg-[#16273F] rounded-2xl shadow-2xl border border-[#DCE6F2] dark:border-[#2A4365] p-2 flex flex-col gap-1"
+                >
+                  <div className="flex items-center justify-between px-2 py-1.5 border-b border-[#DCE6F2] dark:border-[#2A4365]">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#6E8CB4]">
+                      Your Splits
+                    </span>
                     <button
+                      type="button"
                       onClick={() => {
-                        setRenamedTitle(activeGroup.name);
-                        setIsGroupDropdownOpen(!isGroupDropdownOpen);
+                        setIsRenamingGroup(true);
+                        setIsGroupDropdownOpen(false);
                       }}
-                      className="flex items-center gap-2 text-left group/title transition-transform active:scale-[0.99] cursor-pointer"
-                      title="Click to switch split or rename"
+                      className="text-[11px] font-semibold text-[#16273F] dark:text-white hover:underline flex items-center gap-1 cursor-pointer"
                     >
-                      <h2 className="font-serif-display text-3xl sm:text-4xl lg:text-5xl text-slate-900 dark:text-slate-100 tracking-tight font-normal group-hover/title:opacity-85">
-                        {activeGroup.name}
-                      </h2>
-                      {activeGroup.isArchived && (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700">
-                          <Archive className="w-3 h-3 text-sky-500" />
-                          <span>Archived</span>
-                        </span>
-                      )}
-                      <div className="w-7 h-7 rounded-full bg-slate-200/80 dark:bg-slate-800 group-hover/title:bg-slate-300 dark:group-hover/title:bg-slate-700 flex items-center justify-center text-slate-800 dark:text-slate-200 transition-colors shrink-0 border border-slate-300 dark:border-slate-700">
-                        <ChevronDown
-                          className={`w-3.5 h-3.5 transition-transform duration-200 ${
-                            isGroupDropdownOpen ? 'rotate-180' : ''
-                          }`}
-                        />
-                      </div>
+                      <Edit2 className="w-3 h-3 text-[#6E8CB4]" />
+                      <span>Rename</span>
                     </button>
                   </div>
 
-                  {/* Popover Dropdown with Spring Motion */}
-                  <AnimatePresence>
-                    {isGroupDropdownOpen && (
-                      <motion.div
-                        initial={{ opacity: 0, y: -8, scale: 0.96 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: -6, scale: 0.96 }}
-                        transition={{ type: 'spring', stiffness: 450, damping: 30 }}
-                        className="absolute top-full left-0 mt-3 w-80 sm:w-96 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-3xl p-5 shadow-2xl border border-slate-200/90 dark:border-slate-800 z-50"
-                      >
-                        {/* Rename section */}
-                        {isRenamingGroup ? (
-                          <form onSubmit={handleSaveRename} className="flex flex-col gap-2 mb-4">
-                            <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                              Rename Split
-                            </label>
-                            <div className="flex items-center gap-2">
-                              <input
-                                type="text"
-                                value={renamedTitle}
-                                onChange={(e) => setRenamedTitle(e.target.value)}
-                                autoFocus
-                                className="flex-1 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs font-semibold px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 focus:outline-none"
-                              />
-                              <button
-                                type="submit"
-                                className="bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-xs px-3 py-2 rounded-xl font-semibold cursor-pointer"
-                              >
-                                Save
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => setIsRenamingGroup(false)}
-                                className="text-xs text-slate-400 hover:text-slate-600 px-2 cursor-pointer"
-                              >
-                                Cancel
-                              </button>
-                            </div>
-                          </form>
-                        ) : (
-                          <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100 dark:border-slate-800">
-                            <span className="text-xs font-semibold text-slate-900 dark:text-slate-100">
-                              Switch or Manage Split
-                            </span>
-                            <button
-                              onClick={() => setIsRenamingGroup(true)}
-                              className="text-xs text-slate-500 hover:text-slate-900 dark:hover:text-white flex items-center gap-1 cursor-pointer"
-                            >
-                              <Edit2 className="w-3 h-3" />
-                              <span>Rename</span>
-                            </button>
-                          </div>
-                        )}
-
-                        {/* Group List */}
-                        <div className="flex flex-col gap-1 max-h-56 overflow-y-auto pr-1">
-                          {groups.map((g) => {
-                            const isCurrent = g.id === activeGroup.id;
-                            return (
-                              <button
-                                key={g.id}
-                                onClick={() => handleSelectGroup(g)}
-                                className={`p-2.5 rounded-2xl flex items-center justify-between text-left transition-colors cursor-pointer ${
-                                  isCurrent
-                                    ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-semibold'
-                                    : 'hover:bg-slate-50 dark:hover:bg-slate-800/60 text-slate-600 dark:text-slate-400'
-                                }`}
-                              >
-                                <div className="flex flex-col min-w-0">
-                                  <div className="flex items-center gap-1.5">
-                                    <span className="text-xs truncate">{g.name}</span>
-                                    {g.isArchived && (
-                                      <span className="text-[9px] font-semibold bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded-full shrink-0">
-                                        Archived
-                                      </span>
-                                    )}
-                                  </div>
-                                  <span className="text-[10px] text-slate-400">
-                                    {g.members.length} friends • {g.expenses.length} expenses
-                                  </span>
-                                </div>
-                                {isCurrent && <Check className="w-4 h-4 text-sky-600 dark:text-sky-400" />}
-                              </button>
-                            );
-                          })}
-                        </div>
-
+                  <div className="flex flex-col gap-0.5 max-h-56 overflow-y-auto">
+                    {groups.map((g) => {
+                      const isSelected = g.id === activeGroup.id;
+                      return (
                         <button
+                          key={g.id}
+                          type="button"
                           onClick={() => {
+                            handleSelectGroup(g);
                             setIsGroupDropdownOpen(false);
-                            setShowLanding(true);
                           }}
-                          className="w-full mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 text-xs font-semibold text-slate-900 dark:text-slate-100 hover:text-black dark:hover:text-white flex items-center justify-center gap-1.5 cursor-pointer"
+                          className={`flex items-center justify-between p-2 rounded-xl text-left transition-colors cursor-pointer ${
+                            isSelected
+                              ? 'bg-[#E7F0FB] dark:bg-[#203652] text-[#16273F] dark:text-white font-semibold'
+                              : 'hover:bg-[#F7FAFD] dark:hover:bg-[#203652]/60 text-[#16273F] dark:text-[#F7FAFD]'
+                          }`}
                         >
-                          <Plus className="w-3.5 h-3.5" />
-                          <span>Create New Split</span>
+                          <div className="flex flex-col min-w-0">
+                            <span className="text-xs font-semibold truncate">
+                              {g.name}
+                            </span>
+                            <span className="text-[10px] text-[#6E8CB4]">
+                              {(g.members || []).length} friends • {(g.expenses || []).length} items
+                            </span>
+                          </div>
+                          {isSelected && (
+                            <Check className="w-3.5 h-3.5 text-[#16273F] dark:text-[#B4D0EE]" />
+                          )}
                         </button>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
+                      );
+                    })}
+                  </div>
 
-                {/* Action Buttons */}
-                <div className="flex items-center gap-2.5">
-                  <motion.button
-                    whileHover={{ scale: 1.03, y: -1 }}
-                    whileTap={{ scale: 0.96 }}
-                    transition={{ type: 'spring', stiffness: 450, damping: 25 }}
-                    onClick={() => setIsShareModalOpen(true)}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-full text-xs font-semibold tracking-wide transition-colors border border-slate-200 dark:border-slate-800 cursor-pointer shadow-2xs"
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowLanding(true);
+                      setIsGroupDropdownOpen(false);
+                    }}
+                    className="mt-1 flex items-center justify-center gap-1.5 p-2 rounded-xl bg-[#F7FAFD] dark:bg-[#203652] hover:bg-[#E7F0FB] dark:hover:bg-[#2A4365] text-xs font-semibold text-[#16273F] dark:text-white border border-[#DCE6F2] dark:border-[#2A4365] cursor-pointer transition-colors"
                   >
-                    <Share2 className="w-3.5 h-3.5 text-slate-700 dark:text-slate-300" />
-                    <span>Share Split</span>
-                  </motion.button>
-                </div>
-              </div>
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Create new split</span>
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
 
-              {/* ARCHIVED TRIP BANNER */}
-              {activeGroup.isArchived && (
-                <div className="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-3xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs shadow-2xs">
-                  <div className="flex items-center gap-2.5 text-slate-700 dark:text-slate-300">
-                    <span className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center shrink-0">
-                      <Archive className="w-4 h-4" />
-                    </span>
-                    <div>
-                      <span className="font-bold text-slate-900 dark:text-slate-100 block sm:inline mr-1.5">
-                        This trip is archived and all square.
+          {/* Action Buttons: Share Link */}
+          <div className="flex items-center gap-2 sm:gap-3 self-start sm:self-auto">
+            <motion.button
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.96 }}
+              onClick={() => setIsShareModalOpen(true)}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold bg-white dark:bg-[#16273F] hover:bg-[#E7F0FB] dark:hover:bg-[#203652] text-[#16273F] dark:text-white border border-[#DCE6F2] dark:border-[#2A4365] shadow-2xs transition-colors cursor-pointer"
+            >
+              <Share2 className="w-3.5 h-3.5 text-[#6E8CB4]" />
+              <span>Share link</span>
+            </motion.button>
+          </div>
+        </div>
+
+        <AnimatePresence mode="wait" custom={tabDirection}>
+            {/* TAB 1: EXPENSES VIEW (WITH FULL-WIDTH HERO BALANCE CARD ON TOP) */}
+            {activeTab === 'expenses' && (
+              <motion.div
+                key="expenses"
+                custom={tabDirection}
+                variants={liquidGlassVariants}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                className="flex flex-col gap-6"
+              >
+                {/* ARCHIVED TRIP BANNER */}
+                {activeGroup.isArchived && (
+                  <div className="bg-[#E7F0FB] dark:bg-[#16273F] border border-[#DCE6F2] dark:border-[#2A4365] rounded-[22px] p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs shadow-2xs">
+                    <div className="flex items-center gap-2.5 text-[#16273F] dark:text-[#F7FAFD]">
+                      <span className="w-8 h-8 rounded-full bg-[#B4D0EE] dark:bg-[#203652] text-[#16273F] dark:text-[#B4D0EE] flex items-center justify-center shrink-0">
+                        <Archive className="w-4 h-4" />
                       </span>
-                      <span className="text-slate-500 dark:text-slate-400">
-                        All receipts are preserved in read-only mode.
-                      </span>
+                      <div>
+                        <span className="font-bold block sm:inline mr-1.5">
+                          This trip is archived and all square.
+                        </span>
+                        <span className="text-[#6E8CB4] dark:text-slate-400">
+                          All receipts are preserved in read-only mode.
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
+                      <motion.button
+                        whileHover={{ scale: 1.03, y: -1 }}
+                        whileTap={{ scale: 0.96 }}
+                        onClick={() => setIsTripWrapUpOpen(true)}
+                        className="px-3.5 py-1.5 rounded-full bg-[#A9C1A5] text-[#16273F] font-semibold hover:opacity-90 transition-opacity cursor-pointer"
+                      >
+                        View Recap
+                      </motion.button>
+                      <motion.button
+                        whileHover={{ scale: 1.03, y: -1 }}
+                        whileTap={{ scale: 0.96 }}
+                        onClick={() => handleToggleArchive(activeGroup.id)}
+                        className="px-3.5 py-1.5 rounded-full bg-white dark:bg-[#203652] text-[#16273F] dark:text-white border border-[#DCE6F2] dark:border-[#2A4365] font-semibold hover:bg-[#F7FAFD] transition-colors cursor-pointer"
+                      >
+                        Unarchive
+                      </motion.button>
                     </div>
                   </div>
+                )}
 
-                  <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
-                    <motion.button
-                      whileHover={{ scale: 1.03, y: -1 }}
-                      whileTap={{ scale: 0.96 }}
-                      transition={{ type: 'spring', stiffness: 450, damping: 25 }}
-                      onClick={() => setIsTripWrapUpOpen(true)}
-                      className="px-3.5 py-1.5 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 font-semibold hover:bg-emerald-200 transition-colors cursor-pointer"
-                    >
-                      View Recap
-                    </motion.button>
-                    <motion.button
-                      whileHover={{ scale: 1.03, y: -1 }}
-                      whileTap={{ scale: 0.96 }}
-                      transition={{ type: 'spring', stiffness: 450, damping: 25 }}
-                      onClick={() => handleToggleArchive(activeGroup.id)}
-                      className="px-3.5 py-1.5 rounded-full bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600 font-semibold hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors cursor-pointer"
-                    >
-                      Unarchive
-                    </motion.button>
+                {/* 1. HERO: "YOU'RE ALL SQUARE" / BALANCE CARD STRETCHING ACROSS THE SCREEN */}
+                <HeroBalanceCard
+                  group={activeGroup}
+                  onSettleClick={() => handleTabChange('settle-up')}
+                  onRemindClick={(debtor, amount) => setRemindTarget({ debtor, amount })}
+                  onPayPersonClick={() => handleTabChange('settle-up')}
+                  onSwitchIdentityClick={() => setIsJoinModalOpen(true)}
+                  onUpdateMemberPaymentEmail={handleUpdateMemberPaymentEmail}
+                  onOpenWrapUp={() => setIsTripWrapUpOpen(true)}
+                  onOpenPaymentSummary={() => setIsPaymentSummaryOpen(true)}
+                />
+
+                {/* 2. RECENT TRANSACTIONS & EXPENSES LIST */}
+                <div className="flex flex-col gap-5 pt-1">
+                  {/* Mobile-only Who's Here compact card (Desktop has it permanently in the left sidebar) */}
+                  <div className="block md:hidden">
+                    <FriendsListCard
+                      group={activeGroup}
+                      onInviteClick={() => setIsShareModalOpen(true)}
+                      onSwitchIdentityClick={() => setIsJoinModalOpen(true)}
+                      onMemberClick={(m) => handleClaimIdentity(m.id)}
+                    />
                   </div>
-                </div>
-              )}
 
-              {/* FLIPPED HIERARCHY: HERO BALANCE ON TOP */}
-              <HeroBalanceCard
-                group={activeGroup}
-                onSettleClick={() => handleTabChange('settle-up')}
-                onRemindClick={(debtor, amount) => setRemindTarget({ debtor, amount })}
-                onPayPersonClick={() => handleTabChange('settle-up')}
-                onSwitchIdentityClick={() => setIsJoinModalOpen(true)}
-                onUpdateMemberPaymentEmail={handleUpdateMemberPaymentEmail}
-                onOpenWrapUp={() => setIsTripWrapUpOpen(true)}
-                onOpenPaymentSummary={() => setIsPaymentSummaryOpen(true)}
-              />
-
-              {/* Dashboard Layout: 12 Columns */}
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 pt-2">
-                {/* Left Column (8 cols): Recent Expenses */}
-                <div className="lg:col-span-8 flex flex-col gap-4">
-                  {/* Action Bar */}
-                  <div className="flex justify-between items-center mb-1">
+                  {/* Expenses Header & Action Bar */}
+                  <div className="flex justify-between items-center">
                     <div>
-                      <h3 className="font-semibold text-xl md:text-2xl text-slate-900 dark:text-slate-100">
+                      <h3 className="font-semibold text-lg md:text-xl text-[#16273F] dark:text-white">
                         What we spent
                       </h3>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                      <p className="text-xs text-[#6E8CB4] dark:text-[#B4D0EE]">
                         {(activeGroup.expenses || []).length} item{(activeGroup.expenses || []).length === 1 ? '' : 's'} recorded
                       </p>
                     </div>
@@ -1070,16 +1084,15 @@ export default function App() {
                     <motion.button
                       whileHover={{ scale: 1.035, y: -1 }}
                       whileTap={{ scale: 0.96 }}
-                      transition={{ type: 'spring', stiffness: 450, damping: 22 }}
                       onClick={() => {
                         setEditingExpense(null);
                         setIsAddExpenseOpen(true);
                       }}
-                      className="flex items-center gap-2 px-5 md:px-6 py-3 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-full text-xs md:text-sm font-semibold hover:bg-slate-800 dark:hover:bg-white transition-colors shadow-xs hover:shadow-md cursor-pointer group"
+                      className="flex items-center gap-2 px-5 py-2.5 bg-[#16273F] dark:bg-white text-white dark:text-[#16273F] rounded-full text-xs md:text-sm font-semibold hover:opacity-90 transition-opacity shadow-sm cursor-pointer group"
                     >
                       <Plus className="w-4 h-4" />
                       <span>Add expense</span>
-                      <kbd className="hidden sm:inline-flex items-center text-[10px] font-mono px-1.5 py-0.5 rounded bg-white/20 dark:bg-slate-900/20 text-white/90 dark:text-slate-900/90 font-semibold ml-0.5">
+                      <kbd className="hidden sm:inline-flex items-center text-[10px] font-mono px-1.5 py-0.5 rounded bg-white/20 dark:bg-[#16273F]/20 text-white/90 dark:text-[#16273F]/90 font-semibold ml-0.5">
                         E
                       </kbd>
                     </motion.button>
@@ -1087,25 +1100,24 @@ export default function App() {
 
                   {/* Expense List */}
                   {(activeGroup.expenses || []).length === 0 ? (
-                    <div className="bg-white dark:bg-slate-900 rounded-3xl p-10 text-center border border-slate-200 dark:border-slate-800 flex flex-col items-center justify-center gap-3 shadow-2xs">
-                      <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                    <div className="bg-white dark:bg-[#16273F] rounded-[30px] p-10 text-center border border-[#DCE6F2] dark:border-[#2A4365] flex flex-col items-center justify-center gap-3 brand-card-shadow">
+                      <div className="w-12 h-12 rounded-full bg-[#E7F0FB] dark:bg-[#203652] flex items-center justify-center text-[#16273F] dark:text-[#B4D0EE] border border-[#DCE6F2] dark:border-[#2A4365]">
                         <Receipt className="w-6 h-6" />
                       </div>
-                      <h4 className="font-serif-display text-2xl text-slate-900 dark:text-slate-100">
+                      <h4 className="font-display text-2xl text-[#16273F] dark:text-white font-normal">
                         Nothing recorded yet
                       </h4>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm">
+                      <p className="text-xs text-[#6E8CB4] dark:text-[#B4D0EE] max-w-sm">
                         Wrapping up your trip? Start adding your dinners, Uber rides, groceries, or stays.
                       </p>
                       <motion.button
                         whileHover={{ scale: 1.04, y: -1 }}
                         whileTap={{ scale: 0.96 }}
-                        transition={{ type: 'spring', stiffness: 450, damping: 22 }}
                         onClick={() => {
                           setEditingExpense(null);
                           setIsAddExpenseOpen(true);
                         }}
-                        className="mt-2 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-xs font-semibold px-6 py-3 rounded-full hover:bg-slate-800 dark:hover:bg-white transition-colors flex items-center gap-2 cursor-pointer shadow-xs hover:shadow-md"
+                        className="mt-2 bg-[#16273F] dark:bg-white text-white dark:text-[#16273F] text-xs font-semibold px-6 py-2.5 rounded-full hover:opacity-90 transition-opacity flex items-center gap-2 cursor-pointer shadow-md"
                       >
                         <Plus className="w-3.5 h-3.5" />
                         <span>Add expense</span>
@@ -1138,66 +1150,55 @@ export default function App() {
                     </motion.div>
                   )}
                 </div>
+              </motion.div>
+            )}
 
-                {/* Right Column (4 cols): Friends Breakdown & Invitation */}
-                <div className="lg:col-span-4 flex flex-col gap-6">
-                  <FriendsListCard
-                    group={activeGroup}
-                    onInviteClick={() => setIsShareModalOpen(true)}
-                    onSwitchIdentityClick={() => setIsJoinModalOpen(true)}
-                    onMemberClick={(m) => handleClaimIdentity(m.id)}
-                  />
-                </div>
-              </div>
-            </motion.div>
-          )}
+            {/* TAB 2: SETTLE UP VIEW */}
+            {activeTab === 'settle-up' && (
+              <motion.div
+                key="settle-up"
+                custom={tabDirection}
+                variants={liquidGlassVariants}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+              >
+                <SettleUpView
+                  group={activeGroup}
+                  onRecordSettlement={handleRecordSettlement}
+                  onUpdateMemberPaymentEmail={handleUpdateMemberPaymentEmail}
+                  onUndoSettlement={handleUndoSettlement}
+                  onSwitchIdentityClick={() => setIsJoinModalOpen(true)}
+                  onBackToExpenses={() => handleTabChange('expenses')}
+                  onOpenWrapUp={() => setIsTripWrapUpOpen(true)}
+                  onOpenPaymentSummary={() => setIsPaymentSummaryOpen(true)}
+                />
+              </motion.div>
+            )}
 
-          {/* TAB 2: SETTLE UP VIEW */}
-          {activeTab === 'settle-up' && (
-            <motion.div
-              key="settle-up"
-              custom={tabDirection}
-              variants={liquidGlassVariants}
-              initial="initial"
-              animate="animate"
-              exit="exit"
-            >
-              <SettleUpView
-                group={activeGroup}
-                onRecordSettlement={handleRecordSettlement}
-                onUpdateMemberPaymentEmail={handleUpdateMemberPaymentEmail}
-                onUndoSettlement={handleUndoSettlement}
-                onSwitchIdentityClick={() => setIsJoinModalOpen(true)}
-                onBackToExpenses={() => handleTabChange('expenses')}
-                onOpenWrapUp={() => setIsTripWrapUpOpen(true)}
-                onOpenPaymentSummary={() => setIsPaymentSummaryOpen(true)}
-              />
-            </motion.div>
-          )}
-
-          {/* TAB 3: SETTINGS VIEW */}
-          {activeTab === 'settings' && (
-            <motion.div
-              key="settings"
-              custom={tabDirection}
-              variants={liquidGlassVariants}
-              initial="initial"
-              animate="animate"
-              exit="exit"
-            >
-              <SettingsView
-                group={activeGroup}
-                onUpdateGroup={handleUpdateGroup}
-                onDeleteGroup={handleDeleteGroup}
-                onResetSampleData={handleResetSampleData}
-                theme={theme}
-                onToggleTheme={handleToggleTheme}
-                onToggleArchive={() => handleToggleArchive(activeGroup.id)}
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </main>
+            {/* TAB 3: SETTINGS VIEW */}
+            {activeTab === 'settings' && (
+              <motion.div
+                key="settings"
+                custom={tabDirection}
+                variants={liquidGlassVariants}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+              >
+                <SettingsView
+                  group={activeGroup}
+                  onUpdateGroup={handleUpdateGroup}
+                  onDeleteGroup={handleDeleteGroup}
+                  onResetSampleData={handleResetSampleData}
+                  theme={theme}
+                  onToggleTheme={handleToggleTheme}
+                  onToggleArchive={() => handleToggleArchive(activeGroup.id)}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </main>
 
       {/* MODALS */}
       <AddExpenseModal
@@ -1260,6 +1261,11 @@ export default function App() {
         onClose={() => setIsShortcutsOpen(false)}
       />
 
+      <BrandPhilosophyModal
+        type={brandPhilosophyModalType}
+        onClose={() => setBrandPhilosophyModalType(null)}
+      />
+
       {remindTarget && (
         <RemindModal
           isOpen={!!remindTarget}
@@ -1282,7 +1288,7 @@ export default function App() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ type: 'spring', stiffness: 450, damping: 28 }}
-            className="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 bg-slate-900/95 dark:bg-white/95 text-white dark:text-slate-900 rounded-2xl shadow-xl border border-slate-700/40 dark:border-slate-200/50 backdrop-blur-md text-xs font-semibold pointer-events-none"
+            className="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 bg-[#16273F]/95 dark:bg-white/95 text-white dark:text-[#16273F] rounded-full shadow-xl border border-[#3B5B88] dark:border-slate-200 backdrop-blur-md text-xs font-semibold pointer-events-none"
           >
             <span className="text-base">{liveToast.icon || '✨'}</span>
             <span>{liveToast.message}</span>

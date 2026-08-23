@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Expense, ExpenseCategory, Group, Member, SplitType } from '../types';
 import { CuteAvatarBadge } from './CuteAvatarBadge';
-import { SUPPORTED_CURRENCIES, convertCurrency, formatMoney } from '../utils/currency';
+import { SUPPORTED_CURRENCIES, convertCurrency, formatMoney, getCurrencySymbol } from '../utils/currency';
+import { CurrencyPicker } from './CurrencyPicker';
 import { getRandomAvatar } from '../utils/avatars';
 import {
   X,
@@ -447,7 +448,7 @@ export const AddExpenseModal: React.FC<AddExpenseModalProps> = ({
                 <div className="flex items-center gap-2">
                   <div className="relative flex-1">
                     <span className="absolute inset-y-0 left-0 pl-3 flex items-center font-serif-display text-base text-slate-400 dark:text-slate-500">
-                      {SUPPORTED_CURRENCIES[inputCurrency]?.symbol || '$'}
+                      {getCurrencySymbol(inputCurrency)}
                     </span>
                     <input
                       type="number"
@@ -460,21 +461,15 @@ export const AddExpenseModal: React.FC<AddExpenseModalProps> = ({
                         setAmountStr(e.target.value);
                         if (errorMsg) setErrorMsg('');
                       }}
-                      className="w-full bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-serif-display text-lg pl-7 pr-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-400"
+                      className="w-full bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-serif-display text-lg pl-8 pr-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-400"
                     />
                   </div>
 
-                  <select
+                  <CurrencyPicker
                     value={inputCurrency}
-                    onChange={(e) => setInputCurrency(e.target.value)}
-                    className="bg-white dark:bg-slate-900 text-xs font-semibold text-slate-900 dark:text-slate-100 px-2.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 cursor-pointer"
-                  >
-                    {Object.values(SUPPORTED_CURRENCIES).map((c) => (
-                      <option key={c.code} value={c.code}>
-                        {c.code}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(newCurr) => setInputCurrency(newCurr)}
+                    size="sm"
+                  />
                 </div>
               </div>
             </div>

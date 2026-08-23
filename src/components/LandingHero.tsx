@@ -6,15 +6,14 @@ import { CuteAvatarBadge } from './CuteAvatarBadge';
 import { ThemeToggle } from './ThemeToggle';
 import { Theme } from '../utils/theme';
 import { formatCurrency } from '../utils/debtSimplification';
+import { CurrencyPicker } from './CurrencyPicker';
+import { BrandPhilosophyModal } from './BrandPhilosophyModals';
 import {
   ArrowRight,
   Sparkles,
   Heart,
-  Link2,
-  Calculator,
-  Banknote,
-  CheckCircle,
-  Table,
+  HelpCircle,
+  Smartphone,
   Archive,
 } from 'lucide-react';
 
@@ -37,6 +36,7 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
   const [splitName, setSplitName] = useState('');
   const [currency, setCurrency] = useState('CAD');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [philosophyModal, setPhilosophyModal] = useState<'how-it-works' | 'why-no-app' | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,33 +53,52 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] dark:bg-[#090d16] text-slate-900 dark:text-slate-100 flex flex-col justify-between p-6 md:p-12 relative overflow-hidden antialiased selection:bg-slate-200 dark:selection:bg-slate-800 transition-colors">
+    <div className="min-h-screen bg-[#F7FAFD] dark:bg-[#090d16] text-[#16273F] dark:text-slate-100 flex flex-col justify-between p-5 sm:p-8 md:p-12 relative overflow-hidden antialiased selection:bg-[#B4D0EE] dark:selection:bg-slate-800 transition-colors">
       {/* Ambient gradient glows */}
       <div
-        className="absolute -top-32 -left-32 w-96 h-96 bg-sky-200/40 dark:bg-sky-500/10 rounded-full blur-3xl pointer-events-none"
+        className="absolute -top-32 -left-32 w-96 h-96 bg-[#B4D0EE]/30 dark:bg-sky-500/10 rounded-full blur-3xl pointer-events-none"
         aria-hidden="true"
       />
       <div
-        className="absolute top-1/3 -right-32 w-96 h-96 bg-slate-200/60 dark:bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"
+        className="absolute top-1/3 -right-32 w-96 h-96 bg-[#E7F0FB] dark:bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"
         aria-hidden="true"
       />
 
-      {/* Top Header */}
-      <header className="flex justify-between items-center w-full max-w-5xl mx-auto z-10">
+      {/* Top Header - The top bar for the landing page */}
+      <header className="flex justify-between items-center w-full max-w-5xl mx-auto z-10 gap-3">
         <div className="flex items-center gap-3.5">
           <Logo size={40} />
           <div>
-            <span className="font-serif-display text-2xl md:text-3xl text-slate-900 dark:text-slate-100 tracking-tight block leading-none lowercase">
+            <span className="font-display text-2xl md:text-3xl text-[#16273F] dark:text-slate-100 tracking-tight block leading-none lowercase">
               nooswise
             </span>
-            <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium tracking-wide">
-              frictionless bill splitting ✨
+            <span className="text-[11px] text-[#6E8CB4] dark:text-slate-400 font-medium tracking-wide">
+              split bills, stay friends ✨
             </span>
           </div>
         </div>
 
-        <div className="flex items-center gap-2.5">
-          <span className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white/90 dark:bg-slate-900/90 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 shadow-2xs">
+        {/* Action Links & Philosophy Modals */}
+        <div className="flex items-center gap-2 sm:gap-3">
+          <button
+            type="button"
+            onClick={() => setPhilosophyModal('how-it-works')}
+            className="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold text-[#16273F]/80 dark:text-slate-300 hover:text-[#16273F] dark:hover:text-white px-3 py-1.5 rounded-full hover:bg-white/60 dark:hover:bg-slate-800/60 transition-colors cursor-pointer"
+          >
+            <HelpCircle className="w-3.5 h-3.5 text-[#6E8CB4]" />
+            <span>how it works</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setPhilosophyModal('why-no-app')}
+            className="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold text-[#16273F]/80 dark:text-slate-300 hover:text-[#16273F] dark:hover:text-white px-3 py-1.5 rounded-full hover:bg-white/60 dark:hover:bg-slate-800/60 transition-colors cursor-pointer"
+          >
+            <Smartphone className="w-3.5 h-3.5 text-[#6E8CB4]" />
+            <span>why no app</span>
+          </button>
+
+          <span className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-white/90 dark:bg-slate-900/90 text-[#16273F] dark:text-slate-300 border border-[#DCE6F2] dark:border-slate-800 shadow-2xs">
             <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500" />
             <span>no account needed</span>
           </span>
@@ -91,28 +110,28 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
       {/* Hero Body */}
       <main className="flex-1 flex flex-col items-center justify-center text-center my-8 md:my-12 z-10 max-w-3xl mx-auto w-full">
         {/* Emotional headline */}
-        <h1 className="font-serif-display text-5xl sm:text-6xl md:text-7xl text-slate-900 dark:text-slate-100 font-normal tracking-tight leading-[1.08] mb-4">
+        <h1 className="font-display text-5xl sm:text-6xl md:text-7xl text-[#16273F] dark:text-slate-100 font-normal tracking-tight leading-[1.08] mb-4">
           Split bills,
           <br />
-          <span className="italic font-normal text-slate-700 dark:text-slate-300">
+          <span className="italic font-normal text-[#6E8CB4] dark:text-[#B4D0EE]">
             stay friends.
           </span>
         </h1>
 
-        <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 font-medium max-w-lg mb-8 leading-relaxed">
-          No account. No app. No spreadsheets needed ✨
+        <p className="text-sm sm:text-base text-[#16273F]/80 dark:text-slate-400 font-medium max-w-lg mb-8 leading-relaxed">
+          No account. No app download. No spreadsheets needed ✨
         </p>
 
         {/* 2-INPUT FRICTIONLESS FORM */}
         <form
           onSubmit={handleSubmit}
-          className="w-full max-w-md bg-white dark:bg-slate-900/95 rounded-[32px] p-6 sm:p-8 soft-shadow border border-slate-200 dark:border-slate-800 flex flex-col gap-4 text-left transition-all shadow-md backdrop-blur-sm"
+          className="w-full max-w-md bg-white dark:bg-slate-900/95 rounded-[32px] p-6 sm:p-8 soft-shadow border border-[#DCE6F2] dark:border-slate-800 flex flex-col gap-4 text-left transition-all shadow-md backdrop-blur-sm"
         >
           {/* 1. Your Name */}
           <div>
             <label
               htmlFor="your-name-input"
-              className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 block mb-1.5"
+              className="text-[11px] font-bold uppercase tracking-wider text-[#6E8CB4] dark:text-slate-400 block mb-1.5"
             >
               Your name
             </label>
@@ -124,15 +143,15 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
               placeholder="e.g. Joyce"
               value={yourName}
               onChange={(e) => setYourName(e.target.value)}
-              className="w-full bg-slate-50 dark:bg-slate-800/80 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 rounded-2xl px-5 py-3.5 text-base font-medium border border-slate-200 dark:border-slate-700/80 focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-400 transition-all shadow-2xs"
+              className="w-full bg-[#F7FAFD] dark:bg-slate-800/80 text-[#16273F] dark:text-slate-100 placeholder:text-slate-400 rounded-2xl px-5 py-3.5 text-base font-medium border border-[#DCE6F2] dark:border-slate-700/80 focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-[#B4D0EE] transition-all shadow-2xs"
             />
           </div>
 
-          {/* 2. What are you splitting? + Currency */}
+          {/* 2. What are you splitting? + Currency Picker */}
           <div>
             <label
               htmlFor="split-name-input"
-              className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 block mb-1.5"
+              className="text-[11px] font-bold uppercase tracking-wider text-[#6E8CB4] dark:text-slate-400 block mb-1.5"
             >
               What are we splitting?
             </label>
@@ -144,21 +163,14 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
                 placeholder="e.g. Barcelona 2026, Dinner"
                 value={splitName}
                 onChange={(e) => setSplitName(e.target.value)}
-                className="flex-1 bg-slate-50 dark:bg-slate-800/80 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 rounded-2xl px-5 py-3.5 text-base font-medium border border-slate-200 dark:border-slate-700/80 focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-400 transition-all shadow-2xs"
+                className="flex-1 bg-[#F7FAFD] dark:bg-slate-800/80 text-[#16273F] dark:text-slate-100 placeholder:text-slate-400 rounded-2xl px-5 py-3.5 text-base font-medium border border-[#DCE6F2] dark:border-slate-700/80 focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-[#B4D0EE] transition-all shadow-2xs"
               />
 
-              <select
+              <CurrencyPicker
                 value={currency}
-                onChange={(e) => setCurrency(e.target.value)}
-                className="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-slate-100 font-semibold text-sm rounded-2xl px-4 py-3.5 border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-slate-400 cursor-pointer shrink-0 transition-colors"
-              >
-                <option value="CAD">CAD ($)</option>
-                <option value="USD">USD ($)</option>
-                <option value="EUR">EUR (€)</option>
-                <option value="GBP">GBP (£)</option>
-                <option value="AUD">AUD ($)</option>
-                <option value="JPY">JPY (¥)</option>
-              </select>
+                onChange={(newCurr) => setCurrency(newCurr)}
+                size="lg"
+              />
             </div>
           </div>
 
@@ -169,13 +181,13 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
             transition={{ type: 'spring', stiffness: 450, damping: 22 }}
             type="submit"
             disabled={isSubmitting || !splitName.trim() || !yourName.trim()}
-            className="w-full mt-2 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-white disabled:opacity-50 py-4 px-8 rounded-full font-semibold text-sm tracking-wide transition-colors shadow-md flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full mt-2 bg-[#16273F] dark:bg-slate-100 text-white dark:text-[#16273F] hover:opacity-90 disabled:opacity-50 py-4 px-8 rounded-full font-semibold text-sm tracking-wide transition-opacity shadow-md flex items-center justify-center gap-2 cursor-pointer"
           >
             <span>Create my split</span>
             <ArrowRight className="w-4 h-4" />
           </motion.button>
 
-          <p className="text-xs text-center text-slate-500 dark:text-slate-400 font-medium">
+          <p className="text-xs text-center text-[#6E8CB4] dark:text-slate-400 font-medium">
             Send the link. We'll do the rest.
           </p>
         </form>
@@ -184,10 +196,10 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
         {existingGroups.length > 0 && (
           <div className="w-full max-w-md mt-10 text-left">
             <div className="flex items-center justify-between mb-3 px-2">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-[#6E8CB4] dark:text-slate-400">
                 Your Splits in this Browser
               </span>
-              <span className="text-xs text-slate-500 dark:text-slate-400">
+              <span className="text-xs text-[#6E8CB4] dark:text-slate-400">
                 {existingGroups.length} split{existingGroups.length === 1 ? '' : 's'}
               </span>
             </div>
@@ -208,14 +220,14 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
                     onClick={() => onSelectGroup(g)}
                     className={`p-4 rounded-2xl border transition-colors cursor-pointer flex flex-col justify-between group shadow-2xs ${
                       g.isArchived
-                        ? 'bg-slate-50/90 dark:bg-slate-900/60 border-slate-200/90 dark:border-slate-800/80 hover:bg-slate-100/90 dark:hover:bg-slate-800/60 hover:border-slate-300 dark:hover:border-slate-700'
-                        : 'bg-white dark:bg-slate-900/90 hover:bg-slate-50 dark:hover:bg-slate-800 border-slate-200/90 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
+                        ? 'bg-[#F7FAFD]/90 dark:bg-slate-900/60 border-[#DCE6F2]/90 dark:border-slate-800/80 hover:bg-[#E7F0FB] dark:hover:bg-slate-800/60'
+                        : 'bg-white dark:bg-slate-900/90 hover:bg-[#F7FAFD] dark:hover:bg-slate-800 border-[#DCE6F2] dark:border-slate-800'
                     }`}
                   >
                     <div>
                       <div className="flex items-center justify-between gap-2 mb-1">
                         <div className="flex items-center gap-1.5 min-w-0">
-                          <h3 className="font-serif-display text-lg text-slate-900 dark:text-slate-100 group-hover:text-black dark:group-hover:text-white truncate">
+                          <h3 className="font-display text-lg text-[#16273F] dark:text-slate-100 truncate">
                             {g.name}
                           </h3>
                           {g.isArchived && (
@@ -225,11 +237,11 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
                             </span>
                           )}
                         </div>
-                        <span className="text-xs font-semibold text-slate-900 dark:text-slate-100 shrink-0">
+                        <span className="text-xs font-semibold text-[#16273F] dark:text-slate-100 shrink-0">
                           {formatCurrency(total, g.currency)}
                         </span>
                       </div>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                      <p className="text-xs text-[#6E8CB4] dark:text-slate-400">
                         {g.isArchived && (
                           <span className="text-emerald-600 dark:text-emerald-400 font-medium mr-1">
                             ✓ All square ·
@@ -263,9 +275,15 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
       </main>
 
       {/* Footer */}
-      <footer className="text-center z-10 text-xs text-slate-400 dark:text-slate-500 font-medium py-4">
+      <footer className="text-center z-10 text-xs text-[#6E8CB4] dark:text-slate-500 font-medium py-4">
         <p>nooswise • instant zero-spreadsheet bill splitting ✨</p>
       </footer>
+
+      {/* Philosophy Modals on Landing */}
+      <BrandPhilosophyModal
+        type={philosophyModal}
+        onClose={() => setPhilosophyModal(null)}
+      />
     </div>
   );
 };
