@@ -377,8 +377,8 @@ export function encodeGroupToUrl(group: Group, isSummary: boolean = false): stri
   try {
     if (!group) return typeof window !== 'undefined' ? window.location.href : '';
     const base = typeof window !== 'undefined' ? window.location.origin : 'https://nooswise.netlify.app';
-    const sub = isSummary ? '&tab=summary' : '';
-    return `${base}/?s=${encodeURIComponent(group.id)}${sub}`;
+    const sub = isSummary ? '/summary' : '';
+    return `${base}/${encodeURIComponent(group.id)}${sub}`;
   } catch (e) {
     console.error('Error encoding split to URL', e);
     return typeof window !== 'undefined' ? window.location.href : '';
@@ -397,23 +397,23 @@ export function updateBrowserUrl(options: {
 
   try {
     if (options.isHome) {
-      if (window.location.search || (window.location.hash && window.location.hash !== '#/' && window.location.hash !== '')) {
+      if (window.location.pathname !== '/' || window.location.search || window.location.hash) {
         window.history.replaceState(null, '', '/');
       }
       return;
     }
 
     if (options.groupId) {
-      let subQuery = '';
+      let suffix = '';
       if (options.tab === 'settle-up') {
-        subQuery = '&tab=summary';
+        suffix = '/summary';
       } else if (options.tab === 'settings') {
-        subQuery = '&tab=settings';
+        suffix = '/settings';
       }
 
-      const newSearch = `?s=${encodeURIComponent(options.groupId)}${subQuery}`;
-      if (window.location.search !== newSearch) {
-        window.history.replaceState(null, '', newSearch);
+      const newPath = `/${encodeURIComponent(options.groupId)}${suffix}`;
+      if (window.location.pathname !== newPath || window.location.search || window.location.hash) {
+        window.history.replaceState(null, '', newPath);
       }
     }
   } catch {

@@ -31,11 +31,14 @@ export const ShareModal: React.FC<ShareModalProps> = ({
   const [copiedLink, setCopiedLink] = useState(false);
   const [copiedSummary, setCopiedSummary] = useState(false);
 
-  // Generate clean, instant short URL (guaranteed max 20 chars, e.g., noos.app/s/tokyo26)
+  // Real, working link to this group's page
   const shortLink = useMemo(() => {
-    if (!group) return 'noos.app/s/split';
+    if (!group) return '';
     return getInstantShortUrl(group.id);
   }, [group]);
+
+  // Display without the protocol, for a cleaner look in the input field
+  const displayLink = shortLink.replace(/^https?:\/\//, '');
 
   useEffect(() => {
     if (!isOpen) return;
@@ -169,7 +172,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
         <div className="bg-[#F7FAFD] dark:bg-[#203652]/50 rounded-2xl p-4 border border-[#DCE6F2] dark:border-[#2A4365] flex items-center gap-4 shadow-2xs">
           <div className="p-2 bg-white rounded-xl shadow-xs border border-[#DCE6F2] shrink-0">
             <QRCodeSVG
-              value={`https://${effectiveShareUrl}`}
+              value={effectiveShareUrl}
               size={84}
               level="L"
               includeMargin={false}
@@ -191,10 +194,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
         <div className="bg-[#F7FAFD] dark:bg-[#203652]/50 rounded-2xl p-3 border border-[#DCE6F2] dark:border-[#2A4365] flex flex-col gap-1.5 shadow-2xs">
           <div className="flex items-center justify-between">
             <label className="text-[10px] font-bold uppercase tracking-wider text-[#6E8CB4] dark:text-[#B4D0EE] flex items-center gap-1">
-              <span>Short Link</span>
-              <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-[#E7F0FB] dark:bg-[#203652] text-[#16273F] dark:text-[#B4D0EE] font-semibold lowercase">
-                &lt; 20 chars
-              </span>
+              <span>Direct Link</span>
             </label>
             <span className="text-[10px] text-[#6E8CB4] dark:text-[#B4D0EE]">
               Instant ready
@@ -204,7 +204,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
             <input
               type="text"
               readOnly
-              value={effectiveShareUrl}
+              value={displayLink}
               onClick={(e) => (e.target as HTMLInputElement).select()}
               className="flex-1 bg-white dark:bg-[#16273F] text-xs font-sans font-medium text-[#16273F] dark:text-white rounded-xl px-3 py-2 border border-[#DCE6F2] dark:border-[#2A4365] focus:outline-none select-all truncate"
             />

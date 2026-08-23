@@ -14,6 +14,11 @@ interface CurrencyPickerProps {
   className?: string;
   size?: 'sm' | 'md' | 'lg';
   variant?: 'button' | 'input-group';
+  /** Which edge of the trigger the dropdown should hang from. Use 'left' when the
+   * trigger sits in a full-width container (e.g. stacked form fields); the default
+   * 'right' suits a trigger placed at the end of a row, so the dropdown opens back
+   * over free space instead of off the edge of the screen/card. */
+  align?: 'left' | 'right';
 }
 
 export const CurrencyPicker: React.FC<CurrencyPickerProps> = ({
@@ -22,6 +27,7 @@ export const CurrencyPicker: React.FC<CurrencyPickerProps> = ({
   className = '',
   size = 'md',
   variant = 'button',
+  align = 'right',
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -128,7 +134,9 @@ export const CurrencyPicker: React.FC<CurrencyPickerProps> = ({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -4, scale: 0.96 }}
             transition={{ type: 'spring', stiffness: 450, damping: 30 }}
-            className="absolute z-50 mt-2 right-0 sm:right-auto sm:left-0 w-72 sm:w-80 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 p-3 flex flex-col gap-2.5"
+            className={`absolute z-50 mt-2 ${
+              align === 'left' ? 'left-0' : 'right-0'
+            } w-72 sm:w-80 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 p-3 flex flex-col gap-2.5`}
             style={{ maxWidth: 'calc(100vw - 32px)' }}
           >
             {/* Search Input */}

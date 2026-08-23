@@ -243,6 +243,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               onChange={(newCurr) => setCurrency(newCurr)}
               size="lg"
               className="w-full"
+              align="left"
             />
           </div>
         </div>

@@ -103,7 +103,7 @@ export const TripWrapUpModal: React.FC<TripWrapUpModalProps> = ({
   }, [isOpen, isAllSquare, triggerGrandCelebration]);
 
   const shortShareUrl = useMemo(() => {
-    if (!group) return 'noos.app/s/split';
+    if (!group) return '';
     return getInstantShortUrl(group.id);
   }, [group]);
 
@@ -176,7 +176,7 @@ export const TripWrapUpModal: React.FC<TripWrapUpModalProps> = ({
 👥 Friends in split: ${group.members.map((m) => m.name).join(', ')}
 
 ✨ No expenses recorded yet — ready to split!
-View Split: https://${shortShareUrl}
+View Split: ${shortShareUrl}
 nooswise · split bills, stay friends ✨`
     : isAllSquare
     ? `🎉 ${group.name} · Trip Wrap-Up!
@@ -189,7 +189,7 @@ ${biggestDebtor ? `👑 Top Tab Holder: ${biggestDebtor.member.name}` : ''}
 ${transfers.length > 0 ? transfers.map((t) => `• ${t.fromMemberName} paid ${formatCurrency(t.amount, t.currency)} to ${t.toMemberName}`).join('\n') : '• Everyone was square!'}
 
 ✨ All debts settled & everyone is 100% square!
-View Split: https://${shortShareUrl}
+View Split: ${shortShareUrl}
 nooswise · split bills, stay friends ✨`
     : `📊 ${group.name} · Who Owes Who Summary
 ━━━━━━━━━━━━━━━━━━━━
@@ -201,7 +201,7 @@ ${biggestCreditor ? `🤑 Owed the Most: ${biggestCreditor.member.name} (${forma
 ⏳ Pending Transfers to Square Up (${debts.length} simple steps):
 ${pendingDebtsLines}
 
-View & Settle: https://${shortShareUrl}
+View & Settle: ${shortShareUrl}
 nooswise · split bills, stay friends ✨`;
 
   const handleCopy = async () => {
