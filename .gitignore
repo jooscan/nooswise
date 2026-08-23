@@ -6,3 +6,6 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# Legacy flat-file store, imported into Postgres then retired
+data/
