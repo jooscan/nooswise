@@ -1,29 +1,17 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence, type Variants } from 'motion/react';
 import { Group, Expense, SettlementRecord, Member } from './types';
 import {
   loadAllGroups,
-  saveAllGroups,
   getActiveGroupId,
-  setActiveGroupId,
-  decodeGroupFromUrl,
-  getSplitIdFromUrl,
   parseCurrentRoute,
   updateBrowserUrl,
-  encodeGroupToUrl,
-  INITIAL_DEFAULT_GROUP,
   crossTabSyncChannel,
   STORAGE_KEY,
 } from './utils/storage';
-import {
-  pushGroupToCloud,
-  fetchGroupFromCloud,
-  pollGroupUpdates,
-  subscribeToSplitEvents,
-  mergeRemoteGroupWithLocal,
-} from './utils/cloudSync';
-import { formatCurrency, calculateSimplifiedDebts } from './utils/debtSimplification';
-import { getRandomAvatar } from './utils/avatars';
+import { useGroups } from './hooks/useGroups';
+import { hydrateGroups } from './utils/identity';
+import { calculateSimplifiedDebts } from './utils/debtSimplification';
 import { getInitialTheme, applyTheme, Theme } from './utils/theme';
 import { LandingHero } from './components/LandingHero';
 import { Sidebar, ActiveTab } from './components/Sidebar';
@@ -113,25 +101,67 @@ export default function App() {
   // Initial Route Check
   const initialRoute = parseCurrentRoute();
 
-  const [groups, setGroups] = useState<Group[]>(() => {
-    return loadAllGroups();
+  // Declared before useGroups: the hook reports failed writes and remote changes
+  // through this, so it has to exist first.
+  const [liveToast, setLiveToast] = useState<{ id: number; message: string; icon?: string } | null>(null);
+
+  const showLiveToast = useCallback((message: string, icon: string = '✨') => {
+    const id = Date.now();
+    setLiveToast({ id, message, icon });
+    setTimeout(() => {
+      setLiveToast((current) => (current?.id === id ? null : current));
+    }, 4500);
+  }, []);
+
+  const [showLanding, setShowLanding] = useState<boolean>(() => {
+    // Root URL ('/' or '#/welcome') strictly opens the welcome landing screen
+    if (initialRoute.isHome) return true;
+    if (initialRoute.groupId || initialRoute.isSummary) return false;
+    return loadAllGroups().length === 0;
   });
 
-  const [activeGroupId, setCurrentActiveGroupId] = useState<string>(() => {
-    if (initialRoute.groupId) return initialRoute.groupId;
-    const all = loadAllGroups();
-    const stored = getActiveGroupId();
-    if (stored && all.some((g) => g.id === stored)) return stored;
-    return all.length > 0 ? all[0].id : '';
-  });
+  const initialGroupId = useRef<string>(
+    (() => {
+      if (initialRoute.groupId) return initialRoute.groupId;
+      const all = loadAllGroups();
+      const stored = getActiveGroupId();
+      if (stored && all.some((g) => g.id === stored)) return stored;
+      return all.length > 0 ? all[0].id : '';
+    })()
+  ).current;
 
-  // True while we're fetching a URL-specified split that isn't already cached locally.
-  // Prevents briefly (or permanently, on fetch failure) rendering an unrelated local
-  // split in its place while the real one loads.
-  const [isResolvingSharedGroup, setIsResolvingSharedGroup] = useState<boolean>(() => {
-    if (!initialRoute.groupId) return false;
-    const all = loadAllGroups();
-    return !all.some((g) => g.id === initialRoute.groupId);
+  const handleGroupVanished = useCallback((groupId: string) => {
+    showLiveToast('That split was deleted.', '🗑️');
+    setIsJoinModalOpen(false);
+    setShowLanding(true);
+    updateBrowserUrl({ isHome: true });
+  }, [showLiveToast]);
+
+  // All split state and every action that changes one now lives here, backed by the API.
+  const {
+    groups,
+    activeGroup,
+    activeGroupId,
+    isResolvingSharedGroup,
+    selectGroup,
+    refresh: refreshGroup,
+    createGroup,
+    updateGroupInfo,
+    deleteGroup: deleteGroupOnServer,
+    addMember,
+    updateMember,
+    removeMember,
+    saveExpense: saveExpenseOnServer,
+    deleteExpense: deleteExpenseOnServer,
+    recordSettlement,
+    undoSettlement,
+    claimIdentity,
+    setGroups,
+  } = useGroups({
+    initialGroupId,
+    onToast: showLiveToast,
+    onIdentityNeeded: () => setIsJoinModalOpen(true),
+    onGroupDeleted: handleGroupVanished,
   });
 
   const [activeTab, setActiveTab] = useState<ActiveTab>(() => {
@@ -141,13 +171,6 @@ export default function App() {
   });
 
   const [tabDirection, setTabDirection] = useState<number>(1);
-  const [showLanding, setShowLanding] = useState<boolean>(() => {
-    // Root URL ('/' or '#/welcome') strictly opens the welcome landing screen
-    if (initialRoute.isHome) return true;
-    if (initialRoute.groupId || initialRoute.isSummary) return false;
-    const all = loadAllGroups();
-    return all.length === 0;
-  });
 
   const handleTabChange = (nextTab: ActiveTab) => {
     if (nextTab === activeTab) return;
@@ -186,16 +209,6 @@ export default function App() {
     amount: number;
   } | null>(null);
 
-  // Live Toast Notification
-  const [liveToast, setLiveToast] = useState<{ id: number; message: string; icon?: string } | null>(null);
-
-  const showLiveToast = (message: string, icon: string = '✨') => {
-    const id = Date.now();
-    setLiveToast({ id, message, icon });
-    setTimeout(() => {
-      setLiveToast((current) => (current?.id === id ? null : current));
-    }, 4500);
-  };
 
   // Global Keyboard Shortcuts (seamless keyboard controls)
   useEffect(() => {
@@ -290,47 +303,9 @@ export default function App() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // 1. Initial mount and browser back/forward route synchronization
+  // Browser back / forward navigation. Fetching the split named in the URL, live
+  // syncing, and the legacy localStorage import are all handled inside useGroups.
   useEffect(() => {
-    const route = parseCurrentRoute();
-    const targetGroupId = route.groupId || (route.rawLegacyGroup ? route.rawLegacyGroup.id : null);
-
-    // A. Sync initial local groups to cloud so backend is populated
-    const local = loadAllGroups();
-    if (local.length > 0) {
-      local.forEach((g) => pushGroupToCloud(g));
-    }
-
-    // B. If a specific split is requested via URL, fetch latest state from Cloud
-    if (targetGroupId) {
-      fetchGroupFromCloud(targetGroupId).then((remoteGroup) => {
-        setIsResolvingSharedGroup(false);
-        if (remoteGroup) {
-          const savedClaimedId = localStorage.getItem(`nooswise_identity_${remoteGroup.id}`);
-          const merged = mergeRemoteGroupWithLocal(null, remoteGroup, savedClaimedId);
-          setGroups((prev) => {
-            const exists = prev.some((g) => g.id === merged.id);
-            const updated = exists
-              ? prev.map((g) => (g.id === merged.id ? merged : g))
-              : [merged, ...prev];
-            saveAllGroups(updated, false);
-            return updated;
-          });
-          setCurrentActiveGroupId(merged.id);
-          setActiveGroupId(merged.id, false);
-
-          if (!route.isHome) {
-            setShowLanding(false);
-          }
-
-          if (!savedClaimedId && !route.isHome) {
-            setIsJoinModalOpen(true);
-          }
-        }
-      });
-    }
-
-    // C. Listen for browser back / forward navigation
     const handlePopState = () => {
       const currentRoute = parseCurrentRoute();
       if (currentRoute.isHome) {
@@ -339,8 +314,7 @@ export default function App() {
       }
 
       if (currentRoute.groupId) {
-        setCurrentActiveGroupId(currentRoute.groupId);
-        setActiveGroupId(currentRoute.groupId, false);
+        selectGroup(currentRoute.groupId, false);
         setShowLanding(false);
         if (currentRoute.tab) {
           setActiveTab(currentRoute.tab);
@@ -357,117 +331,16 @@ export default function App() {
       window.removeEventListener('popstate', handlePopState);
       window.removeEventListener('hashchange', handlePopState);
     };
-  }, []);
+  }, [selectGroup]);
 
-  // 2. Real-Time Cloud Synchronization via Server-Sent Events (SSE) + active polling fallback
-  useEffect(() => {
-    if (!activeGroupId || showLanding) return;
-
-    // A. Subscribe to real-time Server-Sent Events (instant live broadcast across devices/tabs)
-    const unsubscribeSSE = subscribeToSplitEvents(activeGroupId, (remoteGroup) => {
-      const savedClaimedId = localStorage.getItem(`nooswise_identity_${remoteGroup.id}`);
-      setGroups((prev) => {
-        const currentActive = prev.find((g) => g.id === activeGroupId);
-        const merged = mergeRemoteGroupWithLocal(currentActive || null, remoteGroup, savedClaimedId);
-
-        // Friendly live notifications
-        if (currentActive) {
-          if (remoteGroup.members.length > currentActive.members.length) {
-            const newMem = remoteGroup.members.find(
-              (rm) => !currentActive.members.some((lm) => lm.id === rm.id || lm.name.toLowerCase() === rm.name.toLowerCase())
-            );
-            if (newMem) showLiveToast(`✨ ${newMem.name} joined the split!`, '👋');
-          } else if ((remoteGroup.settlements?.length || 0) > (currentActive.settlements?.length || 0)) {
-            showLiveToast(`🎉 Settle-up payment recorded live!`, '✓');
-          } else if (remoteGroup.expenses.length > currentActive.expenses.length) {
-            showLiveToast(`💸 New expense: "${remoteGroup.expenses[0]?.title}"`, '✨');
-          }
-        }
-
-        const exists = prev.some((g) => g.id === merged.id);
-        const updated = exists ? prev.map((g) => (g.id === merged.id ? merged : g)) : [merged, ...prev];
-        saveAllGroups(updated, false);
-        return updated;
-      });
-    });
-
-    // B. Fast polling fallback every 1.5 seconds
-    const intervalId = setInterval(async () => {
-      const currentActive = groups.find((g) => g.id === activeGroupId);
-      if (!currentActive) return;
-
-      const pollRes = await pollGroupUpdates(activeGroupId, currentActive.updatedAt);
-      if (pollRes.updated && pollRes.group) {
-        const remote = pollRes.group;
-        const savedClaimedId = localStorage.getItem(`nooswise_identity_${remote.id}`);
-        const merged = mergeRemoteGroupWithLocal(currentActive, remote, savedClaimedId);
-
-        if (remote.members.length > currentActive.members.length) {
-          const newMem = remote.members.find(
-            (rm) => !currentActive.members.some((lm) => lm.id === rm.id)
-          );
-          if (newMem) showLiveToast(`✨ ${newMem.name} joined the split!`, '👋');
-        } else if ((remote.settlements?.length || 0) > (currentActive.settlements?.length || 0)) {
-          showLiveToast(`🎉 Settle-up payment recorded!`, '✓');
-        }
-
-        setGroups((prev) => {
-          const updated = prev.map((g) => (g.id === merged.id ? merged : g));
-          saveAllGroups(updated, false);
-          return updated;
-        });
-      }
-    }, 1500);
-
-    // C. Instant sync on window focus / visibility
-    const handleFocus = () => {
-      fetchGroupFromCloud(activeGroupId).then((remote) => {
-        if (remote) {
-          const savedClaimedId = localStorage.getItem(`nooswise_identity_${remote.id}`);
-          setGroups((prev) => {
-            const cur = prev.find((g) => g.id === activeGroupId);
-            const merged = mergeRemoteGroupWithLocal(cur || null, remote, savedClaimedId);
-            const updated = prev.map((g) => (g.id === merged.id ? merged : g));
-            saveAllGroups(updated, false);
-            return updated;
-          });
-        }
-      });
-    };
-
-    window.addEventListener('focus', handleFocus);
-    document.addEventListener('visibilitychange', handleFocus);
-
-    return () => {
-      unsubscribeSSE();
-      clearInterval(intervalId);
-      window.removeEventListener('focus', handleFocus);
-      document.removeEventListener('visibilitychange', handleFocus);
-    };
-  }, [activeGroupId, showLanding]);
-
-  // 2. Multi-Window / Multi-Tab Synchronization via BroadcastChannel
+  // Cross-tab sync. Another tab on this device writes the cache and broadcasts; we
+  // re-hydrate so each tab still resolves "You" from its own stored identity.
   useEffect(() => {
     if (!crossTabSyncChannel) return;
 
     const handleSyncMessage = (event: MessageEvent) => {
       if (event.data?.type === 'GROUPS_UPDATED' && Array.isArray(event.data?.groups)) {
-        const incomingGroups: Group[] = event.data.groups;
-        setGroups(() => {
-          return incomingGroups.map((g) => {
-            const savedClaimedId = localStorage.getItem(`nooswise_identity_${g.id}`);
-            if (savedClaimedId) {
-              return {
-                ...g,
-                members: g.members.map((m) => ({
-                  ...m,
-                  isCurrentUser: m.id === savedClaimedId,
-                })),
-              };
-            }
-            return g;
-          });
-        });
+        setGroups(hydrateGroups(event.data.groups as Group[]));
       }
     };
 
@@ -475,66 +348,23 @@ export default function App() {
     return () => {
       crossTabSyncChannel.removeEventListener('message', handleSyncMessage);
     };
-  }, []);
+  }, [setGroups]);
 
-  // 3. Multi-Window / Multi-Tab Synchronization via Storage Events
+  // Same idea for browsers without BroadcastChannel, via the storage event.
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === STORAGE_KEY && e.newValue) {
-        try {
-          const parsed = JSON.parse(e.newValue);
-          if (Array.isArray(parsed)) {
-            setGroups(
-              parsed.map((g: Group) => {
-                const savedClaimedId = localStorage.getItem(`nooswise_identity_${g.id}`);
-                if (savedClaimedId) {
-                  return {
-                    ...g,
-                    members: g.members.map((m) => ({
-                      ...m,
-                      isCurrentUser: m.id === savedClaimedId,
-                    })),
-                  };
-                }
-                return g;
-              })
-            );
-          }
-        } catch (err) {
-          console.error('Storage sync error', err);
-        }
+      if (e.key !== STORAGE_KEY || !e.newValue) return;
+      try {
+        const parsed = JSON.parse(e.newValue);
+        if (Array.isArray(parsed)) setGroups(hydrateGroups(parsed as Group[]));
+      } catch (err) {
+        console.error('Storage sync error', err);
       }
     };
 
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
-
-  // 4. Listen for URL changes via hash or popstate
-  useEffect(() => {
-    const handleUrlChange = () => {
-      const route = parseCurrentRoute();
-      if (route.isHome) {
-        setShowLanding(true);
-        return;
-      }
-      if (route.groupId) {
-        setCurrentActiveGroupId(route.groupId);
-        setActiveGroupId(route.groupId, false);
-        setShowLanding(false);
-        if (route.tab) {
-          setActiveTab(route.tab);
-        }
-      }
-    };
-
-    window.addEventListener('hashchange', handleUrlChange);
-    window.addEventListener('popstate', handleUrlChange);
-    return () => {
-      window.removeEventListener('hashchange', handleUrlChange);
-      window.removeEventListener('popstate', handleUrlChange);
-    };
-  }, []);
+  }, [setGroups]);
 
   // Sync browser URL bar whenever activeGroupId, activeTab, or showLanding changes
   useEffect(() => {
@@ -545,297 +375,173 @@ export default function App() {
     }
   }, [showLanding, activeGroupId, activeTab]);
 
-  // Save changes to storage whenever groups change
-  useEffect(() => {
-    saveAllGroups(groups, false);
-  }, [groups]);
-
-  // Current active group. Deliberately does NOT fall back to groups[0]: activeGroupId
-  // may point at a split that's still being fetched from the cloud (isResolvingSharedGroup)
-  // or that doesn't exist, and silently substituting a different local split there was the
-  // cause of shared links opening the wrong group.
-  const activeGroup = groups.find((g) => g.id === activeGroupId);
 
   const currentMember =
     activeGroup?.members?.find((m) => m.isCurrentUser) || activeGroup?.members?.[0];
 
-  const handleCreateGroup = (
+  const handleCreateGroup = async (
     name: string,
     yourName: string,
     memberNames: string[],
     currency: string = 'CAD'
   ) => {
-    const newId = `split-${Date.now()}`;
-    const cleanYourName = yourName.trim() || 'You';
+    const group = await createGroup(name, yourName, memberNames, currency);
+    if (!group) return;
 
-    // Creator member
-    const creatorCute = getRandomAvatar(cleanYourName);
-    const creatorMember: Member = {
-      id: `m-0-${Date.now()}`,
-      name: cleanYourName,
-      isCurrentUser: true,
-      initials: cleanYourName.slice(0, 2).toUpperCase(),
-      avatarUrl: creatorCute.spriteUrl,
-      avatarEmoji: creatorCute.emoji,
-      avatarBg: creatorCute.bgGradient,
-      characterName: creatorCute.characterName,
-      email: '',
-      paymentHandle: '',
-    };
-
-    // Other members only if user explicitly provided names
-    const otherMembers: Member[] = memberNames
-      .filter((n) => n.toLowerCase() !== cleanYourName.toLowerCase())
-      .map((mName, idx) => {
-        const cute = getRandomAvatar(mName + idx);
-        return {
-          id: `m-${idx + 1}-${Date.now()}`,
-          name: mName,
-          isCurrentUser: false,
-          initials: mName.slice(0, 2).toUpperCase(),
-          avatarUrl: cute.spriteUrl,
-          avatarEmoji: cute.emoji,
-          avatarBg: cute.bgGradient,
-          characterName: cute.characterName,
-          email: '',
-          paymentHandle: '',
-        };
-      });
-
-    // ONLY add the creator and any explicitly provided friends (no random strangers auto-added)
-    const finalMembers = [creatorMember, ...otherMembers];
-
-    const newGroup: Group = {
-      id: newId,
-      name,
-      currency,
-      members: finalMembers,
-      expenses: [],
-      settlements: [],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      myETransferEmail: '',
-    };
-
-    localStorage.setItem(`nooswise_identity_${newId}`, creatorMember.id);
-
-    const updated = [newGroup, ...groups];
-    setGroups(updated);
-    saveAllGroups(updated, true);
-    pushGroupToCloud(newGroup);
-    setCurrentActiveGroupId(newId);
-    setActiveGroupId(newId, true);
     setShowLanding(false);
     setActiveTab('expenses');
 
-    // Automatically pop up the share window with link & QR code so user can share with friends!
-    setTimeout(() => {
-      setIsShareModalOpen(true);
-    }, 100);
+    // Pop the share sheet so the creator can send the link straight away.
+    setTimeout(() => setIsShareModalOpen(true), 100);
   };
 
+  // Purely local: which member you are is a property of this device, never of the split.
   const handleClaimIdentity = (memberId: string) => {
-    localStorage.setItem(`nooswise_identity_${activeGroup.id}`, memberId);
-    const updatedMembers = activeGroup.members.map((m) => ({
-      ...m,
-      isCurrentUser: m.id === memberId,
-    }));
-    handleUpdateGroup({
-      ...activeGroup,
-      members: updatedMembers,
-      updatedAt: new Date().toISOString(),
-    });
+    if (!activeGroup) return;
+    claimIdentity(activeGroup.id, memberId);
   };
 
-  const handleAddMemberToGroup = (name: string, claimAsCurrentUser: boolean = false) => {
-    const cleanName = name.trim();
-    if (!cleanName) return;
-    const newId = `m-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-    const cute = getRandomAvatar(cleanName);
-    const newMember: Member = {
-      id: newId,
-      name: cleanName,
-      isCurrentUser: claimAsCurrentUser,
-      initials: cleanName.slice(0, 2).toUpperCase(),
-      avatarUrl: cute.spriteUrl,
-      avatarEmoji: cute.emoji,
-      avatarBg: cute.bgGradient,
-      characterName: cute.characterName,
-      email: '',
-      paymentHandle: '',
-    };
-
-    let updatedMembers = [...activeGroup.members];
-    if (claimAsCurrentUser) {
-      localStorage.setItem(`nooswise_identity_${activeGroup.id}`, newId);
-      updatedMembers = updatedMembers.map((m) => ({ ...m, isCurrentUser: false }));
-    }
-    updatedMembers.push(newMember);
-
-    handleUpdateGroup({
-      ...activeGroup,
-      members: updatedMembers,
-      updatedAt: new Date().toISOString(),
-    });
+  const handleAddMemberToGroup = async (
+    name: string,
+    claimAsCurrentUser: boolean = false
+  ) => {
+    if (!activeGroup) return;
+    await addMember(activeGroup.id, name, claimAsCurrentUser);
   };
 
   const handleSelectGroup = (group: Group) => {
-    const savedClaimedId = localStorage.getItem(`nooswise_identity_${group.id}`);
-    const normalizedGroup: Group = {
-      ...group,
-      members: group.members.map((m) => ({
-        ...m,
-        isCurrentUser: savedClaimedId ? m.id === savedClaimedId : m.isCurrentUser,
-      })),
-    };
-
-    setCurrentActiveGroupId(normalizedGroup.id);
-    setActiveGroupId(normalizedGroup.id, true);
+    selectGroup(group.id);
     setShowLanding(false);
     setIsGroupDropdownOpen(false);
     setActiveTab('expenses');
+    // Pull the latest in case another device changed it while this one was elsewhere.
+    void refreshGroup(group.id);
   };
 
-  const handleUpdateGroup = (updatedGroup: Group) => {
-    const groupWithTimestamp = {
-      ...updatedGroup,
-      updatedAt: new Date().toISOString(),
-    };
-    const updated = groups.map((g) => (g.id === groupWithTimestamp.id ? groupWithTimestamp : g));
-    setGroups(updated);
-    saveAllGroups(updated, true);
-    pushGroupToCloud(groupWithTimestamp);
+  /**
+   * Kept for SettingsView, which still hands back a whole edited Group. It diffs that
+   * against what we have and sends only the group-level fields that actually changed;
+   * member edits go through their own endpoints. Phase 3 replaces this with granular
+   * props so the diffing goes away.
+   */
+  const handleUpdateGroup = async (updatedGroup: Group) => {
+    const current = groups.find((g) => g.id === updatedGroup.id);
+    if (!current) return;
+
+    const patch: {
+      name?: string;
+      currency?: string;
+      myETransferEmail?: string;
+      isArchived?: boolean;
+    } = {};
+    if (updatedGroup.name !== current.name) patch.name = updatedGroup.name;
+    if (updatedGroup.currency !== current.currency) patch.currency = updatedGroup.currency;
+    if (updatedGroup.myETransferEmail !== current.myETransferEmail) {
+      patch.myETransferEmail = updatedGroup.myETransferEmail ?? '';
+    }
+    if (updatedGroup.isArchived !== current.isArchived) {
+      patch.isArchived = !!updatedGroup.isArchived;
+    }
+
+    if (Object.keys(patch).length > 0) {
+      await updateGroupInfo(updatedGroup.id, patch);
+    }
+
+    // Members changed by SettingsView: additions, removals, and field edits.
+    const currentById = new Map(current.members.map((m) => [m.id, m]));
+    const nextById = new Map(updatedGroup.members.map((m) => [m.id, m]));
+
+    for (const [id, member] of nextById) {
+      const before = currentById.get(id);
+      if (!before) continue; // additions go through handleAddMemberToGroup
+      const memberPatch: Record<string, string> = {};
+      for (const key of ['name', 'email', 'paymentHandle', 'avatarUrl', 'avatarBg', 'avatarEmoji', 'characterName', 'initials'] as const) {
+        if ((member[key] ?? '') !== (before[key] ?? '')) {
+          memberPatch[key] = member[key] ?? '';
+        }
+      }
+      if (Object.keys(memberPatch).length > 0) {
+        await updateMember(updatedGroup.id, id, memberPatch);
+      }
+    }
+
+    for (const id of currentById.keys()) {
+      if (!nextById.has(id)) {
+        await removeMember(updatedGroup.id, id);
+      }
+    }
   };
 
-  const handleToggleArchive = (groupId: string = activeGroupId) => {
-    const targetGroup = groups.find((g) => g.id === groupId);
-    if (!targetGroup) return;
-    const isArchived = !targetGroup.isArchived;
-    handleUpdateGroup({
-      ...targetGroup,
-      isArchived,
-      archivedAt: isArchived ? new Date().toISOString() : undefined,
-      updatedAt: new Date().toISOString(),
-    });
+  const handleToggleArchive = async (groupId: string = activeGroupId) => {
+    const target = groups.find((g) => g.id === groupId);
+    if (!target) return;
+    await updateGroupInfo(groupId, { isArchived: !target.isArchived });
   };
 
-  const handleSaveRename = (e?: React.FormEvent) => {
+  const handleSaveRename = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!renamedTitle.trim()) return;
-    handleUpdateGroup({
-      ...activeGroup,
-      name: renamedTitle.trim(),
-      updatedAt: new Date().toISOString(),
-    });
+    if (!renamedTitle.trim() || !activeGroup) return;
     setIsRenamingGroup(false);
     setIsGroupDropdownOpen(false);
+    await updateGroupInfo(activeGroup.id, { name: renamedTitle.trim() });
   };
 
-  const handleDeleteGroup = (groupId: string) => {
+  const handleDeleteGroup = async (groupId: string) => {
+    const ok = await deleteGroupOnServer(groupId);
+    if (!ok) return;
+
     const remaining = groups.filter((g) => g.id !== groupId);
-    setGroups(remaining);
-    saveAllGroups(remaining, true);
     if (remaining.length === 0) {
-      setCurrentActiveGroupId('');
-      setActiveGroupId('', true);
+      selectGroup('');
       setShowLanding(true);
     } else {
-      setCurrentActiveGroupId(remaining[0].id);
-      setActiveGroupId(remaining[0].id, true);
+      selectGroup(remaining[0].id);
     }
     setActiveTab('expenses');
   };
 
-  const handleResetSampleData = () => {
-    setGroups([INITIAL_DEFAULT_GROUP]);
-    saveAllGroups([INITIAL_DEFAULT_GROUP], true);
-    setCurrentActiveGroupId(INITIAL_DEFAULT_GROUP.id);
-    setActiveGroupId(INITIAL_DEFAULT_GROUP.id, true);
-    setShowLanding(false);
+  /**
+   * Previously dropped a hardcoded sample group into local state. Now it creates a real
+   * split on the server, since local-only data no longer exists.
+   */
+  const handleResetSampleData = async () => {
+    await handleCreateGroup('Weekend Trip', 'You', ['Alex', 'Sam'], 'CAD');
   };
 
-  // Add / Edit Expense
-  const handleSaveExpense = (expenseData: Omit<Expense, 'id'>) => {
-    if (editingExpense) {
-      const updatedExpense: Expense = {
-        ...expenseData,
-        id: editingExpense.id,
-      };
-      const updatedExpenses = activeGroup.expenses.map((e) =>
-        e.id === editingExpense.id ? updatedExpense : e
-      );
-      handleUpdateGroup({
-        ...activeGroup,
-        expenses: updatedExpenses,
-        updatedAt: new Date().toISOString(),
-      });
-      setEditingExpense(null);
-    } else {
-      const newExpense: Expense = {
-        ...expenseData,
-        id: `exp-${Date.now()}`,
-      };
-      handleUpdateGroup({
-        ...activeGroup,
-        expenses: [newExpense, ...activeGroup.expenses],
-        updatedAt: new Date().toISOString(),
-      });
-    }
+  const handleSaveExpense = async (expenseData: Omit<Expense, 'id'>) => {
+    if (!activeGroup) return;
+    const editingId = editingExpense?.id ?? null;
+    setEditingExpense(null);
+    await saveExpenseOnServer(activeGroup.id, expenseData, editingId);
   };
 
-  const handleDeleteExpense = (expenseId: string) => {
-    const updated = activeGroup.expenses.filter((e) => e.id !== expenseId);
-    handleUpdateGroup({
-      ...activeGroup,
-      expenses: updated,
-      updatedAt: new Date().toISOString(),
+  const handleDeleteExpense = async (expenseId: string) => {
+    if (!activeGroup) return;
+    await deleteExpenseOnServer(activeGroup.id, expenseId);
+  };
+
+  const handleRecordSettlement = async (settlementData: Omit<SettlementRecord, 'id'>) => {
+    if (!activeGroup) return;
+    await recordSettlement(activeGroup.id, settlementData);
+  };
+
+  const handleUndoSettlement = async (settlementId: string) => {
+    if (!activeGroup) return;
+    await undoSettlement(activeGroup.id, settlementId);
+  };
+
+  const handleUpdateMemberPaymentEmail = async (memberId: string, email: string) => {
+    if (!activeGroup) return;
+    const clean = email.trim();
+    await updateMember(activeGroup.id, memberId, {
+      paymentHandle: clean,
+      email: clean,
     });
   };
 
-  // Settlements
-  const handleRecordSettlement = (settlementData: Omit<SettlementRecord, 'id'>) => {
-    const newSettlement: SettlementRecord = {
-      ...settlementData,
-      id: `set-${Date.now()}`,
-    };
-    handleUpdateGroup({
-      ...activeGroup,
-      settlements: [newSettlement, ...(activeGroup.settlements || [])],
-      updatedAt: new Date().toISOString(),
-    });
-  };
-
-  const handleUndoSettlement = (settlementId: string) => {
-    const updated = (activeGroup.settlements || []).filter((s) => s.id !== settlementId);
-    handleUpdateGroup({
-      ...activeGroup,
-      settlements: updated,
-      updatedAt: new Date().toISOString(),
-    });
-  };
-
-  const handleUpdateMemberPaymentEmail = (memberId: string, email: string) => {
-    const cleanEmail = email.trim();
-    const updatedMembers = activeGroup.members.map((m) =>
-      m.id === memberId
-        ? { ...m, paymentHandle: cleanEmail, email: cleanEmail }
-        : m
-    );
-    handleUpdateGroup({
-      ...activeGroup,
-      members: updatedMembers,
-      updatedAt: new Date().toISOString(),
-    });
-  };
-
-  const handleRenameGroup = (newName: string) => {
+  const handleRenameGroup = async (newName: string) => {
     if (!activeGroup || !newName.trim()) return;
-    const updated = {
-      ...activeGroup,
-      name: newName.trim(),
-      updatedAt: new Date().toISOString(),
-    };
-    handleUpdateGroup(updated);
+    await updateGroupInfo(activeGroup.id, { name: newName.trim() });
   };
 
   // A split-specific URL is still being fetched from the cloud — show a neutral
