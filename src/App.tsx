@@ -41,6 +41,7 @@ import { TripWrapUpModal } from './components/TripWrapUpModal';
 import { PaymentSummaryModal } from './components/PaymentSummaryModal';
 import { KeyboardShortcutsModal } from './components/KeyboardShortcutsModal';
 import { BrandPhilosophyModal } from './components/BrandPhilosophyModals';
+import { Logo } from './components/Logo';
 import {
   Plus,
   Share2,
@@ -52,6 +53,8 @@ import {
   Archive,
   RotateCcw,
   Sparkles,
+  Loader2,
+  SearchX,
 } from 'lucide-react';
 
 const TAB_ORDER: Record<ActiveTab, number> = {
@@ -116,10 +119,19 @@ export default function App() {
 
   const [activeGroupId, setCurrentActiveGroupId] = useState<string>(() => {
     if (initialRoute.groupId) return initialRoute.groupId;
-    const stored = getActiveGroupId();
-    if (stored) return stored;
     const all = loadAllGroups();
+    const stored = getActiveGroupId();
+    if (stored && all.some((g) => g.id === stored)) return stored;
     return all.length > 0 ? all[0].id : '';
+  });
+
+  // True while we're fetching a URL-specified split that isn't already cached locally.
+  // Prevents briefly (or permanently, on fetch failure) rendering an unrelated local
+  // split in its place while the real one loads.
+  const [isResolvingSharedGroup, setIsResolvingSharedGroup] = useState<boolean>(() => {
+    if (!initialRoute.groupId) return false;
+    const all = loadAllGroups();
+    return !all.some((g) => g.id === initialRoute.groupId);
   });
 
   const [activeTab, setActiveTab] = useState<ActiveTab>(() => {
@@ -292,6 +304,7 @@ export default function App() {
     // B. If a specific split is requested via URL, fetch latest state from Cloud
     if (targetGroupId) {
       fetchGroupFromCloud(targetGroupId).then((remoteGroup) => {
+        setIsResolvingSharedGroup(false);
         if (remoteGroup) {
           const savedClaimedId = localStorage.getItem(`nooswise_identity_${remoteGroup.id}`);
           const merged = mergeRemoteGroupWithLocal(null, remoteGroup, savedClaimedId);
@@ -537,9 +550,11 @@ export default function App() {
     saveAllGroups(groups, false);
   }, [groups]);
 
-  // Current active group
-  const activeGroup =
-    groups.find((g) => g.id === activeGroupId) || groups[0];
+  // Current active group. Deliberately does NOT fall back to groups[0]: activeGroupId
+  // may point at a split that's still being fetched from the cloud (isResolvingSharedGroup)
+  // or that doesn't exist, and silently substituting a different local split there was the
+  // cause of shared links opening the wrong group.
+  const activeGroup = groups.find((g) => g.id === activeGroupId);
 
   const currentMember =
     activeGroup?.members?.find((m) => m.isCurrentUser) || activeGroup?.members?.[0];
@@ -823,8 +838,49 @@ export default function App() {
     handleUpdateGroup(updated);
   };
 
+  // A split-specific URL is still being fetched from the cloud — show a neutral
+  // loading state rather than any locally-cached (and unrelated) split.
+  if (!showLanding && !activeGroup && isResolvingSharedGroup) {
+    return (
+      <div className="min-h-screen bg-[#F7FAFD] dark:bg-[#090d16] flex flex-col items-center justify-center gap-4 p-6 text-center">
+        <Logo size={40} />
+        <Loader2 className="w-5 h-5 text-[#6E8CB4] dark:text-[#B4D0EE] animate-spin" />
+        <p className="text-xs text-[#6E8CB4] dark:text-[#B4D0EE] font-medium">
+          Loading this split…
+        </p>
+      </div>
+    );
+  }
+
+  // The URL pointed at a split that couldn't be found (bad link, or one that's never
+  // been synced to the cloud from its creator's device).
+  if (!showLanding && !activeGroup && !isResolvingSharedGroup) {
+    return (
+      <div className="min-h-screen bg-[#F7FAFD] dark:bg-[#090d16] flex flex-col items-center justify-center gap-4 p-6 text-center">
+        <Logo size={40} />
+        <div className="w-14 h-14 rounded-full bg-[#E7F0FB] dark:bg-[#203652] text-[#16273F] dark:text-[#B4D0EE] flex items-center justify-center border border-[#DCE6F2] dark:border-[#2A4365]">
+          <SearchX className="w-6 h-6" />
+        </div>
+        <div>
+          <h2 className="font-display text-2xl text-[#16273F] dark:text-white">
+            Split not found
+          </h2>
+          <p className="text-xs text-[#6E8CB4] dark:text-[#B4D0EE] mt-1 max-w-xs">
+            This link doesn't match any split we can find. Double-check the link, or start a new one.
+          </p>
+        </div>
+        <button
+          onClick={handleGoHome}
+          className="mt-2 px-6 py-3 bg-[#16273F] dark:bg-white text-white dark:text-[#16273F] rounded-full text-xs font-semibold hover:opacity-90 transition-opacity cursor-pointer"
+        >
+          Go to nooswise home
+        </button>
+      </div>
+    );
+  }
+
   // If user navigated to landing screen or no split is selected
-  if (showLanding || !activeGroup) {
+  if (showLanding) {
     return (
       <LandingHero
         existingGroups={groups}

@@ -1,4 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useLayoutEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   SUPPORTED_CURRENCIES,
@@ -31,7 +32,9 @@ export const CurrencyPicker: React.FC<CurrencyPickerProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [popoverPos, setPopoverPos] = useState<{ top: number; left?: number; right?: number } | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const popoverRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   const selectedCode = normalizeCurrencyCode(value);
@@ -42,10 +45,39 @@ export const CurrencyPicker: React.FC<CurrencyPickerProps> = ({
     rateToUSD: 1.0,
   };
 
-  // Close dropdown when clicking outside
+  // The dropdown is portaled to <body> (see below) so that it always paints above
+  // sibling content, regardless of stacking contexts created elsewhere on the page
+  // (e.g. framer-motion elements with their own transform). Position it in viewport
+  // coordinates from the trigger's live bounding box instead.
+  const updatePosition = useCallback(() => {
+    const el = dropdownRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    if (align === 'left') {
+      setPopoverPos({ top: rect.bottom + 8, left: rect.left });
+    } else {
+      setPopoverPos({ top: rect.bottom + 8, right: window.innerWidth - rect.right });
+    }
+  }, [align]);
+
+  useLayoutEffect(() => {
+    if (!isOpen) return;
+    updatePosition();
+    window.addEventListener('resize', updatePosition);
+    window.addEventListener('scroll', updatePosition, true);
+    return () => {
+      window.removeEventListener('resize', updatePosition);
+      window.removeEventListener('scroll', updatePosition, true);
+    };
+  }, [isOpen, updatePosition]);
+
+  // Close dropdown when clicking outside (trigger or the portaled popover)
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      const insideTrigger = dropdownRef.current?.contains(target);
+      const insidePopover = popoverRef.current?.contains(target);
+      if (!insideTrigger && !insidePopover) {
         setIsOpen(false);
       }
     }
@@ -126,19 +158,26 @@ export const CurrencyPicker: React.FC<CurrencyPickerProps> = ({
         />
       </button>
 
-      {/* Popover Dropdown */}
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -6, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -4, scale: 0.96 }}
-            transition={{ type: 'spring', stiffness: 450, damping: 30 }}
-            className={`absolute z-50 mt-2 ${
-              align === 'left' ? 'left-0' : 'right-0'
-            } w-72 sm:w-80 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 p-3 flex flex-col gap-2.5`}
-            style={{ maxWidth: 'calc(100vw - 32px)' }}
-          >
+      {/* Popover Dropdown — portaled to <body> so it always paints above the page,
+          immune to stacking contexts created by sibling elements (e.g. framer-motion
+          cards with their own transform). Positioned via popoverPos in viewport coords. */}
+      {createPortal(
+        <AnimatePresence>
+          {isOpen && popoverPos && (
+            <motion.div
+              ref={popoverRef}
+              initial={{ opacity: 0, y: -6, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -4, scale: 0.96 }}
+              transition={{ type: 'spring', stiffness: 450, damping: 30 }}
+              className="fixed z-[100] w-72 sm:w-80 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 p-3 flex flex-col gap-2.5"
+              style={{
+                top: popoverPos.top,
+                left: popoverPos.left,
+                right: popoverPos.right,
+                maxWidth: 'calc(100vw - 32px)',
+              }}
+            >
             {/* Search Input */}
             <div className="relative flex items-center">
               <Search className="w-3.5 h-3.5 absolute left-3 text-slate-400 pointer-events-none" />
@@ -253,9 +292,11 @@ export const CurrencyPicker: React.FC<CurrencyPickerProps> = ({
                 </form>
               )}
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
     </div>
   );
 };

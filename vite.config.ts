@@ -16,7 +16,9 @@ export default defineConfig(() => {
       // Do not modifyâfile watching is disabled to prevent flickering during agent edits.
       hmr: process.env.DISABLE_HMR !== 'true',
       // Disable file watching when DISABLE_HMR is true to save CPU during agent edits.
-      watch: process.env.DISABLE_HMR === 'true' ? null : {},
+      // Always ignore data/ — the dev server's own runtime JSON store for split data,
+      // written on every split update, which otherwise triggers a full-page-reload loop.
+      watch: process.env.DISABLE_HMR === 'true' ? null : { ignored: ['**/data/**'] },
     },
   };
 });
