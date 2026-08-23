@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Sparkles, Smartphone, Users, Zap, CheckCircle2, ShieldCheck } from 'lucide-react';
 import { Logo } from './Logo';
@@ -9,16 +9,32 @@ interface BrandPhilosophyModalProps {
 }
 
 export const BrandPhilosophyModal: React.FC<BrandPhilosophyModalProps> = ({ type, onClose }) => {
+  useEffect(() => {
+    if (!type) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [type, onClose]);
+
   if (!type) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#16273F]/70 dark:bg-black/85 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
+    <div
+      onClick={onClose}
+      className="fixed inset-0 z-50 bg-[#16273F]/70 dark:bg-black/85 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto cursor-pointer"
+    >
       <motion.div
+        onClick={(e) => e.stopPropagation()}
         initial={{ opacity: 0, scale: 0.94, y: 16 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.94, y: 16 }}
         transition={{ type: 'spring', stiffness: 420, damping: 28 }}
-        className="bg-white dark:bg-[#16273F] w-full max-w-lg rounded-[30px] p-7 sm:p-9 shadow-2xl border border-[#DCE6F2] dark:border-[#2A4365] my-auto relative text-[#16273F] dark:text-[#F7FAFD] transition-colors"
+        className="bg-white dark:bg-[#16273F] w-full max-w-lg rounded-[30px] p-7 sm:p-9 shadow-2xl border border-[#DCE6F2] dark:border-[#2A4365] my-auto relative text-[#16273F] dark:text-[#F7FAFD] transition-colors cursor-default"
       >
         {/* Close Button */}
         <button

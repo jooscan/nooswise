@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import confetti from 'canvas-confetti';
 import { Group } from '../types';
-import { encodeGroupToUrl } from '../utils/storage';
-import { shortenUrl, getCachedShortUrl } from '../utils/urlShortener';
+import { getInstantShortUrl } from '../utils/urlShortener';
 import { copyToClipboard } from '../utils/clipboard';
 import {
   formatCurrency,
@@ -25,9 +24,9 @@ import {
   ArrowRight,
   CheckCircle2,
   PartyPopper,
-  ExternalLink,
+  Receipt,
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 
 interface TripWrapUpModalProps {
   isOpen: boolean;
@@ -73,62 +72,53 @@ export const TripWrapUpModal: React.FC<TripWrapUpModalProps> = ({
   }, [isOpen, handleKeyDown]);
 
   const triggerGrandCelebration = useCallback(() => {
-    // Stage 1: Big Center Firework
     confetti({
       particleCount: 80,
       spread: 90,
       origin: { y: 0.55 },
-      colors: ['#38bdf8', '#818cf8', '#34d399', '#fbbf24', '#f43f5e'],
+      colors: ['#6E8CB4', '#B4D0EE', '#A9C1A5', '#E88A72', '#16273F'],
     });
 
-    // Stage 2: Left and Right Cannons
     setTimeout(() => {
       confetti({
         particleCount: 55,
         angle: 60,
         spread: 60,
         origin: { x: 0.05, y: 0.65 },
-        colors: ['#fbbf24', '#34d399', '#60a5fa', '#f472b6'],
+        colors: ['#A9C1A5', '#6E8CB4', '#B4D0EE'],
       });
       confetti({
         particleCount: 55,
         angle: 120,
         spread: 60,
         origin: { x: 0.95, y: 0.65 },
-        colors: ['#f43f5e', '#818cf8', '#38bdf8', '#fbbf24'],
+        colors: ['#E88A72', '#6E8CB4', '#B4D0EE'],
       });
     }, 280);
-
-    // Stage 3: Gentle sparkle shower
-    setTimeout(() => {
-      confetti({
-        particleCount: 45,
-        spread: 120,
-        startVelocity: 20,
-        origin: { y: 0.35 },
-        colors: ['#fbbf24', '#e879f9', '#34d399', '#67e8f9'],
-      });
-    }, 600);
   }, []);
 
-  // ONLY fire confetti if the entire trip is settled (isAllSquare === true)
   useEffect(() => {
     if (!isOpen || !isAllSquare) return;
     triggerGrandCelebration();
   }, [isOpen, isAllSquare, triggerGrandCelebration]);
 
-  if (!isOpen) return null;
+  const shortShareUrl = useMemo(() => {
+    if (!group) return 'noos.app/s/split';
+    return getInstantShortUrl(group.id);
+  }, [group]);
+
+  if (!isOpen || !group) return null;
 
   // Calculate top payer (Upfront MVP)
   const payerTotals: Record<string, number> = {};
-  (group?.members || []).forEach((m) => {
+  (group.members || []).forEach((m) => {
     payerTotals[m.id] = 0;
   });
-  (group?.expenses || []).forEach((e) => {
+  (group.expenses || []).forEach((e) => {
     payerTotals[e.paidByMemberId] = (payerTotals[e.paidByMemberId] || 0) + (e.amount || 0);
   });
 
-  let topPayerId = group?.members?.[0]?.id;
+  let topPayerId = group.members?.[0]?.id;
   let maxPaid = -1;
   Object.entries(payerTotals).forEach(([id, amt]) => {
     if (amt > maxPaid) {
@@ -136,7 +126,7 @@ export const TripWrapUpModal: React.FC<TripWrapUpModalProps> = ({
       topPayerId = id;
     }
   });
-  const topPayer = group?.members?.find((m) => m.id === topPayerId);
+  const topPayer = maxPaid > 0 ? group.members?.find((m) => m.id === topPayerId) : null;
 
   // Find who owes the most
   const sortedDebtors = [...balances]
@@ -152,7 +142,7 @@ export const TripWrapUpModal: React.FC<TripWrapUpModalProps> = ({
 
   // Category breakdown
   const categoryCounts: Record<string, number> = {};
-  (group?.expenses || []).forEach((e) => {
+  (group.expenses || []).forEach((e) => {
     categoryCounts[e.category] = (categoryCounts[e.category] || 0) + 1;
   });
   const topCategory = Object.entries(categoryCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || 'food';
@@ -166,7 +156,7 @@ export const TripWrapUpModal: React.FC<TripWrapUpModalProps> = ({
     other: 'General 🛍️',
   };
 
-  const formattedTotal = formatCurrency(totalSpent, group?.currency || 'CAD');
+  const formattedTotal = formatCurrency(totalSpent, group.currency || 'CAD');
 
   // Summary lines for chat
   const pendingDebtsLines =
@@ -179,51 +169,39 @@ export const TripWrapUpModal: React.FC<TripWrapUpModalProps> = ({
           .join('\n')
       : '• All balances are settled ($0.00)!';
 
-  const fullShareUrl = useMemo(() => (group ? encodeGroupToUrl(group) : ''), [group]);
-  const [shortShareUrl, setShortShareUrl] = useState<string>(() => getCachedShortUrl(fullShareUrl) || fullShareUrl);
+  const recapText = expenseCount === 0
+    ? `📊 ${group.name} · Trip Recap
+━━━━━━━━━━━━━━━━━━━━
+💰 Total Tab: ${formattedTotal} (0 receipts recorded)
+👥 Friends in split: ${group.members.map((m) => m.name).join(', ')}
 
-  useEffect(() => {
-    if (!isOpen || !fullShareUrl) return;
-    const cached = getCachedShortUrl(fullShareUrl);
-    if (cached) {
-      setShortShareUrl(cached);
-      return;
-    }
-    let isCancelled = false;
-    shortenUrl(fullShareUrl).then((res) => {
-      if (!isCancelled && res) setShortShareUrl(res);
-    }).catch(() => {});
-    return () => {
-      isCancelled = true;
-    };
-  }, [isOpen, fullShareUrl]);
-
-  const shareUrl = shortShareUrl || fullShareUrl;
-
-  const recapText = isAllSquare
+✨ No expenses recorded yet — ready to split!
+View Split: https://${shortShareUrl}
+nooswise · split bills, stay friends ✨`
+    : isAllSquare
     ? `🎉 ${group.name} · Trip Wrap-Up!
 ━━━━━━━━━━━━━━━━━━━━
 💰 Total Tab: ${formattedTotal} (${expenseCount} receipts split across ${memberCount} friends)
-🏆 Upfront MVP: ${topPayer?.name || 'Someone'} (${formatCurrency(maxPaid, group.currency)} paid upfront)
-${biggestDebtor ? `👑 Top Tab Holder: ${biggestDebtor.member.name} (had the best time)` : ''}
+${topPayer ? `🏆 Upfront MVP: ${topPayer.name} (${formatCurrency(maxPaid, group.currency)} paid upfront)` : ''}
+${biggestDebtor ? `👑 Top Tab Holder: ${biggestDebtor.member.name}` : ''}
 
 💸 Final Payment Transfers:
 ${transfers.length > 0 ? transfers.map((t) => `• ${t.fromMemberName} paid ${formatCurrency(t.amount, t.currency)} to ${t.toMemberName}`).join('\n') : '• Everyone was square!'}
 
 ✨ All debts settled & everyone is 100% square!
-${shareUrl ? `\nView Split: ${shareUrl}\n` : ''}
-nooswise · frictionless bill splitting ✨`
+View Split: https://${shortShareUrl}
+nooswise · split bills, stay friends ✨`
     : `📊 ${group.name} · Who Owes Who Summary
 ━━━━━━━━━━━━━━━━━━━━
 💰 Total Tab: ${formattedTotal} (${expenseCount} receipts)
-🏆 Upfront MVP: ${topPayer?.name || 'Someone'} (${formatCurrency(maxPaid, group.currency)})
+${topPayer ? `🏆 Upfront MVP: ${topPayer.name} (${formatCurrency(maxPaid, group.currency)})` : ''}
 ${biggestDebtor ? `💸 Owes the Most: ${biggestDebtor.member.name} (${formatCurrency(Math.abs(biggestDebtor.netBalance), group.currency)})` : ''}
 ${biggestCreditor ? `🤑 Owed the Most: ${biggestCreditor.member.name} (${formatCurrency(biggestCreditor.netBalance, group.currency)})` : ''}
 
 ⏳ Pending Transfers to Square Up (${debts.length} simple steps):
 ${pendingDebtsLines}
 
-${shareUrl ? `View & Settle: ${shareUrl}\n` : ''}
+View & Settle: https://${shortShareUrl}
 nooswise · split bills, stay friends ✨`;
 
   const handleCopy = async () => {
@@ -248,23 +226,22 @@ nooswise · split bills, stay friends ✨`;
   return (
     <div
       tabIndex={-1}
-      className="fixed inset-0 z-50 bg-slate-950/50 dark:bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
+      onClick={onClose}
+      className="fixed inset-0 z-50 bg-[#16273F]/70 dark:bg-black/85 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto cursor-pointer"
     >
       <motion.div
+        onClick={(e) => e.stopPropagation()}
         initial={{ opacity: 0, scale: 0.96, y: 10 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.96, y: 10 }}
         transition={{ duration: 0.15 }}
-        className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-[32px] p-6 sm:p-8 shadow-2xl border border-slate-200 dark:border-slate-800 my-auto relative text-slate-900 dark:text-slate-100 transition-colors"
+        className="bg-white dark:bg-[#16273F] w-full max-w-lg rounded-[32px] p-6 sm:p-8 shadow-2xl border border-[#DCE6F2] dark:border-[#2A4365] my-auto relative text-[#16273F] dark:text-[#F7FAFD] transition-colors cursor-default"
       >
         {/* Top close button with Esc reminder */}
         <button
           onClick={onClose}
           aria-label="Close modal"
-          className="absolute top-5 right-5 w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 flex items-center justify-center transition-colors cursor-pointer"
+          className="absolute top-5 right-5 w-8 h-8 rounded-full bg-[#E7F0FB] dark:bg-[#203652] hover:bg-[#B4D0EE] dark:hover:bg-[#2A4365] text-[#16273F] dark:text-white flex items-center justify-center transition-colors cursor-pointer"
         >
           <X className="w-4 h-4" />
         </button>
@@ -274,13 +251,21 @@ nooswise · split bills, stay friends ✨`;
           <div className="flex items-center gap-2">
             <span
               className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border shadow-2xs ${
-                isAllSquare
+                expenseCount === 0
+                  ? 'bg-[#E7F0FB] dark:bg-[#203652] text-[#16273F] dark:text-[#B4D0EE] border-[#DCE6F2] dark:border-[#2A4365]'
+                  : isAllSquare
                   ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
-                  : 'bg-sky-100 dark:bg-sky-950/60 text-sky-800 dark:text-sky-300 border-sky-200 dark:border-sky-800'
+                  : 'bg-[#E7F0FB] dark:bg-[#203652] text-[#16273F] dark:text-[#B4D0EE] border-[#DCE6F2] dark:border-[#2A4365]'
               }`}
             >
-              <Sparkles className={`w-3.5 h-3.5 ${isAllSquare ? 'text-emerald-600 dark:text-emerald-400' : 'text-sky-600 dark:text-sky-400'}`} />
-              <span>{isAllSquare ? '100% Square · All Settled' : 'Trip Summary · In Progress'}</span>
+              <Sparkles className={`w-3.5 h-3.5 ${isAllSquare ? 'text-emerald-600 dark:text-emerald-400' : 'text-[#6E8CB4]'}`} />
+              <span>
+                {expenseCount === 0
+                  ? 'Trip Recap · Fresh Split'
+                  : isAllSquare
+                  ? '100% Square · All Settled'
+                  : 'Trip Summary · In Progress'}
+              </span>
             </span>
             {group.isArchived && (
               <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700">
@@ -302,114 +287,133 @@ nooswise · split bills, stay friends ✨`;
         </div>
 
         {/* Title */}
-        <h2 className="font-serif-display text-2xl sm:text-3xl text-slate-900 dark:text-slate-100 font-normal tracking-tight">
-          {isAllSquare ? `${group.name} is all square! 🎉` : `${group.name} · Who Owes Who`}
+        <h2 className="font-display text-2xl sm:text-3xl text-[#16273F] dark:text-white font-normal tracking-tight">
+          {expenseCount === 0
+            ? `${group.name} Recap`
+            : isAllSquare
+            ? `${group.name} is all square! 🎉`
+            : `${group.name} · Who Owes Who`}
         </h2>
-        <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-          {isAllSquare
+        <p className="text-xs sm:text-sm text-[#6E8CB4] dark:text-[#B4D0EE] mt-1">
+          {expenseCount === 0
+            ? "No expenses have been recorded for this split yet."
+            : isAllSquare
             ? "Zero debts remain — everyone is paid back and peace is restored! 🕊️✨"
             : `Here is the current quick breakdown of who owes what to settle the tab.`}
         </p>
 
         {/* Main Highlights Card */}
-        <div className="mt-4 p-4 sm:p-5 rounded-3xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 flex flex-col gap-3.5 shadow-2xs">
+        <div className="mt-4 p-4 sm:p-5 rounded-3xl bg-[#F7FAFD] dark:bg-[#203652]/50 border border-[#DCE6F2] dark:border-[#2A4365] flex flex-col gap-3.5 shadow-2xs">
           {/* Main Total Big Stat */}
-          <div className="flex items-baseline justify-between border-b border-slate-200/80 dark:border-slate-700/80 pb-3">
+          <div className="flex items-baseline justify-between border-b border-[#DCE6F2] dark:border-[#2A4365] pb-3">
             <div>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#6E8CB4] dark:text-[#B4D0EE]">
                 Total Trip Tab
               </span>
-              <div className="font-serif-display text-3xl font-normal text-slate-900 dark:text-slate-100">
+              <div className="font-sans font-bold text-3xl text-[#16273F] dark:text-white tracking-tight">
                 {formattedTotal}
               </div>
             </div>
-            <div className="text-right">
-              <span className="text-xs font-medium text-slate-500 dark:text-slate-400 block">
+            <div className="text-right font-sans">
+              <span className="text-xs font-medium text-[#6E8CB4] dark:text-[#B4D0EE] block">
                 {expenseCount} receipt{expenseCount === 1 ? '' : 's'}
               </span>
-              <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+              <span className="text-xs font-medium text-[#6E8CB4] dark:text-[#B4D0EE]">
                 {memberCount} friends
               </span>
             </div>
           </div>
 
-          {/* Fun Highlight Badges Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-            {topPayer && (
-              <div className="p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-700/80 flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-full bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 border border-amber-200/60 dark:border-amber-800/60">
-                  <Trophy className="w-4 h-4" />
-                </div>
-                <div className="min-w-0">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">
-                    Upfront MVP 🏆
-                  </span>
-                  <p className="text-xs font-semibold text-slate-900 dark:text-slate-100 truncate">
-                    {topPayer.name} ({formatCurrency(maxPaid, group.currency)})
-                  </p>
-                </div>
+          {/* Zero state or Highlights */}
+          {expenseCount === 0 ? (
+            <div className="p-4 rounded-2xl bg-white dark:bg-[#16273F] border border-[#DCE6F2] dark:border-[#2A4365] text-center flex flex-col items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-[#E7F0FB] dark:bg-[#203652] text-[#16273F] dark:text-[#B4D0EE] flex items-center justify-center">
+                <Receipt className="w-4 h-4" />
               </div>
-            )}
+              <p className="text-xs font-semibold text-[#16273F] dark:text-white">
+                Ready when you are
+              </p>
+              <p className="text-[11px] text-[#6E8CB4] dark:text-[#B4D0EE] max-w-xs">
+                Once you add your dinners, rides, or stays, this recap will highlight the MVP, spending charts, and simplified settlement transfers.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              {topPayer && (
+                <div className="p-3 rounded-2xl bg-white dark:bg-[#16273F] border border-[#DCE6F2] dark:border-[#2A4365] flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-full bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 border border-amber-200/60 dark:border-amber-800/60">
+                    <Trophy className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0 font-sans">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#6E8CB4] block">
+                      Upfront MVP 🏆
+                    </span>
+                    <p className="text-xs font-semibold text-[#16273F] dark:text-white truncate">
+                      {topPayer.name} ({formatCurrency(maxPaid, group.currency)})
+                    </p>
+                  </div>
+                </div>
+              )}
 
-            {/* If there's someone owing the most, highlight them nicely! */}
-            {biggestDebtor && !isAllSquare ? (
-              <div className="p-3 rounded-2xl bg-white dark:bg-slate-900 border border-rose-200/80 dark:border-rose-900/60 flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-full bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0 border border-rose-200/60 dark:border-rose-800/60">
-                  <Heart className="w-4 h-4 fill-rose-500/20 text-rose-500" />
+              {biggestDebtor && !isAllSquare ? (
+                <div className="p-3 rounded-2xl bg-white dark:bg-[#16273F] border border-rose-200/80 dark:border-rose-900/60 flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-full bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0 border border-rose-200/60 dark:border-rose-800/60">
+                    <Heart className="w-4 h-4 fill-rose-500/20 text-rose-500" />
+                  </div>
+                  <div className="min-w-0 font-sans">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-rose-500 dark:text-rose-400 block">
+                      Owes the Most 💸
+                    </span>
+                    <p className="text-xs font-semibold text-[#16273F] dark:text-white truncate">
+                      {biggestDebtor.member.name} ({formatCurrency(Math.abs(biggestDebtor.netBalance), group.currency)})
+                    </p>
+                  </div>
                 </div>
-                <div className="min-w-0">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-rose-500 dark:text-rose-400 block">
-                    Owes the Most 💸
-                  </span>
-                  <p className="text-xs font-semibold text-slate-900 dark:text-slate-100 truncate">
-                    {biggestDebtor.member.name} ({formatCurrency(Math.abs(biggestDebtor.netBalance), group.currency)})
-                  </p>
+              ) : biggestCreditor && !isAllSquare ? (
+                <div className="p-3 rounded-2xl bg-white dark:bg-[#16273F] border border-emerald-200/80 dark:border-emerald-900/60 flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-200/60 dark:border-emerald-800/60">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                  </div>
+                  <div className="min-w-0 font-sans">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 block">
+                      Owed the Most 🤑
+                    </span>
+                    <p className="text-xs font-semibold text-[#16273F] dark:text-white truncate">
+                      {biggestCreditor.member.name} (+{formatCurrency(biggestCreditor.netBalance, group.currency)})
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ) : biggestCreditor && !isAllSquare ? (
-              <div className="p-3 rounded-2xl bg-white dark:bg-slate-900 border border-emerald-200/80 dark:border-emerald-900/60 flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-200/60 dark:border-emerald-800/60">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+              ) : (
+                <div className="p-3 rounded-2xl bg-white dark:bg-[#16273F] border border-[#DCE6F2] dark:border-[#2A4365] flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-full bg-[#E7F0FB] dark:bg-[#203652] text-[#16273F] dark:text-[#B4D0EE] flex items-center justify-center shrink-0 border border-[#DCE6F2] dark:border-[#2A4365]">
+                    <Plane className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0 font-sans">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#6E8CB4] block">
+                      Top Spend
+                    </span>
+                    <p className="text-xs font-semibold text-[#16273F] dark:text-white truncate">
+                      {categoryLabels[topCategory] || topCategory}
+                    </p>
+                  </div>
                 </div>
-                <div className="min-w-0">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 block">
-                    Owed the Most 🤑
-                  </span>
-                  <p className="text-xs font-semibold text-slate-900 dark:text-slate-100 truncate">
-                    {biggestCreditor.member.name} (+{formatCurrency(biggestCreditor.netBalance, group.currency)})
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <div className="p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-700/80 flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-full bg-sky-50 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 flex items-center justify-center shrink-0 border border-sky-200/60 dark:border-sky-800/60">
-                  <Plane className="w-4 h-4" />
-                </div>
-                <div className="min-w-0">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">
-                    Top Spend
-                  </span>
-                  <p className="text-xs font-semibold text-slate-900 dark:text-slate-100 truncate">
-                    {categoryLabels[topCategory] || topCategory}
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          )}
 
           {/* Pending Debts OR Payment Transfers */}
-          {!isAllSquare ? (
-            <div className="pt-2 border-t border-slate-200/80 dark:border-slate-700/80">
+          {expenseCount > 0 && !isAllSquare ? (
+            <div className="pt-2 border-t border-[#DCE6F2] dark:border-[#2A4365]">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 flex items-center gap-1">
-                  <Sparkles className="w-3 h-3 text-sky-500" />
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#6E8CB4] flex items-center gap-1">
+                  <Sparkles className="w-3 h-3 text-[#6E8CB4]" />
                   <span>Pending Transfers ({debts.length} to square up)</span>
                 </span>
                 {onGoToSettleUp && (
                   <button
                     type="button"
                     onClick={onGoToSettleUp}
-                    className="text-xs font-semibold text-sky-600 dark:text-sky-400 hover:underline flex items-center gap-1 cursor-pointer"
+                    className="text-xs font-semibold text-[#16273F] dark:text-[#B4D0EE] hover:underline flex items-center gap-1 cursor-pointer"
                   >
                     <span>Settle Up</span>
                     <ArrowRight className="w-3 h-3" />
@@ -421,20 +425,20 @@ nooswise · split bills, stay friends ✨`;
                 {debts.map((d, idx) => (
                   <div
                     key={d.id || idx}
-                    className="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-700/80 text-xs flex items-center justify-between gap-2 shadow-2xs"
+                    className="p-2.5 rounded-xl bg-white dark:bg-[#16273F] border border-[#DCE6F2] dark:border-[#2A4365] text-xs flex items-center justify-between gap-2 shadow-2xs"
                   >
                     <div className="flex items-center gap-2 min-w-0">
                       {d.fromMember && <CuteAvatarBadge member={d.fromMember} size="xs" showEmoji={false} />}
-                      <span className="font-semibold text-slate-800 dark:text-slate-200 truncate">
+                      <span className="font-semibold text-[#16273F] dark:text-white truncate">
                         {d.fromMember.name}
                       </span>
                       <ArrowRight className="w-3 h-3 text-slate-400 shrink-0" />
                       {d.toMember && <CuteAvatarBadge member={d.toMember} size="xs" showEmoji={false} />}
-                      <span className="font-semibold text-slate-800 dark:text-slate-200 truncate">
+                      <span className="font-semibold text-[#16273F] dark:text-white truncate">
                         {d.toMember.name}
                       </span>
                     </div>
-                    <span className="font-serif-display font-medium text-slate-900 dark:text-slate-100 whitespace-nowrap text-xs">
+                    <span className="font-sans font-bold text-[#16273F] dark:text-white whitespace-nowrap text-xs">
                       {formatCurrency(d.amount, d.currency)}
                     </span>
                   </div>
@@ -442,8 +446,8 @@ nooswise · split bills, stay friends ✨`;
               </div>
             </div>
           ) : transfers.length > 0 ? (
-            <div className="pt-2 border-t border-slate-200/80 dark:border-slate-700/80">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 block mb-2 flex items-center gap-1">
+            <div className="pt-2 border-t border-[#DCE6F2] dark:border-[#2A4365]">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#6E8CB4] block mb-2 flex items-center gap-1">
                 <CheckCircle2 className="w-3 h-3 text-emerald-500" />
                 <span>Payment Summary (All Debts Resolved)</span>
               </span>
@@ -451,20 +455,20 @@ nooswise · split bills, stay friends ✨`;
                 {transfers.map((t, idx) => (
                   <div
                     key={t.id || idx}
-                    className="p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-700/80 text-xs flex items-center justify-between gap-2"
+                    className="p-2 rounded-xl bg-white dark:bg-[#16273F] border border-[#DCE6F2] dark:border-[#2A4365] text-xs flex items-center justify-between gap-2"
                   >
                     <div className="flex items-center gap-1.5 min-w-0">
                       {t.fromMember && <CuteAvatarBadge member={t.fromMember} size="xs" showEmoji={false} />}
-                      <span className="font-semibold text-slate-800 dark:text-slate-200 truncate">
+                      <span className="font-semibold text-[#16273F] dark:text-white truncate">
                         {t.fromMemberName}
                       </span>
                       <ArrowRight className="w-3 h-3 text-slate-400 shrink-0" />
                       {t.toMember && <CuteAvatarBadge member={t.toMember} size="xs" showEmoji={false} />}
-                      <span className="font-semibold text-slate-800 dark:text-slate-200 truncate">
+                      <span className="font-semibold text-[#16273F] dark:text-white truncate">
                         {t.toMemberName}
                       </span>
                     </div>
-                    <span className="font-serif-display font-medium text-slate-900 dark:text-slate-100 whitespace-nowrap">
+                    <span className="font-sans font-bold text-[#16273F] dark:text-white whitespace-nowrap">
                       {formatCurrency(t.amount, t.currency)}
                     </span>
                   </div>
@@ -475,24 +479,24 @@ nooswise · split bills, stay friends ✨`;
 
           {/* Members Roll Call */}
           <div className="pt-1">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 block mb-1.5">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-[#6E8CB4] block mb-1.5">
               Friends in this split
             </span>
-            <div className="flex flex-wrap items-center gap-1.5">
+            <div className="flex flex-wrap items-center gap-1.5 font-sans">
               {group.members.map((m) => {
                 const bal = balances.find((b) => b.member.id === m.id);
                 const isSquare = Math.abs(bal?.netBalance || 0) <= 0.01;
                 return (
                   <div
                     key={m.id}
-                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-700/80 text-xs font-medium text-slate-700 dark:text-slate-300"
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white dark:bg-[#16273F] border border-[#DCE6F2] dark:border-[#2A4365] text-xs font-medium text-[#16273F] dark:text-white"
                   >
                     <CuteAvatarBadge member={m} size="xs" showEmoji={false} />
                     <span>{m.name}</span>
                     {isSquare ? (
-                      <Check className="w-3 h-3 text-emerald-500 ml-0.5" />
+                      <Check className="w-3 h-3 text-[#A9C1A5] ml-0.5" />
                     ) : (
-                      <span className="text-[10px] text-slate-400 ml-0.5">
+                      <span className="text-[10px] text-[#6E8CB4] ml-0.5 font-semibold">
                         {bal && bal.netBalance < 0
                           ? `(owes ${formatCurrency(Math.abs(bal.netBalance), group.currency)})`
                           : bal && bal.netBalance > 0
@@ -508,14 +512,14 @@ nooswise · split bills, stay friends ✨`;
         </div>
 
         {/* Action Buttons */}
-        <div className="mt-4 flex flex-col gap-2">
+        <div className="mt-4 flex flex-col gap-2 font-sans">
           <div className="flex items-center gap-2">
             <motion.button
-              whileHover={{ scale: 1.025, y: -1 }}
+              whileHover={{ scale: 1.02, y: -1 }}
               whileTap={{ scale: 0.96 }}
               transition={{ type: 'spring', stiffness: 450, damping: 25 }}
               onClick={handleCopy}
-              className="flex-1 py-3 px-4 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-2xl font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 hover:bg-slate-800 dark:hover:bg-white transition-colors shadow-md cursor-pointer"
+              className="flex-1 py-3 px-4 bg-[#16273F] dark:bg-white text-white dark:text-[#16273F] rounded-2xl font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 hover:opacity-90 transition-opacity shadow-md cursor-pointer"
             >
               {copied ? <Check className="w-4 h-4 text-emerald-400 dark:text-emerald-600" /> : <Copy className="w-4 h-4" />}
               <span>{copied ? 'Copied Summary!' : 'Copy Summary for Group Chat'}</span>
@@ -527,21 +531,20 @@ nooswise · split bills, stay friends ✨`;
               transition={{ type: 'spring', stiffness: 450, damping: 25 }}
               onClick={handleShare}
               title="Share summary"
-              className="p-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-2xl font-semibold text-xs transition-colors flex items-center justify-center cursor-pointer border border-slate-200 dark:border-slate-700"
+              className="p-3 bg-[#E7F0FB] dark:bg-[#203652] hover:bg-[#B4D0EE] dark:hover:bg-[#2A4365] text-[#16273F] dark:text-white rounded-2xl font-semibold text-xs transition-colors flex items-center justify-center cursor-pointer border border-[#DCE6F2] dark:border-[#2A4365]"
             >
               <Share2 className="w-4 h-4" />
             </motion.button>
           </div>
 
           <div className="flex items-center gap-2">
-            {!isAllSquare && onGoToSettleUp && (
+            {expenseCount > 0 && !isAllSquare && onGoToSettleUp && (
               <motion.button
-                whileHover={{ scale: 1.025, y: -1 }}
+                whileHover={{ scale: 1.02, y: -1 }}
                 whileTap={{ scale: 0.96 }}
-                transition={{ type: 'spring', stiffness: 450, damping: 25 }}
                 type="button"
                 onClick={onGoToSettleUp}
-                className="flex-1 py-2.5 px-3 rounded-2xl bg-sky-50 dark:bg-sky-950/50 hover:bg-sky-100 dark:hover:bg-sky-900/50 text-sky-700 dark:text-sky-300 font-semibold text-xs border border-sky-200 dark:border-sky-800 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                className="flex-1 py-2.5 px-3 rounded-2xl bg-[#E7F0FB] dark:bg-[#203652] hover:bg-[#B4D0EE] dark:hover:bg-[#2A4365] text-[#16273F] dark:text-white font-semibold text-xs border border-[#DCE6F2] dark:border-[#2A4365] transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <span>Go to Settle Up</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -550,20 +553,19 @@ nooswise · split bills, stay friends ✨`;
 
             {/* Archive Toggle */}
             <motion.button
-              whileHover={{ scale: 1.025, y: -1 }}
+              whileHover={{ scale: 1.02, y: -1 }}
               whileTap={{ scale: 0.96 }}
-              transition={{ type: 'spring', stiffness: 450, damping: 25 }}
               onClick={onToggleArchive}
-              className="flex-1 py-2.5 px-3 rounded-2xl border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+              className="flex-1 py-2.5 px-3 rounded-2xl border border-[#DCE6F2] dark:border-[#2A4365] text-xs font-medium text-[#6E8CB4] dark:text-[#B4D0EE] hover:text-[#16273F] dark:hover:text-white hover:bg-[#F7FAFD] dark:hover:bg-[#203652]/60 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
             >
               {group.isArchived ? (
                 <>
-                  <RotateCcw className="w-3.5 h-3.5 text-sky-500" />
+                  <RotateCcw className="w-3.5 h-3.5 text-[#6E8CB4]" />
                   <span>Unarchive Split</span>
                 </>
               ) : (
                 <>
-                  <Archive className="w-3.5 h-3.5 text-slate-500" />
+                  <Archive className="w-3.5 h-3.5 text-[#6E8CB4]" />
                   <span>Archive Split</span>
                 </>
               )}
@@ -571,9 +573,9 @@ nooswise · split bills, stay friends ✨`;
           </div>
         </div>
 
-        <p className="text-[11px] text-center text-slate-400 dark:text-slate-500 mt-2.5 flex items-center justify-center gap-1">
+        <p className="text-[11px] text-center text-[#6E8CB4] dark:text-[#B4D0EE] mt-2.5 flex items-center justify-center gap-1">
           <Heart className="w-3 h-3 text-rose-500 fill-rose-500" />
-          <span>Press Esc to close anytime</span>
+          <span>Press Esc or click anywhere to exit</span>
         </p>
       </motion.div>
     </div>

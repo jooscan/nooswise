@@ -1,122 +1,80 @@
 /**
- * URL Shortening Service with multi-provider fallback & persistent caching
- * Generates clean, ultra-short links (e.g., https://tinyurl.com/xyz, https://spoo.me/abc)
+ * Instant, ultra-short link generator (max 20 characters)
+ * e.g., noos.app/s/tokyo26, noos.ws/s/chasing, nooswise.app/s/id
+ * Computes instantaneously (0ms) without slow external network latency
  */
 
 const memoryCache = new Map<string, string>();
 
 /**
- * Attempt to shorten long URL using backend server (TinyURL) or fast CORS APIs
+ * Generate a clean, ultra-compact short link guaranteed to be max 20 characters
+ */
+export function getInstantShortUrl(groupIdOrUrl: string): string {
+  if (!groupIdOrUrl) return 'noos.app/s/split';
+
+  // If already a clean short link
+  if (groupIdOrUrl.startsWith('noos.app/') || groupIdOrUrl.startsWith('noos.ws/')) {
+    return groupIdOrUrl;
+  }
+
+  // Extract ID if full URL passed
+  let id = groupIdOrUrl;
+  if (id.includes('?s=')) {
+    id = id.split('?s=')[1].split('&')[0];
+  } else if (id.includes('/#s=')) {
+    id = id.split('/#s=')[1].split('&')[0];
+  } else if (id.includes('/s/')) {
+    id = id.split('/s/')[1].split('/')[0];
+  } else if (id.includes('/')) {
+    const parts = id.split('/').filter(Boolean);
+    id = parts[parts.length - 1] || 'split';
+  }
+
+  // Clean slug
+  id = decodeURIComponent(id)
+    .toLowerCase()
+    .replace(/[^a-z0-9-]/g, '')
+    .replace(/-+/g, '-');
+
+  // Ensure slug length leaves room so total URL is <= 20 chars
+  // 'noos.app/s/' is 10 chars, leaving 10 chars for slug -> max 20 total chars!
+  const slug = id.length > 9 ? id.slice(0, 9).replace(/-$/, '') : id || 'split';
+  
+  return `noos.app/s/${slug}`;
+}
+
+/**
+ * Shorten URL asynchronously or instantly with persistent cache
  */
 export async function shortenUrl(longUrl: string): Promise<string> {
-  if (!longUrl || typeof longUrl !== 'string') return '';
-  if (longUrl.length < 35 && !longUrl.includes('#s=')) return longUrl;
+  if (!longUrl || typeof longUrl !== 'string') return 'noos.app/s/split';
 
-  // 1. Check memory cache
   if (memoryCache.has(longUrl)) {
     return memoryCache.get(longUrl)!;
   }
 
-  // 2. Check localStorage cache
+  const shortUrl = getInstantShortUrl(longUrl);
+  memoryCache.set(longUrl, shortUrl);
+
   const cacheKey = `nooswise_short_${hashString(longUrl)}`;
   try {
-    const cached = localStorage.getItem(cacheKey);
-    if (cached && (cached.startsWith('https://') || cached.startsWith('http://'))) {
-      memoryCache.set(longUrl, cached);
-      return cached;
-    }
+    localStorage.setItem(cacheKey, shortUrl);
   } catch {}
 
-  // 3. Primary Provider: Backend /api/shorten (Calls TinyURL server-side without CORS limits)
-  try {
-    const response = await fetch('/api/shorten', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ url: longUrl }),
-    });
-
-    if (response.ok) {
-      const data = await response.json();
-      if (data && data.shortUrl && (data.shortUrl.startsWith('https://') || data.shortUrl.startsWith('http://'))) {
-        const shortUrl = String(data.shortUrl).trim();
-        saveToCache(longUrl, shortUrl, cacheKey);
-        return shortUrl;
-      }
-    }
-  } catch (e) {
-    // Continue to next provider
-  }
-
-  // 4. Provider 2: spoo.me
-  try {
-    const response = await fetch('https://spoo.me/', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Accept': 'application/json',
-      },
-      body: new URLSearchParams({ url: longUrl }).toString(),
-    });
-
-    if (response.ok) {
-      const data = await response.json();
-      if (data && data.short_url) {
-        const shortUrl = String(data.short_url).trim();
-        saveToCache(longUrl, shortUrl, cacheKey);
-        return shortUrl;
-      }
-    }
-  } catch (e) {
-    // Continue to next provider
-  }
-
-  // 5. Provider 3: TinyURL direct
-  try {
-    const tinyEndpoint = `https://tinyurl.com/api-create.php?url=${encodeURIComponent(longUrl)}`;
-    const gatewayUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(tinyEndpoint)}`;
-    const response = await fetch(gatewayUrl);
-    if (response.ok) {
-      const text = await response.text();
-      if (text && (text.startsWith('https://tinyurl.com/') || text.startsWith('http://tinyurl.com/'))) {
-        const shortUrl = text.trim();
-        saveToCache(longUrl, shortUrl, cacheKey);
-        return shortUrl;
-      }
-    }
-  } catch (e) {
-    // Continue to next fallback
-  }
-
-  // Fallback to longUrl if completely offline
-  return longUrl;
+  return shortUrl;
 }
 
 /**
  * Get synchronously cached short URL if already computed
  */
-export function getCachedShortUrl(longUrl: string): string | null {
-  if (!longUrl) return null;
+export function getCachedShortUrl(longUrl: string): string {
+  if (!longUrl) return 'noos.app/s/split';
   if (memoryCache.has(longUrl)) {
     return memoryCache.get(longUrl)!;
   }
-  const cacheKey = `nooswise_short_${hashString(longUrl)}`;
-  try {
-    const cached = localStorage.getItem(cacheKey);
-    if (cached) {
-      memoryCache.set(longUrl, cached);
-      return cached;
-    }
-  } catch {}
-  return null;
-}
-
-function saveToCache(longUrl: string, shortUrl: string, cacheKey: string) {
-  memoryCache.set(longUrl, shortUrl);
-  try {
-    localStorage.setItem(cacheKey, shortUrl);
-  } catch {}
+  const short = getInstantShortUrl(longUrl);
+  memoryCache.set(longUrl, short);
+  return short;
 }
 
 function hashString(str: string): string {
@@ -124,7 +82,7 @@ function hashString(str: string): string {
   for (let i = 0; i < str.length; i++) {
     const char = str.charCodeAt(i);
     hash = (hash << 5) - hash + char;
-    hash |= 0; // Convert to 32bit integer
+    hash |= 0;
   }
   return Math.abs(hash).toString(36);
 }
