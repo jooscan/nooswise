@@ -1,0 +1,87 @@
+# Runs on the e2-micro VM. Three containers on one box: Postgres, the app, and Caddy
+# terminating TLS in front of it.
+#
+#   docker compose -f docker-compose.prod.yml up -d
+#
+# Values come from .env alongside this file (see .env.production.example).
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      # Off by default in the alpine image, but be explicit: without it a restore into
+      # a differently-collated cluster can silently reorder text indexes.
+      LANG: C.UTF-8
+    command: postgres -c config_file=/etc/postgresql/postgresql.conf
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./deploy/postgres.conf:/etc/postgresql/postgresql.conf:ro
+    # No `ports:` — Postgres is reachable only from the app container on the internal
+    # network. Publishing 5432 would expose it to the internet through the VM's IP.
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    logging: &logging
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: nooswise:${NOOSWISE_TAG:-latest}
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: '3000'
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      PG_POOL_MAX: '5'
+    depends_on:
+      db:
+        condition: service_healthy
+    expose:
+      - '3000'
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - '-e'
+        - "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    logging: *logging
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '443:443'
+    environment:
+      NOOSWISE_DOMAIN: ${NOOSWISE_DOMAIN}
+      NOOSWISE_ACME_EMAIL: ${NOOSWISE_ACME_EMAIL}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # Certificates live here. Losing this volume means re-requesting from Let's
+      # Encrypt, which is rate limited — do not prune it casually.
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - app
+    logging: *logging
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:
