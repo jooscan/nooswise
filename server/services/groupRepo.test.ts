@@ -214,6 +214,39 @@ describe('groupRepo', () => {
     });
   });
 
+  describe('addMember ordering', () => {
+    it('appends after the last member, not at a reused position', async () => {
+      // The modal ticks the newly added person into the split by id, so a colliding
+      // sort order (which count(*) would produce after a removal) must not scramble
+      // which member reads as "the new one".
+      const { group, ids } = await seed(['Joyce', 'Sam', 'Alex']);
+      await removeMember(group.id, ids[1]);
+
+      const { group: after } = await addMember(group.id, { name: 'Priya' });
+      expect(after.members.map((m) => m.name)).toEqual(['Joyce', 'Alex', 'Priya']);
+    });
+
+    it('lets a just-added member be used in an expense straight away', async () => {
+      const { group, ids } = await seed(['Joyce']);
+      const { group: withPriya } = await addMember(group.id, { name: 'Priya' });
+      const priya = withPriya.members.find((m) => m.name === 'Priya')!;
+
+      const { group: withExpense } = await createExpense(
+        group.id,
+        expenseInput(
+          ids[0],
+          [
+            { memberId: ids[0], amount: 5 },
+            { memberId: priya.id, amount: 5 },
+          ],
+          10
+        )
+      );
+
+      expect(withExpense.expenses[0].splits.map((s) => s.memberId)).toContain(priya.id);
+    });
+  });
+
   describe('revision', () => {
     it('advances on every write so pollers notice', async () => {
       const { group, ids } = await seed();

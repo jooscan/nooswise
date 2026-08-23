@@ -385,8 +385,12 @@ export async function addMember(
   return db.transaction(async (tx) => {
     await requireGroup(tx, groupId);
 
-    const [{ count }] = await tx
-      .select({ count: sql<number>`count(*)::int` })
+    // max+1, not count: if someone was removed earlier, a count-based order would
+    // collide with an existing member's position and make the ordering ambiguous.
+    const [{ nextOrder }] = await tx
+      .select({
+        nextOrder: sql<number>`coalesce(max(${members.sortOrder}), -1) + 1`,
+      })
       .from(members)
       .where(eq(members.groupId, groupId));
 
@@ -401,7 +405,7 @@ export async function addMember(
       avatarEmoji: input.avatarEmoji ?? null,
       characterName: input.characterName ?? null,
       initials: input.initials ?? input.name.slice(0, 2).toUpperCase(),
-      sortOrder: count,
+      sortOrder: nextOrder,
     });
 
     await bumpRevision(tx, groupId);

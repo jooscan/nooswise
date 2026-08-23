@@ -3,7 +3,6 @@ import { Expense, ExpenseCategory, Group, Member, SplitType } from '../types';
 import { CuteAvatarBadge } from './CuteAvatarBadge';
 import { SUPPORTED_CURRENCIES, convertCurrency, formatMoney, getCurrencySymbol } from '../utils/currency';
 import { CurrencyPicker } from './CurrencyPicker';
-import { getRandomAvatar } from '../utils/avatars';
 import {
   X,
   ArrowRight,
@@ -25,7 +24,11 @@ interface AddExpenseModalProps {
   onSaveExpense: (expense: Omit<Expense, 'id'>) => void;
   onDeleteExpense?: (id: string) => void;
   editingExpense?: Expense | null;
-  onAddMember?: (member: Member) => void;
+  /**
+   * Adds someone mid-expense. Resolves with the created member so the caller can select
+   * the id the server assigned — the modal must not invent one.
+   */
+  onAddMember?: (name: string) => Promise<Member | null>;
 }
 
 const CATEGORIES: { id: ExpenseCategory; label: string }[] = [
@@ -224,33 +227,30 @@ export const AddExpenseModal: React.FC<AddExpenseModalProps> = ({
     setErrorMsg('');
   };
 
-  const handleAddPerson = () => {
+  const [isAddingPerson, setIsAddingPerson] = useState(false);
+
+  /**
+   * The member id has to come from the server. This used to mint `m-${Date.now()}`
+   * locally and immediately tick it in the split, which meant the expense referenced a
+   * member that did not exist and the save was rejected.
+   */
+  const handleAddPerson = async () => {
     const cleanName = newPersonName.trim();
-    if (!cleanName) return;
-    const newId = `m-${Date.now()}`;
-    const cute = getRandomAvatar(cleanName);
-    const newMem: Member = {
-      id: newId,
-      name: cleanName,
-      isCurrentUser: false,
-      initials: cleanName.slice(0, 2).toUpperCase(),
-      avatarUrl: cute.spriteUrl,
-      avatarEmoji: cute.emoji,
-      avatarBg: cute.bgGradient,
-      characterName: cute.characterName,
-      email: `${cleanName.toLowerCase().replace(/\s+/g, '')}@nooswise.app`,
-      paymentHandle: `${cleanName.toLowerCase().replace(/\s+/g, '')}@interac.me`,
-    };
+    if (!cleanName || !onAddMember) return;
 
-    if (onAddMember) {
-      onAddMember(newMem);
-    } else {
-      group.members.push(newMem);
+    setIsAddingPerson(true);
+    try {
+      const created = await onAddMember(cleanName);
+      if (!created) {
+        setErrorMsg("Couldn't add that person. Please try again.");
+        return;
+      }
+      setSelectedMemberIds((prev) => [...prev, created.id]);
+      setNewPersonName('');
+      setErrorMsg('');
+    } finally {
+      setIsAddingPerson(false);
     }
-
-    setSelectedMemberIds((prev) => [...prev, newId]);
-    setNewPersonName('');
-    setErrorMsg('');
   };
 
   const executeSave = () => {
@@ -717,16 +717,19 @@ export const AddExpenseModal: React.FC<AddExpenseModalProps> = ({
             <div className="flex items-center gap-2 pt-1 border-t border-slate-200 dark:border-slate-700">
               <input
                 type="text"
-                placeholder="Type name & press Enter to add to split..."
+                placeholder={
+                  isAddingPerson ? 'Adding…' : 'Type name & press Enter to add to split...'
+                }
                 value={newPersonName}
+                disabled={isAddingPerson}
                 onChange={(e) => setNewPersonName(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     e.preventDefault();
-                    handleAddPerson();
+                    void handleAddPerson();
                   }
                 }}
-                className="flex-1 bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-slate-100 placeholder:text-slate-400 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-1 focus:ring-slate-400"
+                className="flex-1 bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-slate-100 placeholder:text-slate-400 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-1 focus:ring-slate-400 disabled:opacity-60"
               />
               <button
                 type="button"

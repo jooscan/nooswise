@@ -238,10 +238,15 @@ export function useGroups({
       const clean = name.trim();
       if (!clean) return null;
 
+      const before = new Set(
+        (groupsRef.current.find((g) => g.id === groupId)?.members ?? []).map((m) => m.id)
+      );
+
       try {
         const { group, revision } = await api.addMember(groupId, buildMember(clean));
-        // The server assigns the id, so identity can only be claimed once it replies.
-        const added = group.members[group.members.length - 1];
+        // Diff rather than taking the last entry: callers use this id to tick the new
+        // person into a split, so picking the wrong one would corrupt the expense.
+        const added = group.members.find((m) => !before.has(m.id)) ?? null;
         if (claimAsCurrentUser && added) {
           setClaimedMemberId(groupId, added.id);
         }

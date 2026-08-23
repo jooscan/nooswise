@@ -5,7 +5,7 @@ import { CuteAvatarBadge } from './CuteAvatarBadge';
 import { CurrencyPicker } from './CurrencyPicker';
 import { ThemeToggle } from './ThemeToggle';
 import { Theme } from '../utils/theme';
-import { getRandomAvatar, CUTE_AVATARS } from '../utils/avatars';
+import { CUTE_AVATARS } from '../utils/avatars';
 import {
   Users,
   Trash2,
@@ -23,9 +23,30 @@ import {
   RotateCcw,
 } from 'lucide-react';
 
+export interface MemberPatch {
+  name?: string;
+  email?: string;
+  paymentHandle?: string;
+  avatarUrl?: string;
+  avatarBg?: string;
+  avatarEmoji?: string;
+  characterName?: string;
+  initials?: string;
+}
+
 interface SettingsViewProps {
   group: Group;
-  onUpdateGroup: (updated: Group) => void;
+  /** Group-level fields only. Member edits go through their own callbacks. */
+  onPatchGroup: (patch: {
+    name?: string;
+    currency?: string;
+    myETransferEmail?: string;
+  }) => void | Promise<unknown>;
+  onUpdateMember: (memberId: string, patch: MemberPatch) => void | Promise<unknown>;
+  onAddMember: (name: string) => void | Promise<unknown>;
+  onRemoveMember: (memberId: string) => void | Promise<unknown>;
+  /** Purely local — which member you are is a property of this device. */
+  onClaimIdentity: (memberId: string) => void;
   onDeleteGroup: (groupId: string) => void;
   onResetSampleData: () => void;
   theme: Theme;
@@ -35,7 +56,11 @@ interface SettingsViewProps {
 
 export const SettingsView: React.FC<SettingsViewProps> = ({
   group,
-  onUpdateGroup,
+  onPatchGroup,
+  onUpdateMember,
+  onAddMember,
+  onRemoveMember,
+  onClaimIdentity,
   onDeleteGroup,
   onResetSampleData,
   theme,
@@ -46,27 +71,31 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const [currency, setCurrency] = useState(group.currency || 'CAD');
   const [newMemberName, setNewMemberName] = useState('');
   const [activePersonaId, setActivePersonaId] = useState(
-    group.members.find((m) => m.isCurrentUser)?.id || group.members[0].id
+    group.members.find((m) => m.isCurrentUser)?.id || group.members[0]?.id || ''
   );
   const [saveToast, setSaveToast] = useState(false);
   const [editingMemberId, setEditingMemberId] = useState<string | null>(null);
   const [editEmailValue, setEditEmailValue] = useState('');
   const [editNameValue, setEditNameValue] = useState('');
 
-  const handleSaveGroupInfo = (e: React.FormEvent) => {
+  /**
+   * This form bundles two unrelated things: the split's name and currency, which are
+   * shared and go to the server, and which member you are, which is local to this
+   * device. They are saved through different paths for that reason.
+   */
+  const handleSaveGroupInfo = async (e: React.FormEvent) => {
     e.preventDefault();
-    const updatedMembers = group.members.map((m) => ({
-      ...m,
-      isCurrentUser: m.id === activePersonaId,
-    }));
 
-    onUpdateGroup({
-      ...group,
-      name: groupName.trim() || 'My Group',
-      currency,
-      members: updatedMembers,
-      updatedAt: new Date().toISOString(),
-    });
+    if (activePersonaId) onClaimIdentity(activePersonaId);
+
+    const patch: { name?: string; currency?: string } = {};
+    const cleanName = groupName.trim() || 'My Group';
+    if (cleanName !== group.name) patch.name = cleanName;
+    if (currency !== group.currency) patch.currency = currency;
+
+    if (Object.keys(patch).length > 0) {
+      await onPatchGroup(patch);
+    }
 
     setSaveToast(true);
     setTimeout(() => setSaveToast(false), 2500);
@@ -78,100 +107,49 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     setEditEmailValue(member.paymentHandle || member.email || '');
   };
 
-  const handleSaveMemberDetails = (memberId: string) => {
+  const handleSaveMemberDetails = async (memberId: string) => {
     const cleanEmail = editEmailValue.trim();
     const cleanName = editNameValue.trim() || 'Friend';
-    const updated = group.members.map((m) =>
-      m.id === memberId
-        ? {
-            ...m,
-            name: cleanName,
-            email: cleanEmail,
-            paymentHandle: cleanEmail,
-          }
-        : m
-    );
-
-    onUpdateGroup({
-      ...group,
-      members: updated,
-      updatedAt: new Date().toISOString(),
-    });
 
     setEditingMemberId(null);
+    await onUpdateMember(memberId, {
+      name: cleanName,
+      email: cleanEmail,
+      paymentHandle: cleanEmail,
+    });
+
     setSaveToast(true);
     setTimeout(() => setSaveToast(false), 2500);
   };
 
-  const handleAddMember = () => {
-    if (!newMemberName.trim()) return;
+  const handleAddMember = async () => {
     const cleanName = newMemberName.trim();
-    const newId = `m-${Date.now()}`;
-    const cute = getRandomAvatar(cleanName);
-    const newMember: Member = {
-      id: newId,
-      name: cleanName,
-      isCurrentUser: false,
-      initials: cleanName.slice(0, 2).toUpperCase(),
-      avatarUrl: cute.spriteUrl,
-      avatarEmoji: cute.emoji,
-      avatarBg: cute.bgGradient,
-      characterName: cute.characterName,
-      email: '',
-      paymentHandle: '',
-    };
-
-    onUpdateGroup({
-      ...group,
-      members: [...group.members, newMember],
-      updatedAt: new Date().toISOString(),
-    });
+    if (!cleanName) return;
+    // The server assigns the id and the hook picks the avatar.
     setNewMemberName('');
+    await onAddMember(cleanName);
   };
 
   const handleRerollAvatar = (memberId: string) => {
     const randomCute = CUTE_AVATARS[Math.floor(Math.random() * CUTE_AVATARS.length)];
-    const updated = group.members.map((m) =>
-      m.id === memberId
-        ? {
-            ...m,
-            avatarUrl: randomCute.spriteUrl,
-            avatarEmoji: randomCute.emoji,
-            avatarBg: randomCute.bgGradient,
-            characterName: randomCute.characterName,
-          }
-        : m
-    );
-    onUpdateGroup({
-      ...group,
-      members: updated,
-      updatedAt: new Date().toISOString(),
+    void onUpdateMember(memberId, {
+      avatarUrl: randomCute.spriteUrl,
+      avatarEmoji: randomCute.emoji,
+      avatarBg: randomCute.bgGradient,
+      characterName: randomCute.characterName,
     });
   };
 
-  const handleRemoveMember = (memberId: string) => {
-    if (group.members.length <= 2) {
-      alert('A group must have at least 2 members.');
-      return;
-    }
-    const hasExpenses = group.expenses.some(
-      (e) => e.paidByMemberId === memberId || e.splits.some((s) => s.memberId === memberId)
-    );
-    if (
-      hasExpenses &&
-      !confirm(
-        'This friend is part of recorded expenses. Removing them may affect balances. Continue?'
-      )
-    ) {
-      return;
-    }
-
-    const updated = group.members.filter((m) => m.id !== memberId);
-    onUpdateGroup({
-      ...group,
-      members: updated,
-      updatedAt: new Date().toISOString(),
-    });
+  /**
+   * The server refuses to remove anyone still named in an expense or settlement, and
+   * says which ones — so this no longer asks the user to confirm a removal that would
+   * have quietly left the balances wrong. It only confirms the intent.
+   */
+  const handleRemoveMember = async (memberId: string) => {
+    const member = group.members.find((m) => m.id === memberId);
+    if (!member) return;
+    if (!confirm(`Remove ${member.name} from this split?`)) return;
+    await onRemoveMember(memberId);
   };
 
   return (

@@ -405,8 +405,8 @@ export default function App() {
     name: string,
     claimAsCurrentUser: boolean = false
   ) => {
-    if (!activeGroup) return;
-    await addMember(activeGroup.id, name, claimAsCurrentUser);
+    if (!activeGroup) return null;
+    return addMember(activeGroup.id, name, claimAsCurrentUser);
   };
 
   const handleSelectGroup = (group: Group) => {
@@ -416,60 +416,6 @@ export default function App() {
     setActiveTab('expenses');
     // Pull the latest in case another device changed it while this one was elsewhere.
     void refreshGroup(group.id);
-  };
-
-  /**
-   * Kept for SettingsView, which still hands back a whole edited Group. It diffs that
-   * against what we have and sends only the group-level fields that actually changed;
-   * member edits go through their own endpoints. Phase 3 replaces this with granular
-   * props so the diffing goes away.
-   */
-  const handleUpdateGroup = async (updatedGroup: Group) => {
-    const current = groups.find((g) => g.id === updatedGroup.id);
-    if (!current) return;
-
-    const patch: {
-      name?: string;
-      currency?: string;
-      myETransferEmail?: string;
-      isArchived?: boolean;
-    } = {};
-    if (updatedGroup.name !== current.name) patch.name = updatedGroup.name;
-    if (updatedGroup.currency !== current.currency) patch.currency = updatedGroup.currency;
-    if (updatedGroup.myETransferEmail !== current.myETransferEmail) {
-      patch.myETransferEmail = updatedGroup.myETransferEmail ?? '';
-    }
-    if (updatedGroup.isArchived !== current.isArchived) {
-      patch.isArchived = !!updatedGroup.isArchived;
-    }
-
-    if (Object.keys(patch).length > 0) {
-      await updateGroupInfo(updatedGroup.id, patch);
-    }
-
-    // Members changed by SettingsView: additions, removals, and field edits.
-    const currentById = new Map(current.members.map((m) => [m.id, m]));
-    const nextById = new Map(updatedGroup.members.map((m) => [m.id, m]));
-
-    for (const [id, member] of nextById) {
-      const before = currentById.get(id);
-      if (!before) continue; // additions go through handleAddMemberToGroup
-      const memberPatch: Record<string, string> = {};
-      for (const key of ['name', 'email', 'paymentHandle', 'avatarUrl', 'avatarBg', 'avatarEmoji', 'characterName', 'initials'] as const) {
-        if ((member[key] ?? '') !== (before[key] ?? '')) {
-          memberPatch[key] = member[key] ?? '';
-        }
-      }
-      if (Object.keys(memberPatch).length > 0) {
-        await updateMember(updatedGroup.id, id, memberPatch);
-      }
-    }
-
-    for (const id of currentById.keys()) {
-      if (!nextById.has(id)) {
-        await removeMember(updatedGroup.id, id);
-      }
-    }
   };
 
   const handleToggleArchive = async (groupId: string = activeGroupId) => {
@@ -950,7 +896,13 @@ export default function App() {
               >
                 <SettingsView
                   group={activeGroup}
-                  onUpdateGroup={handleUpdateGroup}
+                  onPatchGroup={(patch) => updateGroupInfo(activeGroup.id, patch)}
+                  onUpdateMember={(memberId, patch) =>
+                    updateMember(activeGroup.id, memberId, patch)
+                  }
+                  onAddMember={(name) => handleAddMemberToGroup(name)}
+                  onRemoveMember={(memberId) => removeMember(activeGroup.id, memberId)}
+                  onClaimIdentity={handleClaimIdentity}
                   onDeleteGroup={handleDeleteGroup}
                   onResetSampleData={handleResetSampleData}
                   theme={theme}
@@ -973,7 +925,7 @@ export default function App() {
         onSaveExpense={handleSaveExpense}
         onDeleteExpense={handleDeleteExpense}
         editingExpense={editingExpense}
-        onAddMember={(m) => handleAddMemberToGroup(m.name)}
+        onAddMember={(name) => addMember(activeGroupId, name)}
       />
 
       <ExpenseDetailModal
