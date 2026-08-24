@@ -15,8 +15,8 @@
 
   body {
     font-family: var(--font-sans);
-    background-color: #F7FAFD;
-    color: #16273F;
+    background-color: #F7F9FC;
+    color: #13223D;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     transition: background-color 0.2s ease, color 0.2s ease;
@@ -24,7 +24,7 @@
 
   html.dark body {
     background-color: #0c1524;
-    color: #F7FAFD;
+    color: #F7F9FC;
   }
 
   .font-display, .font-serif-display {
@@ -55,7 +55,7 @@ html.dark .brand-card-shadow {
   background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid #DCE6F2;
+  border: 1px solid #DCEAF5;
 }
 
 html.dark .glass-panel {
@@ -95,7 +95,7 @@ html.dark .soft-shadow-hover:hover {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #B4D0EE;
+  background: #8FD4F2;
   border-radius: 9999px;
 }
 
@@ -104,7 +104,7 @@ html.dark ::-webkit-scrollbar-thumb {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #6E8CB4;
+  background: #779DD2;
 }
 
 html.dark ::-webkit-scrollbar-thumb:hover {

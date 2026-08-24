@@ -494,10 +494,10 @@ export default function App() {
   // loading state rather than any locally-cached (and unrelated) split.
   if (!showLanding && !activeGroup && isResolvingSharedGroup) {
     return (
-      <div className="min-h-screen bg-[#F7FAFD] dark:bg-[#090d16] flex flex-col items-center justify-center gap-4 p-6 text-center">
+      <div className="min-h-screen bg-[#F7F9FC] dark:bg-[#090d16] flex flex-col items-center justify-center gap-4 p-6 text-center">
         <Logo size={40} />
-        <Loader2 className="w-5 h-5 text-[#6E8CB4] dark:text-[#B4D0EE] animate-spin" />
-        <p className="text-xs text-[#6E8CB4] dark:text-[#B4D0EE] font-medium">
+        <Loader2 className="w-5 h-5 text-[#779DD2] dark:text-[#8FD4F2] animate-spin" />
+        <p className="text-xs text-[#779DD2] dark:text-[#8FD4F2] font-medium">
           Loading this split…
         </p>
       </div>
@@ -508,22 +508,22 @@ export default function App() {
   // been synced to the cloud from its creator's device).
   if (!showLanding && !activeGroup && !isResolvingSharedGroup) {
     return (
-      <div className="min-h-screen bg-[#F7FAFD] dark:bg-[#090d16] flex flex-col items-center justify-center gap-4 p-6 text-center">
+      <div className="min-h-screen bg-[#F7F9FC] dark:bg-[#090d16] flex flex-col items-center justify-center gap-4 p-6 text-center">
         <Logo size={40} />
-        <div className="w-14 h-14 rounded-full bg-[#E7F0FB] dark:bg-[#203652] text-[#16273F] dark:text-[#B4D0EE] flex items-center justify-center border border-[#DCE6F2] dark:border-[#2A4365]">
+        <div className="w-14 h-14 rounded-full bg-[#EAF3FB] dark:bg-[#203652] text-[#13223D] dark:text-[#8FD4F2] flex items-center justify-center border border-[#DCEAF5] dark:border-[#2A4365]">
           <SearchX className="w-6 h-6" />
         </div>
         <div>
-          <h2 className="font-display text-2xl text-[#16273F] dark:text-white">
+          <h2 className="font-display text-2xl text-[#13223D] dark:text-white">
             Split not found
           </h2>
-          <p className="text-xs text-[#6E8CB4] dark:text-[#B4D0EE] mt-1 max-w-xs">
+          <p className="text-xs text-[#779DD2] dark:text-[#8FD4F2] mt-1 max-w-xs">
             This link doesn't match any split we can find. Double-check the link, or start a new one.
           </p>
         </div>
         <button
           onClick={handleGoHome}
-          className="mt-2 px-6 py-3 bg-[#16273F] dark:bg-white text-white dark:text-[#16273F] rounded-full text-xs font-semibold hover:opacity-90 transition-opacity cursor-pointer"
+          className="mt-2 px-6 py-3 bg-[#13223D] dark:bg-white text-white dark:text-[#13223D] rounded-full text-xs font-semibold hover:opacity-90 transition-opacity cursor-pointer"
         >
           Go to nooswise home
         </button>
@@ -545,7 +545,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F7FAFD] dark:bg-[#0c1524] text-[#16273F] dark:text-[#F7FAFD] flex flex-col md:flex-row antialiased selection:bg-[#B4D0EE] dark:selection:bg-[#203652] transition-colors">
+    <div className="min-h-screen bg-[#F7F9FC] dark:bg-[#0c1524] text-[#13223D] dark:text-[#F7F9FC] flex flex-col md:flex-row antialiased selection:bg-[#8FD4F2] dark:selection:bg-[#203652] transition-colors">
       {/* Side Navigation for Desktop & Mobile Tabs */}
       <Sidebar
         activeTab={activeTab}
@@ -586,11 +586,11 @@ export default function App() {
                   autoFocus
                   value={renamedTitle}
                   onChange={(e) => setRenamedTitle(e.target.value)}
-                  className="bg-white dark:bg-[#16273F] text-[#16273F] dark:text-white font-display text-2xl sm:text-3xl px-3 py-1 rounded-xl border border-[#DCE6F2] dark:border-[#2A4365] focus:outline-none focus:ring-2 focus:ring-[#B4D0EE]"
+                  className="bg-white dark:bg-[#13223D] text-[#13223D] dark:text-white font-display text-2xl sm:text-3xl px-3 py-1 rounded-xl border border-[#DCEAF5] dark:border-[#2A4365] focus:outline-none focus:ring-2 focus:ring-[#8FD4F2]"
                 />
                 <button
                   type="submit"
-                  className="w-8 h-8 rounded-full bg-[#16273F] dark:bg-white text-white dark:text-[#16273F] flex items-center justify-center cursor-pointer shadow-xs"
+                  className="w-8 h-8 rounded-full bg-[#13223D] dark:bg-white text-white dark:text-[#13223D] flex items-center justify-center cursor-pointer shadow-xs"
                 >
                   <Check className="w-4 h-4" />
                 </button>
@@ -605,11 +605,11 @@ export default function App() {
                 className="flex items-center gap-2 text-left group cursor-pointer"
                 title="Switch or rename split"
               >
-                <h2 className="font-display text-2xl sm:text-3xl lg:text-4xl text-[#16273F] dark:text-white tracking-tight group-hover:opacity-85 transition-opacity">
+                <h2 className="font-display text-2xl sm:text-3xl lg:text-4xl text-[#13223D] dark:text-white tracking-tight group-hover:opacity-85 transition-opacity">
                   {activeGroup.name}
                 </h2>
                 <ChevronDown
-                  className={`w-4 h-4 text-[#6E8CB4] transition-transform ${
+                  className={`w-4 h-4 text-[#779DD2] transition-transform ${
                     isGroupDropdownOpen ? 'rotate-180' : ''
                   }`}
                 />
@@ -624,10 +624,10 @@ export default function App() {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -4, scale: 0.96 }}
                   transition={{ type: 'spring', stiffness: 450, damping: 30 }}
-                  className="absolute z-50 left-0 top-full mt-2 w-72 bg-white dark:bg-[#16273F] rounded-2xl shadow-2xl border border-[#DCE6F2] dark:border-[#2A4365] p-2 flex flex-col gap-1"
+                  className="absolute z-50 left-0 top-full mt-2 w-72 bg-white dark:bg-[#13223D] rounded-2xl shadow-2xl border border-[#DCEAF5] dark:border-[#2A4365] p-2 flex flex-col gap-1"
                 >
-                  <div className="flex items-center justify-between px-2 py-1.5 border-b border-[#DCE6F2] dark:border-[#2A4365]">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#6E8CB4]">
+                  <div className="flex items-center justify-between px-2 py-1.5 border-b border-[#DCEAF5] dark:border-[#2A4365]">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#779DD2]">
                       Your Splits
                     </span>
                     <button
@@ -636,9 +636,9 @@ export default function App() {
                         setIsRenamingGroup(true);
                         setIsGroupDropdownOpen(false);
                       }}
-                      className="text-[11px] font-semibold text-[#16273F] dark:text-white hover:underline flex items-center gap-1 cursor-pointer"
+                      className="text-[11px] font-semibold text-[#13223D] dark:text-white hover:underline flex items-center gap-1 cursor-pointer"
                     >
-                      <Edit2 className="w-3 h-3 text-[#6E8CB4]" />
+                      <Edit2 className="w-3 h-3 text-[#779DD2]" />
                       <span>Rename</span>
                     </button>
                   </div>
@@ -656,20 +656,20 @@ export default function App() {
                           }}
                           className={`flex items-center justify-between p-2 rounded-xl text-left transition-colors cursor-pointer ${
                             isSelected
-                              ? 'bg-[#E7F0FB] dark:bg-[#203652] text-[#16273F] dark:text-white font-semibold'
-                              : 'hover:bg-[#F7FAFD] dark:hover:bg-[#203652]/60 text-[#16273F] dark:text-[#F7FAFD]'
+                              ? 'bg-[#EAF3FB] dark:bg-[#203652] text-[#13223D] dark:text-white font-semibold'
+                              : 'hover:bg-[#F7F9FC] dark:hover:bg-[#203652]/60 text-[#13223D] dark:text-[#F7F9FC]'
                           }`}
                         >
                           <div className="flex flex-col min-w-0">
                             <span className="text-xs font-semibold truncate">
                               {g.name}
                             </span>
-                            <span className="text-[10px] text-[#6E8CB4]">
+                            <span className="text-[10px] text-[#779DD2]">
                               {(g.members || []).length} friends • {(g.expenses || []).length} items
                             </span>
                           </div>
                           {isSelected && (
-                            <Check className="w-3.5 h-3.5 text-[#16273F] dark:text-[#B4D0EE]" />
+                            <Check className="w-3.5 h-3.5 text-[#13223D] dark:text-[#8FD4F2]" />
                           )}
                         </button>
                       );
@@ -682,7 +682,7 @@ export default function App() {
                       setShowLanding(true);
                       setIsGroupDropdownOpen(false);
                     }}
-                    className="mt-1 flex items-center justify-center gap-1.5 p-2 rounded-xl bg-[#F7FAFD] dark:bg-[#203652] hover:bg-[#E7F0FB] dark:hover:bg-[#2A4365] text-xs font-semibold text-[#16273F] dark:text-white border border-[#DCE6F2] dark:border-[#2A4365] cursor-pointer transition-colors"
+                    className="mt-1 flex items-center justify-center gap-1.5 p-2 rounded-xl bg-[#F7F9FC] dark:bg-[#203652] hover:bg-[#EAF3FB] dark:hover:bg-[#2A4365] text-xs font-semibold text-[#13223D] dark:text-white border border-[#DCEAF5] dark:border-[#2A4365] cursor-pointer transition-colors"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     <span>Create new split</span>
@@ -698,9 +698,9 @@ export default function App() {
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.96 }}
               onClick={() => setIsShareModalOpen(true)}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold bg-white dark:bg-[#16273F] hover:bg-[#E7F0FB] dark:hover:bg-[#203652] text-[#16273F] dark:text-white border border-[#DCE6F2] dark:border-[#2A4365] shadow-2xs transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold bg-white dark:bg-[#13223D] hover:bg-[#EAF3FB] dark:hover:bg-[#203652] text-[#13223D] dark:text-white border border-[#DCEAF5] dark:border-[#2A4365] shadow-2xs transition-colors cursor-pointer"
             >
-              <Share2 className="w-3.5 h-3.5 text-[#6E8CB4]" />
+              <Share2 className="w-3.5 h-3.5 text-[#779DD2]" />
               <span>Share link</span>
             </motion.button>
           </div>
@@ -720,16 +720,16 @@ export default function App() {
               >
                 {/* ARCHIVED TRIP BANNER */}
                 {activeGroup.isArchived && (
-                  <div className="bg-[#E7F0FB] dark:bg-[#16273F] border border-[#DCE6F2] dark:border-[#2A4365] rounded-[22px] p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs shadow-2xs">
-                    <div className="flex items-center gap-2.5 text-[#16273F] dark:text-[#F7FAFD]">
-                      <span className="w-8 h-8 rounded-full bg-[#B4D0EE] dark:bg-[#203652] text-[#16273F] dark:text-[#B4D0EE] flex items-center justify-center shrink-0">
+                  <div className="bg-[#EAF3FB] dark:bg-[#13223D] border border-[#DCEAF5] dark:border-[#2A4365] rounded-[22px] p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs shadow-2xs">
+                    <div className="flex items-center gap-2.5 text-[#13223D] dark:text-[#F7F9FC]">
+                      <span className="w-8 h-8 rounded-full bg-[#8FD4F2] dark:bg-[#203652] text-[#13223D] dark:text-[#8FD4F2] flex items-center justify-center shrink-0">
                         <Archive className="w-4 h-4" />
                       </span>
                       <div>
                         <span className="font-bold block sm:inline mr-1.5">
                           This trip is archived and all square.
                         </span>
-                        <span className="text-[#6E8CB4] dark:text-slate-400">
+                        <span className="text-[#779DD2] dark:text-slate-400">
                           All receipts are preserved in read-only mode.
                         </span>
                       </div>
@@ -740,7 +740,7 @@ export default function App() {
                         whileHover={{ scale: 1.03, y: -1 }}
                         whileTap={{ scale: 0.96 }}
                         onClick={() => setIsTripWrapUpOpen(true)}
-                        className="px-3.5 py-1.5 rounded-full bg-[#A9C1A5] text-[#16273F] font-semibold hover:opacity-90 transition-opacity cursor-pointer"
+                        className="px-3.5 py-1.5 rounded-full bg-[#5FA985] text-[#13223D] font-semibold hover:opacity-90 transition-opacity cursor-pointer"
                       >
                         View Recap
                       </motion.button>
@@ -748,7 +748,7 @@ export default function App() {
                         whileHover={{ scale: 1.03, y: -1 }}
                         whileTap={{ scale: 0.96 }}
                         onClick={() => handleToggleArchive(activeGroup.id)}
-                        className="px-3.5 py-1.5 rounded-full bg-white dark:bg-[#203652] text-[#16273F] dark:text-white border border-[#DCE6F2] dark:border-[#2A4365] font-semibold hover:bg-[#F7FAFD] transition-colors cursor-pointer"
+                        className="px-3.5 py-1.5 rounded-full bg-white dark:bg-[#203652] text-[#13223D] dark:text-white border border-[#DCEAF5] dark:border-[#2A4365] font-semibold hover:bg-[#F7F9FC] transition-colors cursor-pointer"
                       >
                         Unarchive
                       </motion.button>
@@ -785,10 +785,10 @@ export default function App() {
                   {/* Expenses Header & Action Bar */}
                   <div className="flex justify-between items-center">
                     <div>
-                      <h3 className="font-semibold text-lg md:text-xl text-[#16273F] dark:text-white">
+                      <h3 className="font-semibold text-lg md:text-xl text-[#13223D] dark:text-white">
                         What we spent
                       </h3>
-                      <p className="text-xs text-[#6E8CB4] dark:text-[#B4D0EE]">
+                      <p className="text-xs text-[#779DD2] dark:text-[#8FD4F2]">
                         {(activeGroup.expenses || []).length} item{(activeGroup.expenses || []).length === 1 ? '' : 's'} recorded
                       </p>
                     </div>
@@ -800,11 +800,11 @@ export default function App() {
                         setEditingExpense(null);
                         setIsAddExpenseOpen(true);
                       }}
-                      className="flex items-center gap-2 px-5 py-2.5 bg-[#16273F] dark:bg-white text-white dark:text-[#16273F] rounded-full text-xs md:text-sm font-semibold hover:opacity-90 transition-opacity shadow-sm cursor-pointer group"
+                      className="flex items-center gap-2 px-5 py-2.5 bg-[#13223D] dark:bg-white text-white dark:text-[#13223D] rounded-full text-xs md:text-sm font-semibold hover:opacity-90 transition-opacity shadow-sm cursor-pointer group"
                     >
                       <Plus className="w-4 h-4" />
                       <span>Add expense</span>
-                      <kbd className="hidden sm:inline-flex items-center text-[10px] font-mono px-1.5 py-0.5 rounded bg-white/20 dark:bg-[#16273F]/20 text-white/90 dark:text-[#16273F]/90 font-semibold ml-0.5">
+                      <kbd className="hidden sm:inline-flex items-center text-[10px] font-mono px-1.5 py-0.5 rounded bg-white/20 dark:bg-[#13223D]/20 text-white/90 dark:text-[#13223D]/90 font-semibold ml-0.5">
                         E
                       </kbd>
                     </motion.button>
@@ -812,14 +812,14 @@ export default function App() {
 
                   {/* Expense List */}
                   {(activeGroup.expenses || []).length === 0 ? (
-                    <div className="bg-white dark:bg-[#16273F] rounded-[30px] p-10 text-center border border-[#DCE6F2] dark:border-[#2A4365] flex flex-col items-center justify-center gap-3 brand-card-shadow">
-                      <div className="w-12 h-12 rounded-full bg-[#E7F0FB] dark:bg-[#203652] flex items-center justify-center text-[#16273F] dark:text-[#B4D0EE] border border-[#DCE6F2] dark:border-[#2A4365]">
+                    <div className="bg-white dark:bg-[#13223D] rounded-[30px] p-10 text-center border border-[#DCEAF5] dark:border-[#2A4365] flex flex-col items-center justify-center gap-3 brand-card-shadow">
+                      <div className="w-12 h-12 rounded-full bg-[#EAF3FB] dark:bg-[#203652] flex items-center justify-center text-[#13223D] dark:text-[#8FD4F2] border border-[#DCEAF5] dark:border-[#2A4365]">
                         <Receipt className="w-6 h-6" />
                       </div>
-                      <h4 className="font-display text-2xl text-[#16273F] dark:text-white font-normal">
+                      <h4 className="font-display text-2xl text-[#13223D] dark:text-white font-normal">
                         Nothing recorded yet
                       </h4>
-                      <p className="text-xs text-[#6E8CB4] dark:text-[#B4D0EE] max-w-sm">
+                      <p className="text-xs text-[#779DD2] dark:text-[#8FD4F2] max-w-sm">
                         Wrapping up your trip? Start adding your dinners, Uber rides, groceries, or stays.
                       </p>
                       <motion.button
@@ -829,7 +829,7 @@ export default function App() {
                           setEditingExpense(null);
                           setIsAddExpenseOpen(true);
                         }}
-                        className="mt-2 bg-[#16273F] dark:bg-white text-white dark:text-[#16273F] text-xs font-semibold px-6 py-2.5 rounded-full hover:opacity-90 transition-opacity flex items-center gap-2 cursor-pointer shadow-md"
+                        className="mt-2 bg-[#13223D] dark:bg-white text-white dark:text-[#13223D] text-xs font-semibold px-6 py-2.5 rounded-full hover:opacity-90 transition-opacity flex items-center gap-2 cursor-pointer shadow-md"
                       >
                         <Plus className="w-3.5 h-3.5" />
                         <span>Add expense</span>
@@ -1006,7 +1006,7 @@ export default function App() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ type: 'spring', stiffness: 450, damping: 28 }}
-            className="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 bg-[#16273F]/95 dark:bg-white/95 text-white dark:text-[#16273F] rounded-full shadow-xl border border-[#3B5B88] dark:border-slate-200 backdrop-blur-md text-xs font-semibold pointer-events-none"
+            className="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 bg-[#13223D]/95 dark:bg-white/95 text-white dark:text-[#13223D] rounded-full shadow-xl border border-[#3B5B88] dark:border-slate-200 backdrop-blur-md text-xs font-semibold pointer-events-none"
           >
             <span className="text-base">{liveToast.icon || '✨'}</span>
             <span>{liveToast.message}</span>

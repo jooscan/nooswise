@@ -3,6 +3,7 @@ import confetti from 'canvas-confetti';
 import { Group } from '../types';
 import { getInstantShortUrl } from '../utils/urlShortener';
 import { copyToClipboard } from '../utils/clipboard';
+import { useLockBodyScroll } from '../hooks/useLockBodyScroll';
 import {
   formatCurrency,
   getPaymentSummaryTransfers,
@@ -76,7 +77,7 @@ export const TripWrapUpModal: React.FC<TripWrapUpModalProps> = ({
       particleCount: 80,
       spread: 90,
       origin: { y: 0.55 },
-      colors: ['#6E8CB4', '#B4D0EE', '#A9C1A5', '#E88A72', '#16273F'],
+      colors: ['#779DD2', '#8FD4F2', '#5FA985', '#D96872', '#13223D'],
     });
 
     setTimeout(() => {
@@ -85,14 +86,14 @@ export const TripWrapUpModal: React.FC<TripWrapUpModalProps> = ({
         angle: 60,
         spread: 60,
         origin: { x: 0.05, y: 0.65 },
-        colors: ['#A9C1A5', '#6E8CB4', '#B4D0EE'],
+        colors: ['#5FA985', '#779DD2', '#8FD4F2'],
       });
       confetti({
         particleCount: 55,
         angle: 120,
         spread: 60,
         origin: { x: 0.95, y: 0.65 },
-        colors: ['#E88A72', '#6E8CB4', '#B4D0EE'],
+        colors: ['#D96872', '#779DD2', '#8FD4F2'],
       });
     }, 280);
   }, []);
@@ -106,6 +107,8 @@ export const TripWrapUpModal: React.FC<TripWrapUpModalProps> = ({
     if (!group) return '';
     return getInstantShortUrl(group.id);
   }, [group]);
+
+  useLockBodyScroll(isOpen);
 
   if (!isOpen || !group) return null;
 
@@ -227,7 +230,7 @@ nooswise · split bills, stay friends ✨`;
     <div
       tabIndex={-1}
       onClick={onClose}
-      className="fixed inset-0 z-50 bg-[#16273F]/70 dark:bg-black/85 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto cursor-pointer"
+      className="fixed inset-0 z-50 bg-[#13223D]/70 dark:bg-black/85 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto cursor-pointer"
     >
       <motion.div
         onClick={(e) => e.stopPropagation()}
@@ -235,13 +238,13 @@ nooswise · split bills, stay friends ✨`;
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.96, y: 10 }}
         transition={{ duration: 0.15 }}
-        className="bg-white dark:bg-[#16273F] w-full max-w-lg rounded-[32px] p-6 sm:p-8 shadow-2xl border border-[#DCE6F2] dark:border-[#2A4365] my-auto relative text-[#16273F] dark:text-[#F7FAFD] transition-colors cursor-default"
+        className="bg-white dark:bg-[#13223D] w-full max-w-lg rounded-[32px] p-6 sm:p-8 shadow-2xl border border-[#DCEAF5] dark:border-[#2A4365] my-auto relative text-[#13223D] dark:text-[#F7F9FC] transition-colors cursor-default"
       >
         {/* Top close button with Esc reminder */}
         <button
           onClick={onClose}
           aria-label="Close modal"
-          className="absolute top-5 right-5 w-8 h-8 rounded-full bg-[#E7F0FB] dark:bg-[#203652] hover:bg-[#B4D0EE] dark:hover:bg-[#2A4365] text-[#16273F] dark:text-white flex items-center justify-center transition-colors cursor-pointer"
+          className="absolute top-5 right-5 w-8 h-8 rounded-full bg-[#EAF3FB] dark:bg-[#203652] hover:bg-[#8FD4F2] dark:hover:bg-[#2A4365] text-[#13223D] dark:text-white flex items-center justify-center transition-colors cursor-pointer"
         >
           <X className="w-4 h-4" />
         </button>
@@ -252,13 +255,13 @@ nooswise · split bills, stay friends ✨`;
             <span
               className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border shadow-2xs ${
                 expenseCount === 0
-                  ? 'bg-[#E7F0FB] dark:bg-[#203652] text-[#16273F] dark:text-[#B4D0EE] border-[#DCE6F2] dark:border-[#2A4365]'
+                  ? 'bg-[#EAF3FB] dark:bg-[#203652] text-[#13223D] dark:text-[#8FD4F2] border-[#DCEAF5] dark:border-[#2A4365]'
                   : isAllSquare
                   ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
-                  : 'bg-[#E7F0FB] dark:bg-[#203652] text-[#16273F] dark:text-[#B4D0EE] border-[#DCE6F2] dark:border-[#2A4365]'
+                  : 'bg-[#EAF3FB] dark:bg-[#203652] text-[#13223D] dark:text-[#8FD4F2] border-[#DCEAF5] dark:border-[#2A4365]'
               }`}
             >
-              <Sparkles className={`w-3.5 h-3.5 ${isAllSquare ? 'text-emerald-600 dark:text-emerald-400' : 'text-[#6E8CB4]'}`} />
+              <Sparkles className={`w-3.5 h-3.5 ${isAllSquare ? 'text-emerald-600 dark:text-emerald-400' : 'text-[#779DD2]'}`} />
               <span>
                 {expenseCount === 0
                   ? 'Trip Recap · Fresh Split'
@@ -287,14 +290,14 @@ nooswise · split bills, stay friends ✨`;
         </div>
 
         {/* Title */}
-        <h2 className="font-display text-2xl sm:text-3xl text-[#16273F] dark:text-white font-normal tracking-tight">
+        <h2 className="font-display text-2xl sm:text-3xl text-[#13223D] dark:text-white font-normal tracking-tight">
           {expenseCount === 0
             ? `${group.name} Recap`
             : isAllSquare
             ? `${group.name} is all square! 🎉`
             : `${group.name} · Who Owes Who`}
         </h2>
-        <p className="text-xs sm:text-sm text-[#6E8CB4] dark:text-[#B4D0EE] mt-1">
+        <p className="text-xs sm:text-sm text-[#779DD2] dark:text-[#8FD4F2] mt-1">
           {expenseCount === 0
             ? "No expenses have been recorded for this split yet."
             : isAllSquare
@@ -303,22 +306,22 @@ nooswise · split bills, stay friends ✨`;
         </p>
 
         {/* Main Highlights Card */}
-        <div className="mt-4 p-4 sm:p-5 rounded-3xl bg-[#F7FAFD] dark:bg-[#203652]/50 border border-[#DCE6F2] dark:border-[#2A4365] flex flex-col gap-3.5 shadow-2xs">
+        <div className="mt-4 p-4 sm:p-5 rounded-3xl bg-[#F7F9FC] dark:bg-[#203652]/50 border border-[#DCEAF5] dark:border-[#2A4365] flex flex-col gap-3.5 shadow-2xs">
           {/* Main Total Big Stat */}
-          <div className="flex items-baseline justify-between border-b border-[#DCE6F2] dark:border-[#2A4365] pb-3">
+          <div className="flex items-baseline justify-between border-b border-[#DCEAF5] dark:border-[#2A4365] pb-3">
             <div>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-[#6E8CB4] dark:text-[#B4D0EE]">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#779DD2] dark:text-[#8FD4F2]">
                 Total Trip Tab
               </span>
-              <div className="font-sans font-bold text-3xl text-[#16273F] dark:text-white tracking-tight">
+              <div className="font-sans font-bold text-3xl text-[#13223D] dark:text-white tracking-tight">
                 {formattedTotal}
               </div>
             </div>
             <div className="text-right font-sans">
-              <span className="text-xs font-medium text-[#6E8CB4] dark:text-[#B4D0EE] block">
+              <span className="text-xs font-medium text-[#779DD2] dark:text-[#8FD4F2] block">
                 {expenseCount} receipt{expenseCount === 1 ? '' : 's'}
               </span>
-              <span className="text-xs font-medium text-[#6E8CB4] dark:text-[#B4D0EE]">
+              <span className="text-xs font-medium text-[#779DD2] dark:text-[#8FD4F2]">
                 {memberCount} friends
               </span>
             </div>
@@ -326,29 +329,29 @@ nooswise · split bills, stay friends ✨`;
 
           {/* Zero state or Highlights */}
           {expenseCount === 0 ? (
-            <div className="p-4 rounded-2xl bg-white dark:bg-[#16273F] border border-[#DCE6F2] dark:border-[#2A4365] text-center flex flex-col items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-[#E7F0FB] dark:bg-[#203652] text-[#16273F] dark:text-[#B4D0EE] flex items-center justify-center">
+            <div className="p-4 rounded-2xl bg-white dark:bg-[#13223D] border border-[#DCEAF5] dark:border-[#2A4365] text-center flex flex-col items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-[#EAF3FB] dark:bg-[#203652] text-[#13223D] dark:text-[#8FD4F2] flex items-center justify-center">
                 <Receipt className="w-4 h-4" />
               </div>
-              <p className="text-xs font-semibold text-[#16273F] dark:text-white">
+              <p className="text-xs font-semibold text-[#13223D] dark:text-white">
                 Ready when you are
               </p>
-              <p className="text-[11px] text-[#6E8CB4] dark:text-[#B4D0EE] max-w-xs">
+              <p className="text-[11px] text-[#779DD2] dark:text-[#8FD4F2] max-w-xs">
                 Once you add your dinners, rides, or stays, this recap will highlight the MVP, spending charts, and simplified settlement transfers.
               </p>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               {topPayer && (
-                <div className="p-3 rounded-2xl bg-white dark:bg-[#16273F] border border-[#DCE6F2] dark:border-[#2A4365] flex items-center gap-2.5">
+                <div className="p-3 rounded-2xl bg-white dark:bg-[#13223D] border border-[#DCEAF5] dark:border-[#2A4365] flex items-center gap-2.5">
                   <div className="w-8 h-8 rounded-full bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 border border-amber-200/60 dark:border-amber-800/60">
                     <Trophy className="w-4 h-4" />
                   </div>
                   <div className="min-w-0 font-sans">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#6E8CB4] block">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#779DD2] block">
                       Upfront MVP 🏆
                     </span>
-                    <p className="text-xs font-semibold text-[#16273F] dark:text-white truncate">
+                    <p className="text-xs font-semibold text-[#13223D] dark:text-white truncate">
                       {topPayer.name} ({formatCurrency(maxPaid, group.currency)})
                     </p>
                   </div>
@@ -356,7 +359,7 @@ nooswise · split bills, stay friends ✨`;
               )}
 
               {biggestDebtor && !isAllSquare ? (
-                <div className="p-3 rounded-2xl bg-white dark:bg-[#16273F] border border-rose-200/80 dark:border-rose-900/60 flex items-center gap-2.5">
+                <div className="p-3 rounded-2xl bg-white dark:bg-[#13223D] border border-rose-200/80 dark:border-rose-900/60 flex items-center gap-2.5">
                   <div className="w-8 h-8 rounded-full bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0 border border-rose-200/60 dark:border-rose-800/60">
                     <Heart className="w-4 h-4 fill-rose-500/20 text-rose-500" />
                   </div>
@@ -364,13 +367,13 @@ nooswise · split bills, stay friends ✨`;
                     <span className="text-[10px] font-bold uppercase tracking-wider text-rose-500 dark:text-rose-400 block">
                       Owes the Most 💸
                     </span>
-                    <p className="text-xs font-semibold text-[#16273F] dark:text-white truncate">
+                    <p className="text-xs font-semibold text-[#13223D] dark:text-white truncate">
                       {biggestDebtor.member.name} ({formatCurrency(Math.abs(biggestDebtor.netBalance), group.currency)})
                     </p>
                   </div>
                 </div>
               ) : biggestCreditor && !isAllSquare ? (
-                <div className="p-3 rounded-2xl bg-white dark:bg-[#16273F] border border-emerald-200/80 dark:border-emerald-900/60 flex items-center gap-2.5">
+                <div className="p-3 rounded-2xl bg-white dark:bg-[#13223D] border border-emerald-200/80 dark:border-emerald-900/60 flex items-center gap-2.5">
                   <div className="w-8 h-8 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-200/60 dark:border-emerald-800/60">
                     <CheckCircle2 className="w-4 h-4 text-emerald-500" />
                   </div>
@@ -378,21 +381,21 @@ nooswise · split bills, stay friends ✨`;
                     <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 block">
                       Owed the Most 🤑
                     </span>
-                    <p className="text-xs font-semibold text-[#16273F] dark:text-white truncate">
+                    <p className="text-xs font-semibold text-[#13223D] dark:text-white truncate">
                       {biggestCreditor.member.name} (+{formatCurrency(biggestCreditor.netBalance, group.currency)})
                     </p>
                   </div>
                 </div>
               ) : (
-                <div className="p-3 rounded-2xl bg-white dark:bg-[#16273F] border border-[#DCE6F2] dark:border-[#2A4365] flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-full bg-[#E7F0FB] dark:bg-[#203652] text-[#16273F] dark:text-[#B4D0EE] flex items-center justify-center shrink-0 border border-[#DCE6F2] dark:border-[#2A4365]">
+                <div className="p-3 rounded-2xl bg-white dark:bg-[#13223D] border border-[#DCEAF5] dark:border-[#2A4365] flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-full bg-[#EAF3FB] dark:bg-[#203652] text-[#13223D] dark:text-[#8FD4F2] flex items-center justify-center shrink-0 border border-[#DCEAF5] dark:border-[#2A4365]">
                     <Plane className="w-4 h-4" />
                   </div>
                   <div className="min-w-0 font-sans">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#6E8CB4] block">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#779DD2] block">
                       Top Spend
                     </span>
-                    <p className="text-xs font-semibold text-[#16273F] dark:text-white truncate">
+                    <p className="text-xs font-semibold text-[#13223D] dark:text-white truncate">
                       {categoryLabels[topCategory] || topCategory}
                     </p>
                   </div>
@@ -403,17 +406,17 @@ nooswise · split bills, stay friends ✨`;
 
           {/* Pending Debts OR Payment Transfers */}
           {expenseCount > 0 && !isAllSquare ? (
-            <div className="pt-2 border-t border-[#DCE6F2] dark:border-[#2A4365]">
+            <div className="pt-2 border-t border-[#DCEAF5] dark:border-[#2A4365]">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[#6E8CB4] flex items-center gap-1">
-                  <Sparkles className="w-3 h-3 text-[#6E8CB4]" />
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#779DD2] flex items-center gap-1">
+                  <Sparkles className="w-3 h-3 text-[#779DD2]" />
                   <span>Pending Transfers ({debts.length} to square up)</span>
                 </span>
                 {onGoToSettleUp && (
                   <button
                     type="button"
                     onClick={onGoToSettleUp}
-                    className="text-xs font-semibold text-[#16273F] dark:text-[#B4D0EE] hover:underline flex items-center gap-1 cursor-pointer"
+                    className="text-xs font-semibold text-[#13223D] dark:text-[#8FD4F2] hover:underline flex items-center gap-1 cursor-pointer"
                   >
                     <span>Settle Up</span>
                     <ArrowRight className="w-3 h-3" />
@@ -425,20 +428,20 @@ nooswise · split bills, stay friends ✨`;
                 {debts.map((d, idx) => (
                   <div
                     key={d.id || idx}
-                    className="p-2.5 rounded-xl bg-white dark:bg-[#16273F] border border-[#DCE6F2] dark:border-[#2A4365] text-xs flex items-center justify-between gap-2 shadow-2xs"
+                    className="p-2.5 rounded-xl bg-white dark:bg-[#13223D] border border-[#DCEAF5] dark:border-[#2A4365] text-xs flex items-center justify-between gap-2 shadow-2xs"
                   >
                     <div className="flex items-center gap-2 min-w-0">
                       {d.fromMember && <CuteAvatarBadge member={d.fromMember} size="xs" showEmoji={false} />}
-                      <span className="font-semibold text-[#16273F] dark:text-white truncate">
+                      <span className="font-semibold text-[#13223D] dark:text-white truncate">
                         {d.fromMember.name}
                       </span>
                       <ArrowRight className="w-3 h-3 text-slate-400 shrink-0" />
                       {d.toMember && <CuteAvatarBadge member={d.toMember} size="xs" showEmoji={false} />}
-                      <span className="font-semibold text-[#16273F] dark:text-white truncate">
+                      <span className="font-semibold text-[#13223D] dark:text-white truncate">
                         {d.toMember.name}
                       </span>
                     </div>
-                    <span className="font-sans font-bold text-[#16273F] dark:text-white whitespace-nowrap text-xs">
+                    <span className="font-sans font-bold text-[#13223D] dark:text-white whitespace-nowrap text-xs">
                       {formatCurrency(d.amount, d.currency)}
                     </span>
                   </div>
@@ -446,8 +449,8 @@ nooswise · split bills, stay friends ✨`;
               </div>
             </div>
           ) : transfers.length > 0 ? (
-            <div className="pt-2 border-t border-[#DCE6F2] dark:border-[#2A4365]">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-[#6E8CB4] block mb-2 flex items-center gap-1">
+            <div className="pt-2 border-t border-[#DCEAF5] dark:border-[#2A4365]">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#779DD2] block mb-2 flex items-center gap-1">
                 <CheckCircle2 className="w-3 h-3 text-emerald-500" />
                 <span>Payment Summary (All Debts Resolved)</span>
               </span>
@@ -455,20 +458,20 @@ nooswise · split bills, stay friends ✨`;
                 {transfers.map((t, idx) => (
                   <div
                     key={t.id || idx}
-                    className="p-2 rounded-xl bg-white dark:bg-[#16273F] border border-[#DCE6F2] dark:border-[#2A4365] text-xs flex items-center justify-between gap-2"
+                    className="p-2 rounded-xl bg-white dark:bg-[#13223D] border border-[#DCEAF5] dark:border-[#2A4365] text-xs flex items-center justify-between gap-2"
                   >
                     <div className="flex items-center gap-1.5 min-w-0">
                       {t.fromMember && <CuteAvatarBadge member={t.fromMember} size="xs" showEmoji={false} />}
-                      <span className="font-semibold text-[#16273F] dark:text-white truncate">
+                      <span className="font-semibold text-[#13223D] dark:text-white truncate">
                         {t.fromMemberName}
                       </span>
                       <ArrowRight className="w-3 h-3 text-slate-400 shrink-0" />
                       {t.toMember && <CuteAvatarBadge member={t.toMember} size="xs" showEmoji={false} />}
-                      <span className="font-semibold text-[#16273F] dark:text-white truncate">
+                      <span className="font-semibold text-[#13223D] dark:text-white truncate">
                         {t.toMemberName}
                       </span>
                     </div>
-                    <span className="font-sans font-bold text-[#16273F] dark:text-white whitespace-nowrap">
+                    <span className="font-sans font-bold text-[#13223D] dark:text-white whitespace-nowrap">
                       {formatCurrency(t.amount, t.currency)}
                     </span>
                   </div>
@@ -479,7 +482,7 @@ nooswise · split bills, stay friends ✨`;
 
           {/* Members Roll Call */}
           <div className="pt-1">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-[#6E8CB4] block mb-1.5">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-[#779DD2] block mb-1.5">
               Friends in this split
             </span>
             <div className="flex flex-wrap items-center gap-1.5 font-sans">
@@ -489,14 +492,14 @@ nooswise · split bills, stay friends ✨`;
                 return (
                   <div
                     key={m.id}
-                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white dark:bg-[#16273F] border border-[#DCE6F2] dark:border-[#2A4365] text-xs font-medium text-[#16273F] dark:text-white"
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white dark:bg-[#13223D] border border-[#DCEAF5] dark:border-[#2A4365] text-xs font-medium text-[#13223D] dark:text-white"
                   >
                     <CuteAvatarBadge member={m} size="xs" showEmoji={false} />
                     <span>{m.name}</span>
                     {isSquare ? (
-                      <Check className="w-3 h-3 text-[#A9C1A5] ml-0.5" />
+                      <Check className="w-3 h-3 text-[#5FA985] ml-0.5" />
                     ) : (
-                      <span className="text-[10px] text-[#6E8CB4] ml-0.5 font-semibold">
+                      <span className="text-[10px] text-[#779DD2] ml-0.5 font-semibold">
                         {bal && bal.netBalance < 0
                           ? `(owes ${formatCurrency(Math.abs(bal.netBalance), group.currency)})`
                           : bal && bal.netBalance > 0
@@ -519,7 +522,7 @@ nooswise · split bills, stay friends ✨`;
               whileTap={{ scale: 0.96 }}
               transition={{ type: 'spring', stiffness: 450, damping: 25 }}
               onClick={handleCopy}
-              className="flex-1 py-3 px-4 bg-[#16273F] dark:bg-white text-white dark:text-[#16273F] rounded-2xl font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 hover:opacity-90 transition-opacity shadow-md cursor-pointer"
+              className="flex-1 py-3 px-4 bg-[#13223D] dark:bg-white text-white dark:text-[#13223D] rounded-2xl font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 hover:opacity-90 transition-opacity shadow-md cursor-pointer"
             >
               {copied ? <Check className="w-4 h-4 text-emerald-400 dark:text-emerald-600" /> : <Copy className="w-4 h-4" />}
               <span>{copied ? 'Copied Summary!' : 'Copy Summary for Group Chat'}</span>
@@ -531,7 +534,7 @@ nooswise · split bills, stay friends ✨`;
               transition={{ type: 'spring', stiffness: 450, damping: 25 }}
               onClick={handleShare}
               title="Share summary"
-              className="p-3 bg-[#E7F0FB] dark:bg-[#203652] hover:bg-[#B4D0EE] dark:hover:bg-[#2A4365] text-[#16273F] dark:text-white rounded-2xl font-semibold text-xs transition-colors flex items-center justify-center cursor-pointer border border-[#DCE6F2] dark:border-[#2A4365]"
+              className="p-3 bg-[#EAF3FB] dark:bg-[#203652] hover:bg-[#8FD4F2] dark:hover:bg-[#2A4365] text-[#13223D] dark:text-white rounded-2xl font-semibold text-xs transition-colors flex items-center justify-center cursor-pointer border border-[#DCEAF5] dark:border-[#2A4365]"
             >
               <Share2 className="w-4 h-4" />
             </motion.button>
@@ -544,7 +547,7 @@ nooswise · split bills, stay friends ✨`;
                 whileTap={{ scale: 0.96 }}
                 type="button"
                 onClick={onGoToSettleUp}
-                className="flex-1 py-2.5 px-3 rounded-2xl bg-[#E7F0FB] dark:bg-[#203652] hover:bg-[#B4D0EE] dark:hover:bg-[#2A4365] text-[#16273F] dark:text-white font-semibold text-xs border border-[#DCE6F2] dark:border-[#2A4365] transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                className="flex-1 py-2.5 px-3 rounded-2xl bg-[#EAF3FB] dark:bg-[#203652] hover:bg-[#8FD4F2] dark:hover:bg-[#2A4365] text-[#13223D] dark:text-white font-semibold text-xs border border-[#DCEAF5] dark:border-[#2A4365] transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <span>Go to Settle Up</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -556,16 +559,16 @@ nooswise · split bills, stay friends ✨`;
               whileHover={{ scale: 1.02, y: -1 }}
               whileTap={{ scale: 0.96 }}
               onClick={onToggleArchive}
-              className="flex-1 py-2.5 px-3 rounded-2xl border border-[#DCE6F2] dark:border-[#2A4365] text-xs font-medium text-[#6E8CB4] dark:text-[#B4D0EE] hover:text-[#16273F] dark:hover:text-white hover:bg-[#F7FAFD] dark:hover:bg-[#203652]/60 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+              className="flex-1 py-2.5 px-3 rounded-2xl border border-[#DCEAF5] dark:border-[#2A4365] text-xs font-medium text-[#779DD2] dark:text-[#8FD4F2] hover:text-[#13223D] dark:hover:text-white hover:bg-[#F7F9FC] dark:hover:bg-[#203652]/60 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
             >
               {group.isArchived ? (
                 <>
-                  <RotateCcw className="w-3.5 h-3.5 text-[#6E8CB4]" />
+                  <RotateCcw className="w-3.5 h-3.5 text-[#779DD2]" />
                   <span>Unarchive Split</span>
                 </>
               ) : (
                 <>
-                  <Archive className="w-3.5 h-3.5 text-[#6E8CB4]" />
+                  <Archive className="w-3.5 h-3.5 text-[#779DD2]" />
                   <span>Archive Split</span>
                 </>
               )}
@@ -573,7 +576,7 @@ nooswise · split bills, stay friends ✨`;
           </div>
         </div>
 
-        <p className="text-[11px] text-center text-[#6E8CB4] dark:text-[#B4D0EE] mt-2.5 flex items-center justify-center gap-1">
+        <p className="text-[11px] text-center text-[#779DD2] dark:text-[#8FD4F2] mt-2.5 flex items-center justify-center gap-1">
           <Heart className="w-3 h-3 text-rose-500 fill-rose-500" />
           <span>Press Esc or click anywhere to exit</span>
         </p>
