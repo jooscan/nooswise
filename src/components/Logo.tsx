@@ -10,7 +10,7 @@ export const Logo: React.FC<LogoProps> = ({ size = 36, className = '' }) => {
   return (
     <div
       style={{ width: size, height: size }}
-      className={`relative rounded-[22%] overflow-hidden shrink-0 select-none bg-[#8FD4F2]/25 ${className}`}
+      className={`relative rounded-[22%] overflow-hidden shrink-0 select-none bg-[#A5CFF6]/25 ${className}`}
     >
       <img
         src={logoImg}

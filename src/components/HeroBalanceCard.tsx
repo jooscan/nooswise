@@ -104,26 +104,26 @@ export const HeroBalanceCard: React.FC<HeroBalanceCardProps> = ({
       {/* Group Quick Status Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-1">
         <div className="flex items-center gap-2.5 flex-wrap">
-          <span className="text-xs text-[#779DD2] dark:text-[#8FD4F2] font-medium">
+          <span className="text-xs text-[#6FA4EA] dark:text-[#A5CFF6] font-medium">
             {group.members.length} friends • {group.expenses.length} expenses
           </span>
 
-          <span className="text-[#DCEAF5] dark:text-[#2A4365]">•</span>
+          <span className="text-[#DCE6F1] dark:text-[#2A4365]">•</span>
 
           {/* Group Status Indicator */}
           {groupPaymentsCount === 0 ? (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#5FA985]/20 text-[#2b5927] dark:text-[#5FA985] border border-[#5FA985]/40 shadow-2xs">
-              <CheckCircle2 className="w-3.5 h-3.5 text-[#2b5927] dark:text-[#5FA985]" />
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#6FA4EA]/20 text-[#2C5F94] dark:text-[#6FA4EA] border border-[#6FA4EA]/40 shadow-2xs">
+              <CheckCircle2 className="w-3.5 h-3.5 text-[#2C5F94] dark:text-[#6FA4EA]" />
               <span>Everyone's square ✨</span>
             </span>
           ) : groupPaymentsCount <= 2 ? (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#8FD4F2]/30 text-[#13223D] dark:text-[#8FD4F2] border border-[#8FD4F2]/50 shadow-2xs">
-              <span className="w-2 h-2 rounded-full bg-[#779DD2] animate-pulse" />
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#A5CFF6]/30 text-[#11213C] dark:text-[#A5CFF6] border border-[#A5CFF6]/50 shadow-2xs">
+              <span className="w-2 h-2 rounded-full bg-[#6FA4EA] animate-pulse" />
               <span>Two nudges away — {groupPaymentsCount} payment{groupPaymentsCount === 1 ? '' : 's'} left</span>
             </span>
           ) : (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#D96872]/20 text-[#D96872] dark:text-[#D96872] border border-[#D96872]/40 shadow-2xs">
-              <span className="w-2 h-2 rounded-full bg-[#D96872]" />
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#EAA2A8]/20 text-[#EAA2A8] dark:text-[#EAA2A8] border border-[#EAA2A8]/40 shadow-2xs">
+              <span className="w-2 h-2 rounded-full bg-[#EAA2A8]" />
               <span>{formatCurrency(totalGroupUnsettled, group.currency)} still to settle</span>
             </span>
           )}
@@ -134,23 +134,23 @@ export const HeroBalanceCard: React.FC<HeroBalanceCardProps> = ({
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.97 }}
           onClick={onSwitchIdentityClick}
-          className="inline-flex items-center gap-1.5 text-xs text-[#13223D] dark:text-[#F7F9FC] bg-white dark:bg-[#13223D] hover:bg-[#EAF3FB] dark:hover:bg-[#203652] border border-[#DCEAF5] dark:border-[#2A4365] px-3.5 py-1 rounded-full transition-colors cursor-pointer self-start sm:self-auto shadow-2xs"
+          className="inline-flex items-center gap-1.5 text-xs text-[#11213C] dark:text-[#F8F9FB] bg-white dark:bg-[#11213C] hover:bg-[#E9EFF8] dark:hover:bg-[#203652] border border-[#DCE6F1] dark:border-[#2A4365] px-3.5 py-1 rounded-full transition-colors cursor-pointer self-start sm:self-auto shadow-2xs"
           title="Change who you are viewing as"
         >
-          <UserCheck className="w-3.5 h-3.5 text-[#779DD2]" />
+          <UserCheck className="w-3.5 h-3.5 text-[#6FA4EA]" />
           <span>Viewing as: <strong>{currentMember.name}</strong></span>
         </motion.button>
       </div>
 
       {/* 2. THE HERO: FULL-WIDTH MIDNIGHT INK BALANCE CARD */}
-      <div className="w-full bg-[#13223D] text-white rounded-[30px] p-6 sm:p-8 md:p-10 brand-card-shadow relative overflow-hidden flex flex-col justify-between transition-all border border-[#2A4365]">
+      <div className="w-full bg-[#11213C] text-white rounded-[30px] p-6 sm:p-8 md:p-10 brand-card-shadow relative overflow-hidden flex flex-col justify-between transition-all border border-[#2A4365]">
         {/* Soft balloon atmospheric gradients */}
         <div
-          className="absolute -right-20 -top-20 w-80 h-80 bg-[#8FD4F2]/10 rounded-full blur-3xl pointer-events-none"
+          className="absolute -right-20 -top-20 w-80 h-80 bg-[#A5CFF6]/10 rounded-full blur-3xl pointer-events-none"
           aria-hidden="true"
         />
         <div
-          className="absolute -left-20 -bottom-20 w-80 h-80 bg-[#779DD2]/15 rounded-full blur-3xl pointer-events-none"
+          className="absolute -left-20 -bottom-20 w-80 h-80 bg-[#6FA4EA]/15 rounded-full blur-3xl pointer-events-none"
           aria-hidden="true"
         />
 
@@ -160,10 +160,10 @@ export const HeroBalanceCard: React.FC<HeroBalanceCardProps> = ({
             <span
               className={`text-xs sm:text-sm font-bold tracking-wider uppercase font-sans ${
                 owes
-                  ? 'text-[#8FD4F2]'
+                  ? 'text-[#A5CFF6]'
                   : isOwed
-                  ? 'text-[#D96872]'
-                  : 'text-[#5FA985]'
+                  ? 'text-[#EAA2A8]'
+                  : 'text-[#6FA4EA]'
               }`}
             >
               {owes
@@ -180,10 +180,10 @@ export const HeroBalanceCard: React.FC<HeroBalanceCardProps> = ({
               <h1 className="font-display text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-normal tracking-tight text-white leading-none">
                 {isSettled ? '$0.00' : formatCurrency(Math.abs(net), group.currency)}
               </h1>
-              <span className="text-sm sm:text-base font-semibold font-mono text-[#8FD4F2]">
+              <span className="text-sm sm:text-base font-semibold font-mono text-[#A5CFF6]">
                 {group.currency || 'CAD'}
               </span>
-              <span className="text-xs sm:text-sm font-medium text-[#8FD4F2]/80 ml-1">
+              <span className="text-xs sm:text-sm font-medium text-[#A5CFF6]/80 ml-1">
                 {owes
                   ? `· you owe (${youOweList.length} payment${youOweList.length === 1 ? '' : 's'})`
                   : isOwed
@@ -203,7 +203,7 @@ export const HeroBalanceCard: React.FC<HeroBalanceCardProps> = ({
                       onClick={onOpenPaymentSummary}
                       className="inline-flex items-center justify-center gap-1.5 bg-[#203652] hover:bg-[#2A4365] text-white px-4 py-2.5 rounded-full text-xs sm:text-sm font-semibold tracking-wide border border-[#3B5B88] transition-colors cursor-pointer shadow-md"
                     >
-                      <Receipt className="w-3.5 h-3.5 text-[#8FD4F2]" />
+                      <Receipt className="w-3.5 h-3.5 text-[#A5CFF6]" />
                       <span>Payment Summary</span>
                     </motion.button>
                   )}
@@ -213,7 +213,7 @@ export const HeroBalanceCard: React.FC<HeroBalanceCardProps> = ({
                       whileHover={{ scale: 1.03 }}
                       whileTap={{ scale: 0.95 }}
                       onClick={onOpenWrapUp}
-                      className="inline-flex items-center justify-center gap-1.5 bg-[#5FA985] hover:bg-[#98b394] text-[#13223D] px-4 py-2.5 rounded-full text-xs sm:text-sm font-bold tracking-wide shadow-md transition-all cursor-pointer"
+                      className="inline-flex items-center justify-center gap-1.5 bg-[#6FA4EA] hover:opacity-90 text-[#11213C] px-4 py-2.5 rounded-full text-xs sm:text-sm font-bold tracking-wide shadow-md transition-all cursor-pointer"
                     >
                       <Sparkles className="w-3.5 h-3.5" />
                       <span>Trip Recap</span>
@@ -226,7 +226,7 @@ export const HeroBalanceCard: React.FC<HeroBalanceCardProps> = ({
                 whileHover={{ scale: 1.04, y: -1 }}
                 whileTap={{ scale: 0.96 }}
                 onClick={onSettleClick}
-                className="inline-flex items-center justify-center gap-1.5 bg-white hover:bg-[#F7F9FC] text-[#13223D] px-5 py-2.5 rounded-full text-xs sm:text-sm font-semibold tracking-wide shadow-md transition-colors cursor-pointer"
+                className="inline-flex items-center justify-center gap-1.5 bg-white hover:bg-[#F8F9FB] text-[#11213C] px-5 py-2.5 rounded-full text-xs sm:text-sm font-semibold tracking-wide shadow-md transition-colors cursor-pointer"
               >
                 <span>{isSettled ? 'View Balances' : 'Settle up payments'}</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -235,7 +235,7 @@ export const HeroBalanceCard: React.FC<HeroBalanceCardProps> = ({
           </div>
 
           {/* Friendly Brand Subtitle */}
-          <p className="text-xs sm:text-sm text-[#8FD4F2] font-medium max-w-xl mb-6">
+          <p className="text-xs sm:text-sm text-[#A5CFF6] font-medium max-w-xl mb-6">
             {owes ? (
               <span>
                 We've done the maths. Just {youOweList.length} payment{youOweList.length === 1 ? '' : 's'} to get completely square.
@@ -252,7 +252,7 @@ export const HeroBalanceCard: React.FC<HeroBalanceCardProps> = ({
           {/* Metric Bar Row Inside Card */}
           <div className="grid grid-cols-3 gap-3 p-4 rounded-[22px] bg-[#203652]/70 border border-[#2A4365] mb-6">
             <div className="flex flex-col">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-[#779DD2]">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#6FA4EA]">
                 Trip Total
               </span>
               <span className="font-sans font-bold text-base sm:text-lg text-white mt-0.5 tracking-tight">
@@ -261,7 +261,7 @@ export const HeroBalanceCard: React.FC<HeroBalanceCardProps> = ({
             </div>
 
             <div className="flex flex-col border-l border-[#2A4365] pl-3">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-[#779DD2]">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#6FA4EA]">
                 Your Share
               </span>
               <span className="font-sans font-bold text-base sm:text-lg text-white mt-0.5 tracking-tight">
@@ -270,7 +270,7 @@ export const HeroBalanceCard: React.FC<HeroBalanceCardProps> = ({
             </div>
 
             <div className="flex flex-col border-l border-[#2A4365] pl-3">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-[#779DD2]">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#6FA4EA]">
                 Payments Left
               </span>
               <span className="font-sans font-bold text-base sm:text-lg text-white mt-0.5 tracking-tight">
@@ -289,15 +289,15 @@ export const HeroBalanceCard: React.FC<HeroBalanceCardProps> = ({
               {isEditingEmail || !savedEmail ? (
                 <form onSubmit={handleSaveEmail} className="flex flex-col gap-2.5 text-left">
                   <div className="flex items-center justify-between gap-2">
-                    <label className="text-xs font-semibold text-[#8FD4F2] flex items-center gap-1.5">
-                      <Mail className="w-3.5 h-3.5 text-[#8FD4F2]" />
+                    <label className="text-xs font-semibold text-[#A5CFF6] flex items-center gap-1.5">
+                      <Mail className="w-3.5 h-3.5 text-[#A5CFF6]" />
                       <span>Where should friends send your money?</span>
                     </label>
                     {savedEmail && (
                       <button
                         type="button"
                         onClick={() => setIsEditingEmail(false)}
-                        className="text-[11px] text-[#779DD2] hover:text-white cursor-pointer"
+                        className="text-[11px] text-[#6FA4EA] hover:text-white cursor-pointer"
                       >
                         Cancel
                       </button>
@@ -312,7 +312,7 @@ export const HeroBalanceCard: React.FC<HeroBalanceCardProps> = ({
                       value={emailInput}
                       onChange={(e) => setEmailInput(e.target.value)}
                       placeholder="e-Transfer email or payment handle"
-                      className="flex-1 bg-[#13223D] text-white placeholder:text-[#779DD2] font-mono text-xs sm:text-sm px-4 py-2.5 rounded-full border border-[#3B5B88] focus:outline-none focus:ring-2 focus:ring-[#8FD4F2] shadow-inner"
+                      className="flex-1 bg-[#11213C] text-white placeholder:text-[#6FA4EA] font-mono text-xs sm:text-sm px-4 py-2.5 rounded-full border border-[#3B5B88] focus:outline-none focus:ring-2 focus:ring-[#7AC5F9] shadow-inner"
                     />
 
                     <motion.button
@@ -320,24 +320,24 @@ export const HeroBalanceCard: React.FC<HeroBalanceCardProps> = ({
                       whileTap={{ scale: 0.96 }}
                       type="submit"
                       disabled={!emailInput.trim()}
-                      className="bg-[#8FD4F2] hover:bg-white text-[#13223D] px-5 py-2.5 rounded-full text-xs font-semibold transition-all flex items-center justify-center gap-1.5 shadow-sm disabled:opacity-50 cursor-pointer shrink-0"
+                      className="bg-[#A5CFF6] hover:bg-white text-[#11213C] px-5 py-2.5 rounded-full text-xs font-semibold transition-all flex items-center justify-center gap-1.5 shadow-sm disabled:opacity-50 cursor-pointer shrink-0"
                     >
                       <Save className="w-3.5 h-3.5" />
                       <span>Save for Group</span>
                     </motion.button>
                   </div>
-                  <p className="text-[11px] text-[#779DD2]">
+                  <p className="text-[11px] text-[#6FA4EA]">
                     Saved so friends who have money for you can copy it with 1 click.
                   </p>
                 </form>
               ) : (
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-left">
                   <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="w-8 h-8 rounded-full bg-[#8FD4F2]/20 text-[#8FD4F2] flex items-center justify-center border border-[#8FD4F2]/30 shrink-0">
+                    <div className="w-8 h-8 rounded-full bg-[#A5CFF6]/20 text-[#A5CFF6] flex items-center justify-center border border-[#A5CFF6]/30 shrink-0">
                       <Mail className="w-4 h-4" />
                     </div>
                     <div className="min-w-0">
-                      <span className="text-[11px] text-[#779DD2] font-medium block">
+                      <span className="text-[11px] text-[#6FA4EA] font-medium block">
                         Your payment info (for friends to send you money)
                       </span>
                       <span className="text-xs sm:text-sm font-mono font-medium text-white truncate block">
@@ -348,7 +348,7 @@ export const HeroBalanceCard: React.FC<HeroBalanceCardProps> = ({
 
                   <div className="flex items-center gap-2 self-start sm:self-auto">
                     {justSaved && (
-                      <span className="text-xs text-[#5FA985] font-semibold flex items-center gap-1">
+                      <span className="text-xs text-[#6FA4EA] font-semibold flex items-center gap-1">
                         <Check className="w-3 h-3" />
                         <span>Saved</span>
                       </span>
@@ -357,7 +357,7 @@ export const HeroBalanceCard: React.FC<HeroBalanceCardProps> = ({
                       whileTap={{ scale: 0.95 }}
                       type="button"
                       onClick={() => setIsEditingEmail(true)}
-                      className="text-xs text-[#8FD4F2] hover:text-white bg-[#13223D] hover:bg-[#2A4365] px-3.5 py-1.5 rounded-full border border-[#2A4365] transition-colors flex items-center gap-1 cursor-pointer"
+                      className="text-xs text-[#A5CFF6] hover:text-white bg-[#11213C] hover:bg-[#2A4365] px-3.5 py-1.5 rounded-full border border-[#2A4365] transition-colors flex items-center gap-1 cursor-pointer"
                     >
                       <Edit2 className="w-3 h-3" />
                       <span>Change</span>
@@ -372,14 +372,14 @@ export const HeroBalanceCard: React.FC<HeroBalanceCardProps> = ({
           {(youOweList.length > 0 || owesYouList.length > 0) && (
             <div className="pt-6 border-t border-[#2A4365]">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-bold text-[#8FD4F2] tracking-wider uppercase font-sans">
+                <span className="text-xs font-bold text-[#A5CFF6] tracking-wider uppercase font-sans">
                   {owes
                     ? "Here's who to settle with"
                     : isOwed
                     ? "Here's who has money for you"
                     : 'Direct payments'}
                 </span>
-                <span className="text-[11px] text-[#779DD2]">
+                <span className="text-[11px] text-[#6FA4EA]">
                   {youOweList.length + owesYouList.length} payment{youOweList.length + owesYouList.length === 1 ? '' : 's'}
                 </span>
               </div>
@@ -401,8 +401,8 @@ export const HeroBalanceCard: React.FC<HeroBalanceCardProps> = ({
                         <CuteAvatarBadge member={debt.toMember} size="md" />
                         <div className="flex flex-col min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-xs text-[#8FD4F2] font-medium">To {debt.toMember.name}</span>
-                            <span className="text-[#779DD2] hidden sm:inline">•</span>
+                            <span className="text-xs text-[#A5CFF6] font-medium">To {debt.toMember.name}</span>
+                            <span className="text-[#6FA4EA] hidden sm:inline">•</span>
                             <span className="font-sans font-bold text-base sm:text-lg text-white">
                               {formatCurrency(debt.amount, group.currency)}
                             </span>
@@ -416,24 +416,24 @@ export const HeroBalanceCard: React.FC<HeroBalanceCardProps> = ({
                                 type="button"
                                 onClick={(e) => handleCopyRecipientEmail(debt.id, targetEmail, e)}
                                 title={`Click to copy ${debt.toMember.name}'s e-Transfer email (${targetEmail})`}
-                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#13223D] hover:bg-[#0c1524] text-[#8FD4F2] hover:text-white border border-[#2A4365] text-[11px] font-mono transition-all cursor-pointer shadow-inner"
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#11213C] hover:bg-[#0c1524] text-[#A5CFF6] hover:text-white border border-[#2A4365] text-[11px] font-mono transition-all cursor-pointer shadow-inner"
                               >
-                                <Mail className="w-3 h-3 text-[#8FD4F2] shrink-0" />
-                                <span className="font-semibold text-[#8FD4F2] text-[10px] uppercase tracking-wider font-sans">
+                                <Mail className="w-3 h-3 text-[#A5CFF6] shrink-0" />
+                                <span className="font-semibold text-[#A5CFF6] text-[10px] uppercase tracking-wider font-sans">
                                   e-Transfer:
                                 </span>
                                 <span className="truncate max-w-[140px] sm:max-w-[180px]">{targetEmail}</span>
                                 {isCopied ? (
-                                  <span className="text-[10px] text-[#5FA985] font-sans font-semibold flex items-center gap-0.5 ml-0.5">
-                                    <Check className="w-3 h-3 text-[#5FA985]" /> Copied!
+                                  <span className="text-[10px] text-[#6FA4EA] font-sans font-semibold flex items-center gap-0.5 ml-0.5">
+                                    <Check className="w-3 h-3 text-[#6FA4EA]" /> Copied!
                                   </span>
                                 ) : (
-                                  <Copy className="w-2.5 h-2.5 text-[#779DD2] shrink-0 ml-0.5" />
+                                  <Copy className="w-2.5 h-2.5 text-[#6FA4EA] shrink-0 ml-0.5" />
                                 )}
                               </motion.button>
                             ) : (
-                              <span className="inline-flex items-center gap-1 text-[11px] text-[#779DD2] bg-[#13223D]/60 px-2 py-0.5 rounded-full border border-[#2A4365]/50">
-                                <Mail className="w-2.5 h-2.5 text-[#779DD2]" />
+                              <span className="inline-flex items-center gap-1 text-[11px] text-[#6FA4EA] bg-[#11213C]/60 px-2 py-0.5 rounded-full border border-[#2A4365]/50">
+                                <Mail className="w-2.5 h-2.5 text-[#6FA4EA]" />
                                 <span>No e-transfer added</span>
                               </span>
                             )}
@@ -445,7 +445,7 @@ export const HeroBalanceCard: React.FC<HeroBalanceCardProps> = ({
                         <motion.button
                           whileTap={{ scale: 0.94 }}
                           onClick={() => onPayPersonClick(debt.toMember, debt.amount)}
-                          className="bg-white hover:bg-[#F7F9FC] text-[#13223D] text-xs font-semibold px-4 py-2 rounded-full transition-colors cursor-pointer shadow-2xs flex items-center gap-1"
+                          className="bg-white hover:bg-[#F8F9FB] text-[#11213C] text-xs font-semibold px-4 py-2 rounded-full transition-colors cursor-pointer shadow-2xs flex items-center gap-1"
                         >
                           <span>Settle</span>
                           <ArrowRight className="w-3 h-3" />
@@ -466,12 +466,12 @@ export const HeroBalanceCard: React.FC<HeroBalanceCardProps> = ({
                     <div className="flex items-center gap-2.5 min-w-0">
                       <CuteAvatarBadge member={debt.fromMember} size="sm" />
                       <div className="flex flex-col min-w-0">
-                        <span className="text-xs text-[#D96872] font-medium truncate">
+                        <span className="text-xs text-[#EAA2A8] font-medium truncate">
                           {debt.fromMember.name} has
                         </span>
                         <span className="font-sans font-bold text-base sm:text-lg text-white truncate">
                           {formatCurrency(debt.amount, group.currency)}
-                          <span className="font-normal text-[#8FD4F2] text-xs sm:text-sm ml-1">for you</span>
+                          <span className="font-normal text-[#A5CFF6] text-xs sm:text-sm ml-1">for you</span>
                         </span>
                       </div>
                     </div>
@@ -480,10 +480,10 @@ export const HeroBalanceCard: React.FC<HeroBalanceCardProps> = ({
                       <motion.button
                         whileTap={{ scale: 0.94 }}
                         onClick={() => onRemindClick(debt.fromMember, debt.amount)}
-                        className="bg-[#13223D] hover:bg-[#0c1524] text-[#8FD4F2] hover:text-white border border-[#2A4365] text-xs font-semibold px-4 py-2 rounded-full transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                        className="bg-[#11213C] hover:bg-[#0c1524] text-[#A5CFF6] hover:text-white border border-[#2A4365] text-xs font-semibold px-4 py-2 rounded-full transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs"
                         title={`Give ${debt.fromMember.name} a gentle nudge`}
                       >
-                        <Send className="w-3 h-3 text-[#8FD4F2]" />
+                        <Send className="w-3 h-3 text-[#A5CFF6]" />
                         <span>Nudge</span>
                       </motion.button>
                     </div>

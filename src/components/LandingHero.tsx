@@ -53,13 +53,13 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-[#F7F9FC] dark:bg-[#090d16] text-[#13223D] dark:text-slate-100 flex flex-col justify-between p-5 sm:p-8 md:p-12 relative overflow-hidden antialiased selection:bg-[#8FD4F2] dark:selection:bg-slate-800 transition-colors">
+    <div className="min-h-screen bg-[#F8F9FB] dark:bg-[#090d16] text-[#11213C] dark:text-slate-100 flex flex-col justify-between p-5 sm:p-8 md:p-12 relative overflow-hidden antialiased selection:bg-[#A5CFF6] dark:selection:bg-slate-800 transition-colors">
       {/* Ambient gradient wash, echoing the logo's own holographic glow */}
       <div
         className="absolute -top-1/4 left-1/2 -translate-x-1/2 w-[130%] sm:w-[900px] aspect-square rounded-full blur-3xl pointer-events-none opacity-25 dark:opacity-20"
         style={{
           background:
-            'radial-gradient(circle, #C4EDF3 0%, #A7D6F7 30%, #8FD4F2 50%, transparent 70%)',
+            'radial-gradient(circle, #E9EFF8 0%, #92B4EF 30%, #A5CFF6 50%, transparent 70%)',
         }}
         aria-hidden="true"
       />
@@ -69,7 +69,7 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
         <div className="flex items-center gap-3.5">
           <Logo size={40} />
           <div>
-            <span className="font-display text-2xl md:text-3xl text-[#13223D] dark:text-slate-100 tracking-tight block leading-none lowercase">
+            <span className="font-display text-2xl md:text-3xl text-[#11213C] dark:text-slate-100 tracking-tight block leading-none lowercase">
               nooswise
             </span>
           </div>
@@ -80,22 +80,22 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
           <button
             type="button"
             onClick={() => setPhilosophyModal('how-it-works')}
-            className="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold text-[#13223D]/80 dark:text-slate-300 hover:text-[#13223D] dark:hover:text-white px-3 py-1.5 rounded-full hover:bg-white/60 dark:hover:bg-slate-800/60 transition-colors cursor-pointer"
+            className="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold text-[#11213C]/80 dark:text-slate-300 hover:text-[#11213C] dark:hover:text-white px-3 py-1.5 rounded-full hover:bg-white/60 dark:hover:bg-slate-800/60 transition-colors cursor-pointer"
           >
-            <HelpCircle className="w-3.5 h-3.5 text-[#779DD2]" />
+            <HelpCircle className="w-3.5 h-3.5 text-[#6FA4EA]" />
             <span>how it works</span>
           </button>
 
           <button
             type="button"
             onClick={() => setPhilosophyModal('why-no-app')}
-            className="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold text-[#13223D]/80 dark:text-slate-300 hover:text-[#13223D] dark:hover:text-white px-3 py-1.5 rounded-full hover:bg-white/60 dark:hover:bg-slate-800/60 transition-colors cursor-pointer"
+            className="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold text-[#11213C]/80 dark:text-slate-300 hover:text-[#11213C] dark:hover:text-white px-3 py-1.5 rounded-full hover:bg-white/60 dark:hover:bg-slate-800/60 transition-colors cursor-pointer"
           >
-            <Smartphone className="w-3.5 h-3.5 text-[#779DD2]" />
+            <Smartphone className="w-3.5 h-3.5 text-[#6FA4EA]" />
             <span>why no app</span>
           </button>
 
-          <span className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-white/90 dark:bg-slate-900/90 text-[#13223D] dark:text-slate-300 border border-[#DCEAF5] dark:border-slate-800 shadow-2xs">
+          <span className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-white/90 dark:bg-slate-900/90 text-[#11213C] dark:text-slate-300 border border-[#DCE6F1] dark:border-slate-800 shadow-2xs">
             <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500" />
             <span>no account needed</span>
           </span>
@@ -107,10 +107,10 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
       {/* Hero Body */}
       <main className="flex-1 flex flex-col items-center justify-center text-center my-8 md:my-12 z-10 max-w-3xl mx-auto w-full">
         {/* Emotional headline */}
-        <h1 className="font-display text-5xl sm:text-6xl md:text-7xl text-[#13223D] dark:text-slate-100 font-normal tracking-tight leading-[1.08] mb-8">
+        <h1 className="font-display text-5xl sm:text-6xl md:text-7xl text-[#11213C] dark:text-slate-100 font-normal tracking-tight leading-[1.08] mb-8">
           Split bills,
           <br />
-          <span className="italic font-normal text-[#779DD2] dark:text-[#8FD4F2]">
+          <span className="italic font-normal text-[#6FA4EA] dark:text-[#A5CFF6]">
             stay friends.
           </span>
         </h1>
@@ -118,13 +118,13 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
         {/* 2-INPUT FRICTIONLESS FORM */}
         <form
           onSubmit={handleSubmit}
-          className="w-full max-w-md bg-white dark:bg-slate-900/95 rounded-[32px] p-6 sm:p-8 soft-shadow border border-[#DCEAF5] dark:border-slate-800 flex flex-col gap-4 text-left transition-all shadow-md backdrop-blur-sm"
+          className="w-full max-w-md bg-white dark:bg-slate-900/95 rounded-[32px] p-6 sm:p-8 soft-shadow border border-[#DCE6F1] dark:border-slate-800 flex flex-col gap-4 text-left transition-all shadow-md backdrop-blur-sm"
         >
           {/* 1. Your Name */}
           <div>
             <label
               htmlFor="your-name-input"
-              className="text-[11px] font-bold uppercase tracking-wider text-[#779DD2] dark:text-slate-400 block mb-1.5"
+              className="text-[11px] font-bold uppercase tracking-wider text-[#6FA4EA] dark:text-slate-400 block mb-1.5"
             >
               Your name
             </label>
@@ -136,7 +136,7 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
               placeholder="e.g. Joyce"
               value={yourName}
               onChange={(e) => setYourName(e.target.value)}
-              className="w-full bg-[#F7F9FC] dark:bg-slate-800/80 text-[#13223D] dark:text-slate-100 placeholder:text-slate-400 rounded-2xl px-5 py-3.5 text-base font-medium border border-[#DCEAF5] dark:border-slate-700/80 focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-[#8FD4F2] transition-all shadow-2xs"
+              className="w-full bg-[#F8F9FB] dark:bg-slate-800/80 text-[#11213C] dark:text-slate-100 placeholder:text-slate-400 rounded-2xl px-5 py-3.5 text-base font-medium border border-[#DCE6F1] dark:border-slate-700/80 focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-[#7AC5F9] transition-all shadow-2xs"
             />
           </div>
 
@@ -144,7 +144,7 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
           <div>
             <label
               htmlFor="split-name-input"
-              className="text-[11px] font-bold uppercase tracking-wider text-[#779DD2] dark:text-slate-400 block mb-1.5"
+              className="text-[11px] font-bold uppercase tracking-wider text-[#6FA4EA] dark:text-slate-400 block mb-1.5"
             >
               What are we splitting?
             </label>
@@ -156,7 +156,7 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
                 placeholder="e.g. Barcelona 2026, Dinner"
                 value={splitName}
                 onChange={(e) => setSplitName(e.target.value)}
-                className="flex-1 bg-[#F7F9FC] dark:bg-slate-800/80 text-[#13223D] dark:text-slate-100 placeholder:text-slate-400 rounded-2xl px-5 py-3.5 text-base font-medium border border-[#DCEAF5] dark:border-slate-700/80 focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-[#8FD4F2] transition-all shadow-2xs"
+                className="flex-1 bg-[#F8F9FB] dark:bg-slate-800/80 text-[#11213C] dark:text-slate-100 placeholder:text-slate-400 rounded-2xl px-5 py-3.5 text-base font-medium border border-[#DCE6F1] dark:border-slate-700/80 focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-[#7AC5F9] transition-all shadow-2xs"
               />
 
               <CurrencyPicker
@@ -174,13 +174,13 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
             transition={{ type: 'spring', stiffness: 450, damping: 22 }}
             type="submit"
             disabled={isSubmitting || !splitName.trim() || !yourName.trim()}
-            className="w-full mt-2 bg-[#13223D] dark:bg-slate-100 text-white dark:text-[#13223D] hover:opacity-90 disabled:opacity-50 py-4 px-8 rounded-full font-semibold text-sm tracking-wide transition-opacity shadow-md flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full mt-2 bg-[#11213C] dark:bg-slate-100 text-white dark:text-[#11213C] hover:opacity-90 disabled:opacity-50 py-4 px-8 rounded-full font-semibold text-sm tracking-wide transition-opacity shadow-md flex items-center justify-center gap-2 cursor-pointer"
           >
             <span>Create my split</span>
             <ArrowRight className="w-4 h-4" />
           </motion.button>
 
-          <p className="text-xs text-center text-[#779DD2] dark:text-slate-400 font-medium">
+          <p className="text-xs text-center text-[#6FA4EA] dark:text-slate-400 font-medium">
             Send the link. We'll do the rest.
           </p>
         </form>
@@ -189,10 +189,10 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
         {existingGroups.length > 0 && (
           <div className="w-full max-w-md mt-10 text-left">
             <div className="flex items-center justify-between mb-3 px-2">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-[#779DD2] dark:text-slate-400">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-[#6FA4EA] dark:text-slate-400">
                 Your Splits in this Browser
               </span>
-              <span className="text-xs text-[#779DD2] dark:text-slate-400">
+              <span className="text-xs text-[#6FA4EA] dark:text-slate-400">
                 {existingGroups.length} split{existingGroups.length === 1 ? '' : 's'}
               </span>
             </div>
@@ -213,14 +213,14 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
                     onClick={() => onSelectGroup(g)}
                     className={`p-4 rounded-2xl border transition-colors cursor-pointer flex flex-col justify-between group shadow-2xs ${
                       g.isArchived
-                        ? 'bg-[#F7F9FC]/90 dark:bg-slate-900/60 border-[#DCEAF5]/90 dark:border-slate-800/80 hover:bg-[#EAF3FB] dark:hover:bg-slate-800/60'
-                        : 'bg-white dark:bg-slate-900/90 hover:bg-[#F7F9FC] dark:hover:bg-slate-800 border-[#DCEAF5] dark:border-slate-800'
+                        ? 'bg-[#F8F9FB]/90 dark:bg-slate-900/60 border-[#DCE6F1]/90 dark:border-slate-800/80 hover:bg-[#E9EFF8] dark:hover:bg-slate-800/60'
+                        : 'bg-white dark:bg-slate-900/90 hover:bg-[#F8F9FB] dark:hover:bg-slate-800 border-[#DCE6F1] dark:border-slate-800'
                     }`}
                   >
                     <div>
                       <div className="flex items-center justify-between gap-2 mb-1">
                         <div className="flex items-center gap-1.5 min-w-0">
-                          <h3 className="font-display text-lg text-[#13223D] dark:text-slate-100 truncate">
+                          <h3 className="font-display text-lg text-[#11213C] dark:text-slate-100 truncate">
                             {g.name}
                           </h3>
                           {g.isArchived && (
@@ -230,11 +230,11 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
                             </span>
                           )}
                         </div>
-                        <span className="text-xs font-semibold text-[#13223D] dark:text-slate-100 shrink-0">
+                        <span className="text-xs font-semibold text-[#11213C] dark:text-slate-100 shrink-0">
                           {formatCurrency(total, g.currency)}
                         </span>
                       </div>
-                      <p className="text-xs text-[#779DD2] dark:text-slate-400">
+                      <p className="text-xs text-[#6FA4EA] dark:text-slate-400">
                         {g.isArchived && (
                           <span className="text-emerald-600 dark:text-emerald-400 font-medium mr-1">
                             ✓ All square ·
@@ -268,7 +268,7 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
       </main>
 
       {/* Footer */}
-      <footer className="text-center z-10 text-xs text-[#779DD2] dark:text-slate-500 font-medium py-4">
+      <footer className="text-center z-10 text-xs text-[#6FA4EA] dark:text-slate-500 font-medium py-4">
         <p>nooswise • instant zero-spreadsheet bill splitting ✨</p>
       </footer>
 

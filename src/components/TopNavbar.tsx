@@ -86,7 +86,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
   };
 
   return (
-    <header className="w-full sticky top-0 z-40 bg-[#F7F9FC]/90 dark:bg-[#0c1524]/90 backdrop-blur-md border-b border-[#DCEAF5] dark:border-[#1E3352] transition-colors">
+    <header className="w-full sticky top-0 z-40 bg-[#F8F9FB]/90 dark:bg-[#0c1524]/90 backdrop-blur-md border-b border-[#DCE6F1] dark:border-[#1E3352] transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 flex items-center justify-between gap-3">
         {/* Left Side: Brand Wordmark + Philosophy Links */}
         <div className="flex items-center gap-6">
@@ -98,7 +98,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
             title="Go to Home / Overview"
           >
             <Logo size={36} />
-            <span className="font-display text-2xl sm:text-3xl text-[#13223D] dark:text-[#F7F9FC] lowercase font-normal tracking-tight group-hover:opacity-85">
+            <span className="font-display text-2xl sm:text-3xl text-[#11213C] dark:text-[#F8F9FB] lowercase font-normal tracking-tight group-hover:opacity-85">
               nooswise
             </span>
           </motion.button>
@@ -107,13 +107,13 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
           <div className="hidden md:flex items-center gap-1">
             <button
               onClick={onOpenHowItWorks}
-              className="text-xs font-semibold px-3 py-1.5 rounded-full text-[#779DD2] hover:text-[#13223D] dark:text-[#8FD4F2] dark:hover:text-white hover:bg-[#EAF3FB] dark:hover:bg-[#203652]/60 transition-colors cursor-pointer"
+              className="text-xs font-semibold px-3 py-1.5 rounded-full text-[#6FA4EA] hover:text-[#11213C] dark:text-[#A5CFF6] dark:hover:text-white hover:bg-[#E9EFF8] dark:hover:bg-[#203652]/60 transition-colors cursor-pointer"
             >
               how it works
             </button>
             <button
               onClick={onOpenWhyNoApp}
-              className="text-xs font-semibold px-3 py-1.5 rounded-full text-[#779DD2] hover:text-[#13223D] dark:text-[#8FD4F2] dark:hover:text-white hover:bg-[#EAF3FB] dark:hover:bg-[#203652]/60 transition-colors cursor-pointer"
+              className="text-xs font-semibold px-3 py-1.5 rounded-full text-[#6FA4EA] hover:text-[#11213C] dark:text-[#A5CFF6] dark:hover:text-white hover:bg-[#E9EFF8] dark:hover:bg-[#203652]/60 transition-colors cursor-pointer"
             >
               why no app
             </button>
@@ -129,15 +129,15 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
               setRenamedTitle(group.name);
               setIsGroupDropdownOpen(!isGroupDropdownOpen);
             }}
-            className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#EAF3FB] dark:bg-[#13223D] border border-[#DCEAF5] dark:border-[#2A4365] text-[#13223D] dark:text-white text-xs sm:text-sm font-semibold cursor-pointer shadow-2xs hover:bg-[#8FD4F2]/30 dark:hover:bg-[#203652] transition-colors"
+            className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#E9EFF8] dark:bg-[#11213C] border border-[#DCE6F1] dark:border-[#2A4365] text-[#11213C] dark:text-white text-xs sm:text-sm font-semibold cursor-pointer shadow-2xs hover:bg-[#A5CFF6]/30 dark:hover:bg-[#203652] transition-colors"
           >
             <span className="truncate max-w-[130px] sm:max-w-[200px]">{group.name}</span>
             {group.isArchived && (
-              <span className="text-[10px] font-bold uppercase tracking-wider bg-[#8FD4F2] text-[#13223D] px-1.5 py-0.5 rounded-full">
+              <span className="text-[10px] font-bold uppercase tracking-wider bg-[#A5CFF6] text-[#11213C] px-1.5 py-0.5 rounded-full">
                 Archived
               </span>
             )}
-            <ChevronDown className={`w-3.5 h-3.5 text-[#779DD2] transition-transform ${isGroupDropdownOpen ? 'rotate-180' : ''}`} />
+            <ChevronDown className={`w-3.5 h-3.5 text-[#6FA4EA] transition-transform ${isGroupDropdownOpen ? 'rotate-180' : ''}`} />
           </motion.button>
 
           {/* Split Switcher Dropdown */}
@@ -148,11 +148,11 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -4, scale: 0.96 }}
                 transition={{ type: 'spring', stiffness: 450, damping: 30 }}
-                className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-72 sm:w-80 bg-white dark:bg-[#13223D] rounded-[22px] p-4 shadow-2xl border border-[#DCEAF5] dark:border-[#2A4365] z-50 text-[#13223D] dark:text-white"
+                className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-72 sm:w-80 bg-white dark:bg-[#11213C] rounded-[22px] p-4 shadow-2xl border border-[#DCE6F1] dark:border-[#2A4365] z-50 text-[#11213C] dark:text-white"
               >
                 {isRenaming ? (
                   <form onSubmit={handleSaveRename} className="flex flex-col gap-2 mb-3">
-                    <label className="text-[10px] font-bold uppercase tracking-wider text-[#779DD2]">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-[#6FA4EA]">
                       Rename Split
                     </label>
                     <div className="flex items-center gap-2">
@@ -161,31 +161,31 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
                         value={renamedTitle}
                         onChange={(e) => setRenamedTitle(e.target.value)}
                         autoFocus
-                        className="flex-1 bg-[#EAF3FB] dark:bg-[#203652] text-xs font-semibold px-3 py-2 rounded-xl border border-[#DCEAF5] dark:border-[#2A4365] focus:outline-none"
+                        className="flex-1 bg-[#E9EFF8] dark:bg-[#203652] text-xs font-semibold px-3 py-2 rounded-xl border border-[#DCE6F1] dark:border-[#2A4365] focus:outline-none"
                       />
                       <button
                         type="submit"
-                        className="bg-[#13223D] dark:bg-white text-white dark:text-[#13223D] text-xs px-3 py-2 rounded-xl font-semibold cursor-pointer"
+                        className="bg-[#11213C] dark:bg-white text-white dark:text-[#11213C] text-xs px-3 py-2 rounded-xl font-semibold cursor-pointer"
                       >
                         Save
                       </button>
                       <button
                         type="button"
                         onClick={() => setIsRenaming(false)}
-                        className="text-xs text-[#779DD2] hover:text-[#13223D] px-2 cursor-pointer"
+                        className="text-xs text-[#6FA4EA] hover:text-[#11213C] px-2 cursor-pointer"
                       >
                         Cancel
                       </button>
                     </div>
                   </form>
                 ) : (
-                  <div className="flex items-center justify-between mb-3 pb-2 border-b border-[#DCEAF5] dark:border-[#2A4365]">
-                    <span className="text-xs font-bold text-[#13223D] dark:text-white">
+                  <div className="flex items-center justify-between mb-3 pb-2 border-b border-[#DCE6F1] dark:border-[#2A4365]">
+                    <span className="text-xs font-bold text-[#11213C] dark:text-white">
                       Your Splits
                     </span>
                     <button
                       onClick={() => setIsRenaming(true)}
-                      className="text-xs text-[#779DD2] hover:text-[#13223D] dark:hover:text-white flex items-center gap-1 cursor-pointer"
+                      className="text-xs text-[#6FA4EA] hover:text-[#11213C] dark:hover:text-white flex items-center gap-1 cursor-pointer"
                     >
                       <Edit2 className="w-3 h-3" />
                       <span>Rename</span>
@@ -205,12 +205,12 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
                         }}
                         className={`p-2.5 rounded-xl flex items-center justify-between text-left transition-colors cursor-pointer ${
                           isCurrent
-                            ? 'bg-[#EAF3FB] dark:bg-[#203652] text-[#13223D] dark:text-white font-semibold'
-                            : 'hover:bg-[#F7F9FC] dark:hover:bg-[#203652]/40 text-[#779DD2] dark:text-slate-300'
+                            ? 'bg-[#E9EFF8] dark:bg-[#203652] text-[#11213C] dark:text-white font-semibold'
+                            : 'hover:bg-[#F8F9FB] dark:hover:bg-[#203652]/40 text-[#6FA4EA] dark:text-slate-300'
                         }`}
                       >
                         <span className="text-xs truncate">{g.name}</span>
-                        {isCurrent && <Check className="w-3.5 h-3.5 text-[#13223D] dark:text-white" />}
+                        {isCurrent && <Check className="w-3.5 h-3.5 text-[#11213C] dark:text-white" />}
                       </button>
                     );
                   })}
@@ -221,7 +221,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
                     setIsGroupDropdownOpen(false);
                     onCreateNewSplit();
                   }}
-                  className="w-full mt-3 pt-2.5 border-t border-[#DCEAF5] dark:border-[#2A4365] text-xs font-semibold text-[#13223D] dark:text-white flex items-center justify-center gap-1.5 cursor-pointer hover:opacity-80"
+                  className="w-full mt-3 pt-2.5 border-t border-[#DCE6F1] dark:border-[#2A4365] text-xs font-semibold text-[#11213C] dark:text-white flex items-center justify-center gap-1.5 cursor-pointer hover:opacity-80"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>Start new split</span>
@@ -238,10 +238,10 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
             onClick={onOpenJoinModal}
-            className="hidden sm:inline-flex items-center gap-1.5 text-xs text-[#13223D] dark:text-slate-200 bg-[#EAF3FB] dark:bg-[#13223D] hover:bg-[#8FD4F2]/40 dark:hover:bg-[#203652] border border-[#DCEAF5] dark:border-[#2A4365] px-3 py-1.5 rounded-full transition-colors cursor-pointer"
+            className="hidden sm:inline-flex items-center gap-1.5 text-xs text-[#11213C] dark:text-slate-200 bg-[#E9EFF8] dark:bg-[#11213C] hover:bg-[#A5CFF6]/40 dark:hover:bg-[#203652] border border-[#DCE6F1] dark:border-[#2A4365] px-3 py-1.5 rounded-full transition-colors cursor-pointer"
             title="Change who you are in this split"
           >
-            <UserCheck className="w-3.5 h-3.5 text-[#779DD2]" />
+            <UserCheck className="w-3.5 h-3.5 text-[#6FA4EA]" />
             <span>I'm <strong>{currentMember?.name || 'You'}</strong></span>
           </motion.button>
 
@@ -250,10 +250,10 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
             onClick={onOpenShareModal}
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#13223D] dark:text-white bg-white dark:bg-[#13223D] hover:bg-[#EAF3FB] dark:hover:bg-[#203652] border border-[#DCEAF5] dark:border-[#2A4365] px-3.5 py-1.5 sm:py-2 rounded-full transition-colors cursor-pointer shadow-2xs"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#11213C] dark:text-white bg-white dark:bg-[#11213C] hover:bg-[#E9EFF8] dark:hover:bg-[#203652] border border-[#DCE6F1] dark:border-[#2A4365] px-3.5 py-1.5 sm:py-2 rounded-full transition-colors cursor-pointer shadow-2xs"
             title="Share this split link with friends"
           >
-            <Share2 className="w-3.5 h-3.5 text-[#779DD2]" />
+            <Share2 className="w-3.5 h-3.5 text-[#6FA4EA]" />
             <span className="hidden sm:inline">Share link</span>
           </motion.button>
 
@@ -262,7 +262,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
             whileHover={{ scale: 1.04, y: -1 }}
             whileTap={{ scale: 0.96 }}
             onClick={onOpenAddExpense}
-            className="inline-flex items-center gap-1.5 px-4 sm:px-5 py-2 sm:py-2.5 bg-[#13223D] dark:bg-white text-white dark:text-[#13223D] rounded-full text-xs sm:text-sm font-semibold transition-all shadow-md cursor-pointer hover:opacity-90"
+            className="inline-flex items-center gap-1.5 px-4 sm:px-5 py-2 sm:py-2.5 bg-[#11213C] dark:bg-white text-white dark:text-[#11213C] rounded-full text-xs sm:text-sm font-semibold transition-all shadow-md cursor-pointer hover:opacity-90"
           >
             <Plus className="w-4 h-4" />
             <span>Add expense</span>

@@ -92,7 +92,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   return (
     <>
       {/* SideNavBar (Desktop) */}
-      <aside className="hidden md:flex flex-col p-5 lg:p-6 bg-white/95 dark:bg-[#0f1a2e]/95 text-slate-900 dark:text-slate-100 h-screen w-64 lg:w-72 shrink-0 sticky top-0 border-r border-[#DCEAF5] dark:border-[#203652] z-40 select-none shadow-2xs backdrop-blur-md transition-colors overflow-hidden">
+      <aside className="hidden md:flex flex-col p-5 lg:p-6 bg-white/95 dark:bg-[#0f1a2e]/95 text-[#11213C] dark:text-slate-100 h-screen w-64 lg:w-72 shrink-0 sticky top-0 border-r border-[#DCE6F1] dark:border-[#203652] z-40 select-none shadow-2xs backdrop-blur-md transition-colors overflow-hidden">
         {/* Brand Header */}
         <div className="mb-6">
           <motion.button
@@ -104,7 +104,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           >
             <Logo size={36} />
             <div>
-              <h1 className="font-serif-display text-2xl lg:text-3xl text-slate-900 dark:text-slate-100 tracking-tight font-normal leading-none group-hover:opacity-85 lowercase">
+              <h1 className="font-serif-display text-2xl lg:text-3xl text-[#11213C] dark:text-slate-100 tracking-tight font-normal leading-none group-hover:opacity-85 lowercase">
                 nooswise
               </h1>
               <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium tracking-wide mt-1">
@@ -116,7 +116,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* GROUP NAVIGATION */}
         <div className="flex flex-col gap-1">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-[#779DD2] px-3 mb-1">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-[#6FA4EA] px-3 mb-1">
             Group
           </span>
           <nav
@@ -141,7 +141,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   transition={{ type: 'spring', stiffness: 450, damping: 25 }}
                   className={`group relative flex items-center justify-between px-3 py-2 rounded-xl text-xs sm:text-sm font-medium transition-colors cursor-pointer ${
                     isActive || isHovered
-                      ? 'text-[#13223D] dark:text-white font-semibold'
+                      ? 'text-[#11213C] dark:text-white font-semibold'
                       : 'text-slate-500 dark:text-slate-400'
                   }`}
                 >
@@ -157,8 +157,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       }}
                       className={`absolute inset-0 rounded-xl border transition-colors ${
                         isActive
-                          ? 'bg-[#EAF3FB] dark:bg-[#203652] border-[#DCEAF5] dark:border-[#2A4365] shadow-2xs'
-                          : 'bg-[#F7F9FC] dark:bg-[#203652]/60 border-[#DCEAF5]/60 dark:border-[#2A4365]/60'
+                          ? 'bg-[#E9EFF8] dark:bg-[#203652] border-[#DCE6F1] dark:border-[#2A4365] shadow-2xs'
+                          : 'bg-[#F8F9FB] dark:bg-[#203652]/60 border-[#DCE6F1]/60 dark:border-[#2A4365]/60'
                       }`}
                     />
                   )}
@@ -167,7 +167,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     <div
                       className={`w-6 h-6 rounded-lg flex items-center justify-center transition-all ${
                         isActive || isHovered
-                          ? 'bg-white dark:bg-[#13223D] text-[#13223D] dark:text-white shadow-2xs'
+                          ? 'bg-white dark:bg-[#11213C] text-[#11213C] dark:text-white shadow-2xs'
                           : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-700 dark:group-hover:text-slate-300'
                       }`}
                     >
@@ -181,7 +181,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
                       transition={{ type: 'spring', stiffness: 500, damping: 25 }}
-                      className="w-1.5 h-1.5 rounded-full bg-[#13223D] dark:bg-[#8FD4F2] shrink-0 relative z-10"
+                      className="w-1.5 h-1.5 rounded-full bg-[#11213C] dark:bg-[#A5CFF6] shrink-0 relative z-10"
                     />
                   )}
                 </motion.button>
@@ -192,9 +192,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* WHO'S HERE SECTION (SCREENSHOT 3 ARCHETYPE) */}
         {group && (
-          <div className="flex flex-col mt-5 pt-4 border-t border-[#DCEAF5] dark:border-[#203652] min-h-0 flex-1">
+          <div className="flex flex-col mt-5 pt-4 border-t border-[#DCE6F1] dark:border-[#203652] min-h-0 flex-1">
             <div className="flex items-center justify-between px-2 mb-2">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-[#779DD2]">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#6FA4EA]">
                 Who's here ({group.members.length})
               </span>
               {onInviteFriends && (
@@ -203,10 +203,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   whileTap={{ scale: 0.95 }}
                   type="button"
                   onClick={onInviteFriends}
-                  className="text-[11px] font-semibold text-[#13223D] dark:text-[#8FD4F2] hover:underline flex items-center gap-1 cursor-pointer"
+                  className="text-[11px] font-semibold text-[#11213C] dark:text-[#A5CFF6] hover:underline flex items-center gap-1 cursor-pointer"
                   title="Invite or add friends to split"
                 >
-                  <UserPlus className="w-3 h-3 text-[#779DD2]" />
+                  <UserPlus className="w-3 h-3 text-[#6FA4EA]" />
                   <span>Invite</span>
                 </motion.button>
               )}
@@ -227,19 +227,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     title={member.isCurrentUser ? 'Your profile' : `Click to switch view to ${member.name}`}
                     className={`flex items-center justify-between py-1.5 px-2 rounded-xl transition-all cursor-pointer group ${
                       member.isCurrentUser
-                        ? 'bg-[#EAF3FB]/80 dark:bg-[#203652]/80 border border-[#DCEAF5] dark:border-[#2A4365]'
-                        : 'hover:bg-[#F7F9FC] dark:hover:bg-[#203652]/40'
+                        ? 'bg-[#E9EFF8]/80 dark:bg-[#203652]/80 border border-[#DCE6F1] dark:border-[#2A4365]'
+                        : 'hover:bg-[#F8F9FB] dark:hover:bg-[#203652]/40'
                     }`}
                   >
                     {/* Avatar & Name */}
                     <div className="flex items-center gap-2 min-w-0">
                       <CuteAvatarBadge member={member} size="xs" showEmoji={false} />
                       <div className="flex items-center gap-1.5 min-w-0">
-                        <span className="text-xs font-medium text-[#13223D] dark:text-white truncate max-w-[85px] lg:max-w-[105px]">
+                        <span className="text-xs font-medium text-[#11213C] dark:text-white truncate max-w-[85px] lg:max-w-[105px]">
                           {member.name}
                         </span>
                         {member.isCurrentUser && (
-                          <span className="text-[8px] bg-[#13223D] dark:bg-white text-white dark:text-[#13223D] font-semibold px-1.5 py-0.2 rounded-full shrink-0">
+                          <span className="text-[8px] bg-[#11213C] dark:bg-white text-white dark:text-[#11213C] font-semibold px-1.5 py-0.2 rounded-full shrink-0">
                             You
                           </span>
                         )}
@@ -250,19 +250,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     <div className="flex items-center gap-1 shrink-0 pl-1.5">
                       <div className="text-right font-sans font-semibold">
                         {isPositive && (
-                          <span className="text-[11px] text-[#D96872] dark:text-[#D96872] tracking-tight">
+                          <span className="text-[11px] text-[#EAA2A8] dark:text-[#EAA2A8] tracking-tight">
                             +{formatCurrency(netBalance, group.currency)}
                           </span>
                         )}
 
                         {isNegative && (
-                          <span className="text-[11px] text-[#779DD2] dark:text-[#8FD4F2] tracking-tight">
+                          <span className="text-[11px] text-[#6FA4EA] dark:text-[#A5CFF6] tracking-tight">
                             -{formatCurrency(Math.abs(netBalance), group.currency)}
                           </span>
                         )}
 
                         {isSettled && (
-                          <span className="text-[10px] text-[#2b5927] dark:text-[#5FA985] lowercase">
+                          <span className="text-[10px] text-[#2C5F94] dark:text-[#6FA4EA] lowercase">
                             square
                           </span>
                         )}
@@ -273,7 +273,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                           type="button"
                           onClick={(e) => handleRemoveMember(e, member)}
                           title={`Remove ${member.name} from this split`}
-                          className="opacity-0 group-hover:opacity-100 focus:opacity-100 w-5 h-5 rounded-full flex items-center justify-center text-[#779DD2] hover:text-white hover:bg-rose-500 transition-all cursor-pointer shrink-0"
+                          className="opacity-0 group-hover:opacity-100 focus:opacity-100 w-5 h-5 rounded-full flex items-center justify-center text-[#6FA4EA] hover:text-white hover:bg-rose-500 transition-all cursor-pointer shrink-0"
                         >
                           <X className="w-3 h-3" />
                         </button>
@@ -286,7 +286,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
             {/* Manually add someone who isn't going to use the app themselves */}
             {onAddMember && (
-              <div className="pt-1.5 mt-1.5 border-t border-[#DCEAF5]/70 dark:border-[#203652]/70">
+              <div className="pt-1.5 mt-1.5 border-t border-[#DCE6F1]/70 dark:border-[#203652]/70">
                 {isAddingPerson ? (
                   <form onSubmit={handleAddPerson} className="flex items-center gap-1.5">
                     <input
@@ -305,12 +305,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         }
                       }}
                       placeholder="Name..."
-                      className="flex-1 min-w-0 bg-[#F7F9FC] dark:bg-[#203652] text-xs font-medium px-2.5 py-1.5 rounded-full border border-[#DCEAF5] dark:border-[#2A4365] focus:outline-none focus:ring-2 focus:ring-[#8FD4F2] dark:focus:ring-[#3B5B88] text-[#13223D] dark:text-white placeholder:text-[#779DD2]"
+                      className="flex-1 min-w-0 bg-[#F8F9FB] dark:bg-[#203652] text-xs font-medium px-2.5 py-1.5 rounded-full border border-[#DCE6F1] dark:border-[#2A4365] focus:outline-none focus:ring-2 focus:ring-[#7AC5F9] dark:focus:ring-[#3B5B88] text-[#11213C] dark:text-white placeholder:text-[#6FA4EA]"
                     />
                     <button
                       type="submit"
                       disabled={!newPersonName.trim()}
-                      className="w-7 h-7 rounded-full bg-[#13223D] dark:bg-white text-white dark:text-[#13223D] flex items-center justify-center shrink-0 disabled:opacity-40 cursor-pointer"
+                      className="w-7 h-7 rounded-full bg-[#11213C] dark:bg-white text-white dark:text-[#11213C] flex items-center justify-center shrink-0 disabled:opacity-40 cursor-pointer"
                       title="Add person"
                     >
                       <Check className="w-3.5 h-3.5" />
@@ -323,7 +323,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       setIsAddingPerson(true);
                       setTimeout(() => addPersonInputRef.current?.focus(), 50);
                     }}
-                    className="w-full flex items-center gap-1.5 px-2 py-1.5 rounded-xl text-[11px] font-semibold text-[#779DD2] hover:text-[#13223D] dark:hover:text-white hover:bg-[#F7F9FC] dark:hover:bg-[#203652]/60 transition-colors cursor-pointer"
+                    className="w-full flex items-center gap-1.5 px-2 py-1.5 rounded-xl text-[11px] font-semibold text-[#6FA4EA] hover:text-[#11213C] dark:hover:text-white hover:bg-[#F8F9FB] dark:hover:bg-[#203652]/60 transition-colors cursor-pointer"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     <span>Add person</span>
@@ -335,14 +335,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
         )}
 
         {/* Group Selector & Bottom Controls */}
-        <div className="mt-auto flex flex-col gap-2.5 pt-4 border-t border-[#DCEAF5] dark:border-[#203652]">
+        <div className="mt-auto flex flex-col gap-2.5 pt-4 border-t border-[#DCE6F1] dark:border-[#203652]">
           {/* Current Group Info & Theme Toggle Row */}
           <div className="flex items-center justify-between px-1">
             <div className="min-w-0 pr-2">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-[#779DD2] block">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#6FA4EA] block">
                 Active Split
               </span>
-              <p className="text-xs font-medium text-[#13223D] dark:text-white truncate mt-0.5">
+              <p className="text-xs font-medium text-[#11213C] dark:text-white truncate mt-0.5">
                 {groupName}
               </p>
             </div>
@@ -355,13 +355,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
               whileHover={{ scale: 1.02, x: 1 }}
               whileTap={{ scale: 0.97 }}
               onClick={onOpenShortcuts}
-              className="flex items-center justify-between px-2 py-1 text-xs text-[#779DD2] hover:text-[#13223D] dark:hover:text-white transition-colors cursor-pointer rounded-xl hover:bg-[#F7F9FC] dark:hover:bg-[#203652]/60"
+              className="flex items-center justify-between px-2 py-1 text-xs text-[#6FA4EA] hover:text-[#11213C] dark:hover:text-white transition-colors cursor-pointer rounded-xl hover:bg-[#F8F9FB] dark:hover:bg-[#203652]/60"
             >
               <div className="flex items-center gap-1.5">
                 <Keyboard className="w-3.5 h-3.5" />
                 <span className="text-[11px]">Shortcuts</span>
               </div>
-              <kbd className="font-mono text-[9px] font-semibold bg-[#EAF3FB] dark:bg-[#203652] px-1.5 py-0.5 rounded border border-[#DCEAF5] dark:border-[#2A4365] text-[#13223D] dark:text-[#8FD4F2]">
+              <kbd className="font-mono text-[9px] font-semibold bg-[#E9EFF8] dark:bg-[#203652] px-1.5 py-0.5 rounded border border-[#DCE6F1] dark:border-[#2A4365] text-[#11213C] dark:text-[#A5CFF6]">
                 ?
               </kbd>
             </motion.button>
@@ -371,7 +371,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             whileHover={{ scale: 1.02, y: -1 }}
             whileTap={{ scale: 0.96 }}
             onClick={onNewGroup}
-            className="w-full flex items-center justify-center gap-2 py-2 px-4 bg-[#13223D] dark:bg-white text-white dark:text-[#13223D] rounded-full font-semibold text-xs tracking-wide hover:opacity-90 transition-opacity cursor-pointer shadow-2xs"
+            className="w-full flex items-center justify-center gap-2 py-2 px-4 bg-[#11213C] dark:bg-white text-white dark:text-[#11213C] rounded-full font-semibold text-xs tracking-wide hover:opacity-90 transition-opacity cursor-pointer shadow-2xs"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Start a split</span>
@@ -380,13 +380,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </aside>
 
       {/* Mobile Top App Bar */}
-      <header className="md:hidden flex justify-between items-center w-full px-4 py-3 bg-white/95 dark:bg-[#0f1a2e]/95 backdrop-blur-md sticky top-0 z-40 border-b border-[#DCEAF5] dark:border-[#203652] shadow-2xs transition-colors">
+      <header className="md:hidden flex justify-between items-center w-full px-4 py-3 bg-white/95 dark:bg-[#0f1a2e]/95 backdrop-blur-md sticky top-0 z-40 border-b border-[#DCE6F1] dark:border-[#203652] shadow-2xs transition-colors">
         <button
           onClick={onBackToLanding}
           className="flex items-center gap-2.5 text-left cursor-pointer"
         >
           <Logo size={28} />
-          <span className="font-serif-display text-lg text-[#13223D] dark:text-white tracking-tight lowercase">
+          <span className="font-serif-display text-lg text-[#11213C] dark:text-white tracking-tight lowercase">
             nooswise
           </span>
         </button>
@@ -398,7 +398,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               whileTap={{ scale: 0.92 }}
               onClick={onOpenShortcuts}
               aria-label="Keyboard shortcuts"
-              className="w-8 h-8 rounded-full bg-[#EAF3FB] dark:bg-[#203652] text-[#13223D] dark:text-[#8FD4F2] flex items-center justify-center cursor-pointer"
+              className="w-8 h-8 rounded-full bg-[#E9EFF8] dark:bg-[#203652] text-[#11213C] dark:text-[#A5CFF6] flex items-center justify-center cursor-pointer"
             >
               <Keyboard className="w-3.5 h-3.5" />
             </motion.button>
@@ -409,7 +409,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             whileHover={{ scale: 1.04 }}
             whileTap={{ scale: 0.95 }}
             onClick={onNewGroup}
-            className="flex items-center gap-1 bg-[#13223D] dark:bg-white text-white dark:text-[#13223D] text-xs font-semibold px-3 py-1.5 rounded-full hover:opacity-90 transition-opacity shadow-2xs"
+            className="flex items-center gap-1 bg-[#11213C] dark:bg-white text-white dark:text-[#11213C] text-xs font-semibold px-3 py-1.5 rounded-full hover:opacity-90 transition-opacity shadow-2xs"
           >
             <Plus className="w-3 h-3" />
             <span>New Split</span>
@@ -420,7 +420,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Mobile Bottom Navigation Bar */}
       <nav
         onMouseLeave={() => setMobileHoveredTab(null)}
-        className="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-5 pt-2 md:hidden bg-white/95 dark:bg-[#0f1a2e]/95 backdrop-blur-lg border-t border-[#DCEAF5] dark:border-[#203652] shadow-[0_-4px_24px_rgba(0,0,0,0.06)] dark:shadow-[0_-4px_24px_rgba(0,0,0,0.3)] transition-colors"
+        className="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-5 pt-2 md:hidden bg-white/95 dark:bg-[#0f1a2e]/95 backdrop-blur-lg border-t border-[#DCE6F1] dark:border-[#203652] shadow-[0_-4px_24px_rgba(0,0,0,0.06)] dark:shadow-[0_-4px_24px_rgba(0,0,0,0.3)] transition-colors"
       >
         {navItems.map((item) => {
           const isActive = activeTab === item.id;
@@ -440,7 +440,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               transition={{ type: 'spring', stiffness: 450, damping: 25 }}
               className={`relative flex flex-col items-center justify-center px-5 py-2 rounded-2xl transition-colors cursor-pointer ${
                 isActive || isHovered
-                  ? 'text-[#13223D] dark:text-white font-semibold'
+                  ? 'text-[#11213C] dark:text-white font-semibold'
                   : 'text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
               }`}
             >
@@ -455,8 +455,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   }}
                   className={`absolute inset-0 rounded-2xl border transition-colors ${
                     isActive
-                      ? 'bg-[#EAF3FB] dark:bg-[#203652] border-[#DCEAF5] dark:border-[#2A4365] shadow-2xs'
-                      : 'bg-[#F7F9FC] dark:bg-[#203652]/70 border-[#DCEAF5]/60 dark:border-[#2A4365]/60'
+                      ? 'bg-[#E9EFF8] dark:bg-[#203652] border-[#DCE6F1] dark:border-[#2A4365] shadow-2xs'
+                      : 'bg-[#F8F9FB] dark:bg-[#203652]/70 border-[#DCE6F1]/60 dark:border-[#2A4365]/60'
                   }`}
                 />
               )}

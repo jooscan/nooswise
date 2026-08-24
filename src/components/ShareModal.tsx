@@ -112,7 +112,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
   return (
     <div
       onClick={onClose}
-      className="fixed inset-0 z-50 bg-[#13223D]/70 dark:bg-black/85 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto cursor-pointer"
+      className="fixed inset-0 z-50 bg-[#11213C]/70 dark:bg-black/85 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto cursor-pointer"
     >
       <motion.div
         onClick={(e) => e.stopPropagation()}
@@ -120,26 +120,26 @@ export const ShareModal: React.FC<ShareModalProps> = ({
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.94, y: 15 }}
         transition={{ type: 'spring', stiffness: 420, damping: 30 }}
-        className="bg-white dark:bg-[#13223D] w-full max-w-md rounded-[32px] p-6 sm:p-8 shadow-2xl border border-[#DCEAF5] dark:border-[#2A4365] flex flex-col gap-4 my-auto transition-colors text-[#13223D] dark:text-[#F7F9FC] cursor-default"
+        className="bg-white dark:bg-[#11213C] w-full max-w-md rounded-[32px] p-6 sm:p-8 shadow-2xl border border-[#DCE6F1] dark:border-[#2A4365] flex flex-col gap-4 my-auto transition-colors text-[#11213C] dark:text-[#F8F9FB] cursor-default"
       >
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-2xl bg-[#EAF3FB] dark:bg-[#203652] flex items-center justify-center text-[#13223D] dark:text-[#8FD4F2] border border-[#DCEAF5] dark:border-[#2A4365] shadow-2xs">
+            <div className="w-9 h-9 rounded-2xl bg-[#E9EFF8] dark:bg-[#203652] flex items-center justify-center text-[#11213C] dark:text-[#A5CFF6] border border-[#DCE6F1] dark:border-[#2A4365] shadow-2xs">
               <Share2 className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="font-display text-2xl text-[#13223D] dark:text-white leading-tight">
+              <h3 className="font-display text-2xl text-[#11213C] dark:text-white leading-tight">
                 Share Split
               </h3>
-              <p className="text-xs text-[#779DD2] dark:text-[#8FD4F2] font-medium">
+              <p className="text-xs text-[#6FA4EA] dark:text-[#A5CFF6] font-medium">
                 {group.name}
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-[#EAF3FB] dark:bg-[#203652] hover:bg-[#8FD4F2] dark:hover:bg-[#2A4365] flex items-center justify-center text-[#13223D] dark:text-white transition-colors cursor-pointer"
+            className="w-8 h-8 rounded-full bg-[#E9EFF8] dark:bg-[#203652] hover:bg-[#A5CFF6] dark:hover:bg-[#2A4365] flex items-center justify-center text-[#11213C] dark:text-white transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -151,29 +151,29 @@ export const ShareModal: React.FC<ShareModalProps> = ({
           whileTap={{ scale: 0.97 }}
           transition={{ type: 'spring', stiffness: 450, damping: 25 }}
           onClick={handleCopyInviteMessage}
-          className="w-full bg-[#13223D] dark:bg-white text-white dark:text-[#13223D] p-4 rounded-2xl flex items-center justify-between shadow-md cursor-pointer transition-all"
+          className="w-full bg-[#11213C] dark:bg-white text-white dark:text-[#11213C] p-4 rounded-2xl flex items-center justify-between shadow-md cursor-pointer transition-all"
         >
           <div className="flex items-center gap-3 text-left">
-            <div className="w-9 h-9 rounded-xl bg-white/20 dark:bg-[#13223D]/10 flex items-center justify-center text-white dark:text-[#13223D] shrink-0">
+            <div className="w-9 h-9 rounded-xl bg-white/20 dark:bg-[#11213C]/10 flex items-center justify-center text-white dark:text-[#11213C] shrink-0">
               <Sparkles className="w-5 h-5" />
             </div>
             <div>
               <p className="text-xs font-bold tracking-wide flex items-center gap-1.5">
                 <span>{copiedInvite ? 'Copied Cute Message! ✨' : 'Copy Invite Message 🦔'}</span>
               </p>
-              <p className="text-[11px] text-[#8FD4F2] dark:text-[#779DD2] font-normal truncate max-w-[220px]">
+              <p className="text-[11px] text-[#A5CFF6] dark:text-[#6FA4EA] font-normal truncate max-w-[220px]">
                 "{senderName} invited you to join {group.name}!"
               </p>
             </div>
           </div>
-          <div className="w-7 h-7 rounded-full bg-white/20 dark:bg-[#13223D]/10 flex items-center justify-center text-white dark:text-[#13223D] shrink-0">
+          <div className="w-7 h-7 rounded-full bg-white/20 dark:bg-[#11213C]/10 flex items-center justify-center text-white dark:text-[#11213C] shrink-0">
             {copiedInvite ? <Check className="w-4 h-4 stroke-[3]" /> : <Copy className="w-3.5 h-3.5" />}
           </div>
         </motion.button>
 
         {/* QR Code & Phone Scan */}
-        <div className="bg-[#F7F9FC] dark:bg-[#203652]/50 rounded-2xl p-4 border border-[#DCEAF5] dark:border-[#2A4365] flex items-center gap-4 shadow-2xs">
-          <div className="p-2 bg-white rounded-xl shadow-xs border border-[#DCEAF5] shrink-0">
+        <div className="bg-[#F8F9FB] dark:bg-[#203652]/50 rounded-2xl p-4 border border-[#DCE6F1] dark:border-[#2A4365] flex items-center gap-4 shadow-2xs">
+          <div className="p-2 bg-white rounded-xl shadow-xs border border-[#DCE6F1] shrink-0">
             <QRCodeSVG
               value={effectiveShareUrl}
               size={84}
@@ -183,23 +183,23 @@ export const ShareModal: React.FC<ShareModalProps> = ({
             />
           </div>
           <div className="min-w-0">
-            <p className="text-xs font-semibold text-[#13223D] dark:text-white flex items-center gap-1.5">
-              <QrCode className="w-3.5 h-3.5 text-[#779DD2] dark:text-[#8FD4F2]" />
+            <p className="text-xs font-semibold text-[#11213C] dark:text-white flex items-center gap-1.5">
+              <QrCode className="w-3.5 h-3.5 text-[#6FA4EA] dark:text-[#A5CFF6]" />
               <span>Scan with phone</span>
             </p>
-            <p className="text-[11px] text-[#779DD2] dark:text-[#8FD4F2] mt-1 leading-snug">
+            <p className="text-[11px] text-[#6FA4EA] dark:text-[#A5CFF6] mt-1 leading-snug">
               Point your camera to join immediately. Friends can select who they are and settle up.
             </p>
           </div>
         </div>
 
         {/* Short Direct Link Copy (Under 20 chars) */}
-        <div className="bg-[#F7F9FC] dark:bg-[#203652]/50 rounded-2xl p-3 border border-[#DCEAF5] dark:border-[#2A4365] flex flex-col gap-1.5 shadow-2xs">
+        <div className="bg-[#F8F9FB] dark:bg-[#203652]/50 rounded-2xl p-3 border border-[#DCE6F1] dark:border-[#2A4365] flex flex-col gap-1.5 shadow-2xs">
           <div className="flex items-center justify-between">
-            <label className="text-[10px] font-bold uppercase tracking-wider text-[#779DD2] dark:text-[#8FD4F2] flex items-center gap-1">
+            <label className="text-[10px] font-bold uppercase tracking-wider text-[#6FA4EA] dark:text-[#A5CFF6] flex items-center gap-1">
               <span>Direct Link</span>
             </label>
-            <span className="text-[10px] text-[#779DD2] dark:text-[#8FD4F2]">
+            <span className="text-[10px] text-[#6FA4EA] dark:text-[#A5CFF6]">
               Instant ready
             </span>
           </div>
@@ -209,12 +209,12 @@ export const ShareModal: React.FC<ShareModalProps> = ({
               readOnly
               value={displayLink}
               onClick={(e) => (e.target as HTMLInputElement).select()}
-              className="flex-1 bg-white dark:bg-[#13223D] text-xs font-sans font-medium text-[#13223D] dark:text-white rounded-xl px-3 py-2 border border-[#DCEAF5] dark:border-[#2A4365] focus:outline-none select-all truncate"
+              className="flex-1 bg-white dark:bg-[#11213C] text-xs font-sans font-medium text-[#11213C] dark:text-white rounded-xl px-3 py-2 border border-[#DCE6F1] dark:border-[#2A4365] focus:outline-none select-all truncate"
             />
             <motion.button
               whileTap={{ scale: 0.95 }}
               onClick={handleCopyLinkOnly}
-              className="bg-[#13223D] dark:bg-white text-white dark:text-[#13223D] text-xs font-semibold px-3.5 py-2 rounded-xl hover:opacity-90 transition-all flex items-center gap-1.5 shrink-0 cursor-pointer shadow-xs"
+              className="bg-[#11213C] dark:bg-white text-white dark:text-[#11213C] text-xs font-semibold px-3.5 py-2 rounded-xl hover:opacity-90 transition-all flex items-center gap-1.5 shrink-0 cursor-pointer shadow-xs"
             >
               {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-400 dark:text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
               <span>{copiedLink ? 'Copied' : 'Copy'}</span>
@@ -227,32 +227,32 @@ export const ShareModal: React.FC<ShareModalProps> = ({
           <motion.button
             whileTap={{ scale: 0.98 }}
             onClick={handleCopySummary}
-            className="bg-[#F7F9FC] dark:bg-[#203652]/40 hover:bg-[#EAF3FB] dark:hover:bg-[#203652] p-2.5 rounded-2xl flex items-center gap-2 border border-[#DCEAF5] dark:border-[#2A4365] transition-colors text-left cursor-pointer"
+            className="bg-[#F8F9FB] dark:bg-[#203652]/40 hover:bg-[#E9EFF8] dark:hover:bg-[#203652] p-2.5 rounded-2xl flex items-center gap-2 border border-[#DCE6F1] dark:border-[#2A4365] transition-colors text-left cursor-pointer"
           >
-            <div className="w-7 h-7 rounded-lg bg-[#EAF3FB] dark:bg-[#203652] text-[#13223D] dark:text-[#8FD4F2] flex items-center justify-center shrink-0">
+            <div className="w-7 h-7 rounded-lg bg-[#E9EFF8] dark:bg-[#203652] text-[#11213C] dark:text-[#A5CFF6] flex items-center justify-center shrink-0">
               <FileText className="w-3.5 h-3.5" />
             </div>
             <div className="min-w-0">
-              <p className="text-[11px] font-semibold text-[#13223D] dark:text-white truncate">
+              <p className="text-[11px] font-semibold text-[#11213C] dark:text-white truncate">
                 {copiedSummary ? 'Copied Breakdown!' : 'Tally Breakdown'}
               </p>
-              <p className="text-[10px] text-[#779DD2] dark:text-[#8FD4F2] truncate">Text summary</p>
+              <p className="text-[10px] text-[#6FA4EA] dark:text-[#A5CFF6] truncate">Text summary</p>
             </div>
           </motion.button>
 
           <motion.button
             whileTap={{ scale: 0.98 }}
             onClick={handleDownloadJSON}
-            className="bg-[#F7F9FC] dark:bg-[#203652]/40 hover:bg-[#EAF3FB] dark:hover:bg-[#203652] p-2.5 rounded-2xl flex items-center gap-2 border border-[#DCEAF5] dark:border-[#2A4365] transition-colors text-left cursor-pointer"
+            className="bg-[#F8F9FB] dark:bg-[#203652]/40 hover:bg-[#E9EFF8] dark:hover:bg-[#203652] p-2.5 rounded-2xl flex items-center gap-2 border border-[#DCE6F1] dark:border-[#2A4365] transition-colors text-left cursor-pointer"
           >
-            <div className="w-7 h-7 rounded-lg bg-[#EAF3FB] dark:bg-[#203652] text-[#13223D] dark:text-[#8FD4F2] flex items-center justify-center shrink-0">
+            <div className="w-7 h-7 rounded-lg bg-[#E9EFF8] dark:bg-[#203652] text-[#11213C] dark:text-[#A5CFF6] flex items-center justify-center shrink-0">
               <Download className="w-3.5 h-3.5" />
             </div>
             <div className="min-w-0">
-              <p className="text-[11px] font-semibold text-[#13223D] dark:text-white truncate">
+              <p className="text-[11px] font-semibold text-[#11213C] dark:text-white truncate">
                 Export JSON
               </p>
-              <p className="text-[10px] text-[#779DD2] dark:text-[#8FD4F2] truncate">Offline backup</p>
+              <p className="text-[10px] text-[#6FA4EA] dark:text-[#A5CFF6] truncate">Offline backup</p>
             </div>
           </motion.button>
         </div>
@@ -260,7 +260,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
         <motion.button
           whileTap={{ scale: 0.98 }}
           onClick={onClose}
-          className="w-full bg-[#EAF3FB] dark:bg-[#203652] hover:bg-[#8FD4F2] dark:hover:bg-[#2A4365] text-[#13223D] dark:text-white text-xs font-semibold py-2.5 rounded-full cursor-pointer transition-colors"
+          className="w-full bg-[#E9EFF8] dark:bg-[#203652] hover:bg-[#A5CFF6] dark:hover:bg-[#2A4365] text-[#11213C] dark:text-white text-xs font-semibold py-2.5 rounded-full cursor-pointer transition-colors"
         >
           Done
         </motion.button>
