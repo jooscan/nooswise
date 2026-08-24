@@ -1,5 +1,9 @@
-# Runs on the e2-micro VM. Three containers on one box: Postgres, the app, and Caddy
-# terminating TLS in front of it.
+# Runs on the e2-micro VM. Three containers on one box: Postgres, the app, and
+# cloudflared, which dials OUT to Cloudflare and tunnels traffic back in.
+#
+# There is no reverse proxy listening on a public port here, because there is no
+# public port: the VM has no external IP at all. cloudflared is the only thing
+# that talks to the internet, and it does so outbound-only.
 #
 #   docker compose -f docker-compose.prod.yml up -d
 #
@@ -21,7 +25,7 @@ services:
       - pgdata:/var/lib/postgresql/data
       - ./deploy/postgres.conf:/etc/postgresql/postgresql.conf:ro
     # No `ports:` — Postgres is reachable only from the app container on the internal
-    # network. Publishing 5432 would expose it to the internet through the VM's IP.
+    # network. There is no external IP on this VM for it to be exposed on anyway.
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
       interval: 10s
@@ -62,26 +66,15 @@ services:
       start_period: 20s
     logging: *logging
 
-  caddy:
-    image: caddy:2-alpine
+  cloudflared:
+    image: cloudflare/cloudflared:latest
     restart: unless-stopped
-    ports:
-      - '80:80'
-      - '443:443'
+    command: tunnel run
     environment:
-      NOOSWISE_DOMAIN: ${NOOSWISE_DOMAIN}
-      NOOSWISE_ACME_EMAIL: ${NOOSWISE_ACME_EMAIL}
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      # Certificates live here. Losing this volume means re-requesting from Let's
-      # Encrypt, which is rate limited — do not prune it casually.
-      - caddy_data:/data
-      - caddy_config:/config
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
     depends_on:
       - app
     logging: *logging
 
 volumes:
   pgdata:
-  caddy_data:
-  caddy_config:

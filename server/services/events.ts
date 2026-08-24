@@ -36,7 +36,8 @@ export function subscribe(
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache, no-transform');
   res.setHeader('Connection', 'keep-alive');
-  // Caddy buffers proxied responses by default; this asks it not to.
+  // Harmless no-op through Cloudflare, but keeps this safe if it ever sits behind
+  // another buffering proxy (nginx, an older Caddy config, etc).
   res.setHeader('X-Accel-Buffering', 'no');
   res.flushHeaders?.();
 
