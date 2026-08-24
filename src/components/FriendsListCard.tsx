@@ -89,14 +89,14 @@ export const FriendsListCard: React.FC<FriendsListCardProps> = ({
               <div className="flex items-center gap-1.5 shrink-0 pl-2">
                 <div className="text-right">
                   {isPositive && (
-                    <span className="text-[11px] font-semibold text-[#EAA2A8] dark:text-[#EAA2A8] flex items-center gap-0.5">
+                    <span className="text-[11px] font-semibold text-[#6FA4EA] dark:text-[#A5CFF6] flex items-center gap-0.5">
                       <ArrowUp className="w-2.5 h-2.5" />
                       <span>+{formatCurrency(netBalance, group.currency)}</span>
                     </span>
                   )}
 
                   {isNegative && (
-                    <span className="text-[11px] font-semibold text-[#6FA4EA] dark:text-[#A5CFF6] flex items-center gap-0.5">
+                    <span className="text-[11px] font-semibold text-[#EAA2A8] dark:text-[#EAA2A8] flex items-center gap-0.5">
                       <ArrowDown className="w-2.5 h-2.5" />
                       <span>-{formatCurrency(Math.abs(netBalance), group.currency)}</span>
                     </span>

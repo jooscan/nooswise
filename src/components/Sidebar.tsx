@@ -250,13 +250,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     <div className="flex items-center gap-1 shrink-0 pl-1.5">
                       <div className="text-right font-sans font-semibold">
                         {isPositive && (
-                          <span className="text-[11px] text-[#EAA2A8] dark:text-[#EAA2A8] tracking-tight">
+                          <span className="text-[11px] text-[#6FA4EA] dark:text-[#A5CFF6] tracking-tight">
                             +{formatCurrency(netBalance, group.currency)}
                           </span>
                         )}
 
                         {isNegative && (
-                          <span className="text-[11px] text-[#6FA4EA] dark:text-[#A5CFF6] tracking-tight">
+                          <span className="text-[11px] text-[#EAA2A8] dark:text-[#EAA2A8] tracking-tight">
                             -{formatCurrency(Math.abs(netBalance), group.currency)}
                           </span>
                         )}

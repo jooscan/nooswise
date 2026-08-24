@@ -160,9 +160,9 @@ export const HeroBalanceCard: React.FC<HeroBalanceCardProps> = ({
             <span
               className={`text-xs sm:text-sm font-bold tracking-wider uppercase font-sans ${
                 owes
-                  ? 'text-[#A5CFF6]'
-                  : isOwed
                   ? 'text-[#EAA2A8]'
+                  : isOwed
+                  ? 'text-[#A5CFF6]'
                   : 'text-[#6FA4EA]'
               }`}
             >
