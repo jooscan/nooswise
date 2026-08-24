@@ -1,5 +1,5 @@
 import React from 'react';
-import logoImg from '../assets/images/nooswise_balloon_logo_1787160186190.jpg';
+import logoImg from '../assets/images/nooswise_logo_icon.png';
 
 interface LogoProps {
   size?: number | string;
@@ -10,7 +10,7 @@ export const Logo: React.FC<LogoProps> = ({ size = 36, className = '' }) => {
   return (
     <div
       style={{ width: size, height: size }}
-      className={`relative rounded-full overflow-hidden shrink-0 shadow-xs border border-slate-200/90 dark:border-slate-700/90 select-none bg-sky-100 dark:bg-sky-950 ${className}`}
+      className={`relative rounded-full overflow-hidden shrink-0 select-none bg-[#8FD4F2]/25 ${className}`}
     >
       <img
         src={logoImg}
@@ -21,5 +21,3 @@ export const Logo: React.FC<LogoProps> = ({ size = 36, className = '' }) => {
     </div>
   );
 };
-
-
