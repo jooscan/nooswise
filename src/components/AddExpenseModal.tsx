@@ -3,6 +3,7 @@ import { Expense, ExpenseCategory, Group, Member, SplitType } from '../types';
 import { CuteAvatarBadge } from './CuteAvatarBadge';
 import { SUPPORTED_CURRENCIES, convertCurrency, formatMoney, getCurrencySymbol } from '../utils/currency';
 import { CurrencyPicker } from './CurrencyPicker';
+import { useLockBodyScroll } from '../hooks/useLockBodyScroll';
 import {
   X,
   ArrowRight,
@@ -386,6 +387,8 @@ export const AddExpenseModal: React.FC<AddExpenseModalProps> = ({
     isForeignCurrency,
     conversion,
   ]);
+
+  useLockBodyScroll(isOpen);
 
   if (!isOpen) return null;
 

@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { motion } from 'motion/react';
 import { X, Command, Keyboard } from 'lucide-react';
+import { useLockBodyScroll } from '../hooks/useLockBodyScroll';
 
 interface KeyboardShortcutsModalProps {
   isOpen: boolean;
@@ -22,6 +23,8 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
+
+  useLockBodyScroll(isOpen);
 
   if (!isOpen) return null;
 

@@ -15,6 +15,7 @@ import {
   Receipt,
 } from 'lucide-react';
 import { motion } from 'motion/react';
+import { useLockBodyScroll } from '../hooks/useLockBodyScroll';
 
 interface ExpenseDetailModalProps {
   expense: Expense | null;
@@ -43,6 +44,8 @@ export const ExpenseDetailModal: React.FC<ExpenseDetailModalProps> = ({
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onClose]);
+
+  useLockBodyScroll(!!expense);
 
   if (!expense) return null;
 

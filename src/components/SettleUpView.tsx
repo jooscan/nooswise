@@ -11,6 +11,7 @@ import { CircularFinancingModal } from './CircularFinancingModal';
 import { RemindModal } from './RemindModal';
 import { copyToClipboard } from '../utils/clipboard';
 import confetti from 'canvas-confetti';
+import { useLockBodyScroll } from '../hooks/useLockBodyScroll';
 import {
   Check,
   Copy,
@@ -85,6 +86,8 @@ export const SettleUpView: React.FC<SettleUpViewProps> = ({
   const [paymentMethod, setPaymentMethod] = useState<'etransfer' | 'cash' | 'venmo' | 'revolut'>(
     'etransfer'
   );
+
+  useLockBodyScroll(!!activeSettleDebt);
 
   // Calculate simplified debts
   const debts = calculateSimplifiedDebts(group);

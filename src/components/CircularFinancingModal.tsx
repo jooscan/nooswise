@@ -1,5 +1,6 @@
 import React from 'react';
 import { X, Sparkles, CheckCircle2, MessageCircleQuestion } from 'lucide-react';
+import { useLockBodyScroll } from '../hooks/useLockBodyScroll';
 
 interface CircularFinancingModalProps {
   isOpen: boolean;
@@ -10,6 +11,8 @@ export const CircularFinancingModal: React.FC<CircularFinancingModalProps> = ({
   isOpen,
   onClose,
 }) => {
+  useLockBodyScroll(isOpen);
+
   if (!isOpen) return null;
 
   return (

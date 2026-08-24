@@ -17,6 +17,7 @@ import {
   Sparkles,
   CheckCircle2,
 } from 'lucide-react';
+import { useLockBodyScroll } from '../hooks/useLockBodyScroll';
 
 interface PaymentSummaryModalProps {
   isOpen: boolean;
@@ -76,6 +77,8 @@ Nooswise · no spreadsheets needed ✨`
       handleCopy();
     }
   };
+
+  useLockBodyScroll(isOpen);
 
   if (!isOpen || !group) return null;
 

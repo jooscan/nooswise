@@ -5,6 +5,7 @@ import { formatCurrency } from '../utils/debtSimplification';
 import { copyToClipboard } from '../utils/clipboard';
 import { CuteAvatarBadge } from './CuteAvatarBadge';
 import { X, Copy, Check, MessageCircle, Heart, Sparkles } from 'lucide-react';
+import { useLockBodyScroll } from '../hooks/useLockBodyScroll';
 
 interface RemindModalProps {
   isOpen: boolean;
@@ -95,6 +96,8 @@ export const RemindModal: React.FC<RemindModalProps> = ({
     const encoded = encodeURIComponent(customMessage);
     window.open(`https://wa.me/?text=${encoded}`, '_blank');
   };
+
+  useLockBodyScroll(isOpen);
 
   if (!isOpen) return null;
 
