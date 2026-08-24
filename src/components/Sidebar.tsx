@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { motion } from 'motion/react';
 import { Logo } from './Logo';
 import { ThemeToggle } from './ThemeToggle';
@@ -34,6 +34,7 @@ interface SidebarProps {
   onInviteFriends?: () => void;
   onMemberClick?: (member: Member) => void;
   onSwitchIdentityClick?: () => void;
+  onAddMember?: (name: string) => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -49,9 +50,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onInviteFriends,
   onMemberClick,
   onSwitchIdentityClick,
+  onAddMember,
 }) => {
   const [hoveredTab, setHoveredTab] = useState<ActiveTab | null>(null);
   const [mobileHoveredTab, setMobileHoveredTab] = useState<ActiveTab | null>(null);
+  const [isAddingPerson, setIsAddingPerson] = useState(false);
+  const [newPersonName, setNewPersonName] = useState('');
+  const addPersonInputRef = useRef<HTMLInputElement>(null);
+
+  const handleAddPerson = (e: React.FormEvent) => {
+    e.preventDefault();
+    const name = newPersonName.trim();
+    if (!name || !onAddMember) return;
+    onAddMember(name);
+    setNewPersonName('');
+    setIsAddingPerson(false);
+  };
 
   const navItems = [
     { id: 'expenses' as const, label: 'Expenses', icon: ReceiptText },
@@ -245,6 +259,54 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 );
               })}
             </div>
+
+            {/* Manually add someone who isn't going to use the app themselves */}
+            {onAddMember && (
+              <div className="pt-1.5 mt-1.5 border-t border-[#DCE6F2]/70 dark:border-[#203652]/70">
+                {isAddingPerson ? (
+                  <form onSubmit={handleAddPerson} className="flex items-center gap-1.5">
+                    <input
+                      ref={addPersonInputRef}
+                      type="text"
+                      autoFocus
+                      value={newPersonName}
+                      onChange={(e) => setNewPersonName(e.target.value)}
+                      onBlur={() => {
+                        if (!newPersonName.trim()) setIsAddingPerson(false);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Escape') {
+                          setNewPersonName('');
+                          setIsAddingPerson(false);
+                        }
+                      }}
+                      placeholder="Name..."
+                      className="flex-1 min-w-0 bg-[#F7FAFD] dark:bg-[#203652] text-xs font-medium px-2.5 py-1.5 rounded-full border border-[#DCE6F2] dark:border-[#2A4365] focus:outline-none focus:ring-2 focus:ring-[#B4D0EE] dark:focus:ring-[#3B5B88] text-[#16273F] dark:text-white placeholder:text-[#6E8CB4]"
+                    />
+                    <button
+                      type="submit"
+                      disabled={!newPersonName.trim()}
+                      className="w-7 h-7 rounded-full bg-[#16273F] dark:bg-white text-white dark:text-[#16273F] flex items-center justify-center shrink-0 disabled:opacity-40 cursor-pointer"
+                      title="Add person"
+                    >
+                      <Check className="w-3.5 h-3.5" />
+                    </button>
+                  </form>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsAddingPerson(true);
+                      setTimeout(() => addPersonInputRef.current?.focus(), 50);
+                    }}
+                    className="w-full flex items-center gap-1.5 px-2 py-1.5 rounded-xl text-[11px] font-semibold text-[#6E8CB4] hover:text-[#16273F] dark:hover:text-white hover:bg-[#F7FAFD] dark:hover:bg-[#203652]/60 transition-colors cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Add person</span>
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         )}
 

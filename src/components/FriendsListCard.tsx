@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import { Group, Member } from '../types';
 import { calculateMemberBalances, formatCurrency } from '../utils/debtSimplification';
 import { CuteAvatarBadge } from './CuteAvatarBadge';
-import { Check, UserPlus, ArrowUp, ArrowDown } from 'lucide-react';
+import { Check, UserPlus, Plus, ArrowUp, ArrowDown } from 'lucide-react';
 import { motion } from 'motion/react';
 
 interface FriendsListCardProps {
@@ -10,6 +10,7 @@ interface FriendsListCardProps {
   onInviteClick: () => void;
   onSwitchIdentityClick?: () => void;
   onMemberClick?: (member: Member) => void;
+  onAddMember?: (name: string) => void;
 }
 
 export const FriendsListCard: React.FC<FriendsListCardProps> = ({
@@ -17,8 +18,21 @@ export const FriendsListCard: React.FC<FriendsListCardProps> = ({
   onInviteClick,
   onSwitchIdentityClick,
   onMemberClick,
+  onAddMember,
 }) => {
   const balances = calculateMemberBalances(group);
+  const [isAddingPerson, setIsAddingPerson] = useState(false);
+  const [newPersonName, setNewPersonName] = useState('');
+  const addPersonInputRef = useRef<HTMLInputElement>(null);
+
+  const handleAddPerson = (e: React.FormEvent) => {
+    e.preventDefault();
+    const name = newPersonName.trim();
+    if (!name || !onAddMember) return;
+    onAddMember(name);
+    setNewPersonName('');
+    setIsAddingPerson(false);
+  };
 
   return (
     <div className="bg-white dark:bg-[#16273F] rounded-[30px] p-5 sm:p-6 border border-[#DCE6F2] dark:border-[#2A4365] brand-card-shadow transition-colors">
@@ -88,6 +102,54 @@ export const FriendsListCard: React.FC<FriendsListCardProps> = ({
           );
         })}
       </div>
+
+      {/* Manually add someone who isn't going to use the app themselves */}
+      {onAddMember && (
+        <div className="mb-3">
+          {isAddingPerson ? (
+            <form onSubmit={handleAddPerson} className="flex items-center gap-1.5">
+              <input
+                ref={addPersonInputRef}
+                type="text"
+                autoFocus
+                value={newPersonName}
+                onChange={(e) => setNewPersonName(e.target.value)}
+                onBlur={() => {
+                  if (!newPersonName.trim()) setIsAddingPerson(false);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') {
+                    setNewPersonName('');
+                    setIsAddingPerson(false);
+                  }
+                }}
+                placeholder="Name..."
+                className="flex-1 min-w-0 bg-[#F7FAFD] dark:bg-[#203652] text-xs font-medium px-3 py-2 rounded-full border border-[#DCE6F2] dark:border-[#2A4365] focus:outline-none focus:ring-2 focus:ring-[#B4D0EE] dark:focus:ring-[#3B5B88] text-[#16273F] dark:text-white placeholder:text-[#6E8CB4]"
+              />
+              <button
+                type="submit"
+                disabled={!newPersonName.trim()}
+                className="w-8 h-8 rounded-full bg-[#16273F] dark:bg-white text-white dark:text-[#16273F] flex items-center justify-center shrink-0 disabled:opacity-40 cursor-pointer"
+                title="Add person"
+              >
+                <Check className="w-3.5 h-3.5" />
+              </button>
+            </form>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                setIsAddingPerson(true);
+                setTimeout(() => addPersonInputRef.current?.focus(), 50);
+              }}
+              className="w-full flex items-center justify-center gap-1.5 py-2 rounded-full text-[11px] font-semibold text-[#6E8CB4] hover:text-[#16273F] dark:hover:text-white hover:bg-[#F7FAFD] dark:hover:bg-[#203652]/60 transition-colors cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Add person</span>
+            </button>
+          )}
+        </div>
+      )}
 
       <motion.button
         whileHover={{ scale: 1.02, y: -1 }}
