@@ -16,6 +16,8 @@ if [[ ! -f .env ]]; then
   exit 1
 fi
 
+set -a; source .env; set +a
+
 echo "==> Pulling latest code"
 git pull --ff-only
 
@@ -23,19 +25,31 @@ TAG="$(git rev-parse --short HEAD)"
 export NOOSWISE_TAG="$TAG"
 echo "==> Deploying $TAG"
 
-echo "==> Taking a safety dump before migrating"
-# Migrations are forward-only. If one is destructive and wrong, this is what saves you.
-bash deploy/backup.sh --label "pre-deploy-$TAG" || {
-  echo "Backup failed. Refusing to migrate without one." >&2
-  exit 1
-}
-
 echo "==> Building app image"
 $COMPOSE build app
 
+# Db has to be up before the safety dump can run against it. On a first-ever deploy
+# this brings up an empty database and backs up essentially nothing — that's fine, the
+# point is to never migrate against an unbacked-up *existing* database.
 echo "==> Ensuring database is up"
 $COMPOSE up -d db
 $COMPOSE exec -T db sh -c 'until pg_isready -q; do sleep 1; done'
+
+# On the very first deploy nothing has been migrated yet, so there's no schema and no
+# data to protect — and backup.sh would refuse to upload that dump anyway, since it
+# checks for the groups table as a sanity check that a dump is real. Every deploy after
+# this one finds the table and takes the safety dump as normal.
+if $COMPOSE exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -tAc \
+     "select to_regclass('public.groups') is not null" 2>/dev/null | grep -q t; then
+  echo "==> Taking a safety dump before migrating"
+  # Migrations are forward-only. If one is destructive and wrong, this is what saves you.
+  bash deploy/backup.sh --label "pre-deploy-$TAG" || {
+    echo "Backup failed. Refusing to migrate without one." >&2
+    exit 1
+  }
+else
+  echo "==> No existing schema yet — first deploy, nothing to back up"
+fi
 
 echo "==> Running migrations"
 # A one-shot container on the new image, so the schema always matches the code about
