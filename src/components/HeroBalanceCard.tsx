@@ -461,21 +461,22 @@ export const HeroBalanceCard: React.FC<HeroBalanceCardProps> = ({
                     key={debt.id}
                     whileHover={{ y: -2 }}
                     transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-                    className="bg-[#203652]/70 hover:bg-[#203652] border border-[#2A4365] rounded-[22px] p-3.5 sm:p-4 flex items-center justify-between gap-3 transition-colors backdrop-blur-xs shadow-2xs"
+                    className="bg-[#203652]/70 hover:bg-[#203652] border border-[#2A4365] rounded-[22px] p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-colors backdrop-blur-xs shadow-2xs"
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
                       <CuteAvatarBadge member={debt.fromMember} size="sm" />
                       <div className="flex flex-col min-w-0">
-                        <span className="text-xs text-[#E88A72] font-medium">
+                        <span className="text-xs text-[#E88A72] font-medium truncate">
                           {debt.fromMember.name} has
                         </span>
-                        <span className="font-sans font-bold text-base sm:text-lg text-white">
-                          {formatCurrency(debt.amount, group.currency)} for you
+                        <span className="font-sans font-bold text-base sm:text-lg text-white truncate">
+                          {formatCurrency(debt.amount, group.currency)}
+                          <span className="font-normal text-[#B4D0EE] text-xs sm:text-sm ml-1">for you</span>
                         </span>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
                       <motion.button
                         whileTap={{ scale: 0.94 }}
                         onClick={() => onRemindClick(debt.fromMember, debt.amount)}
