@@ -384,7 +384,7 @@ export const HeroBalanceCard: React.FC<HeroBalanceCardProps> = ({
                 </span>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
                 {/* People You Owe -> "Settle" */}
                 {youOweList.map((debt) => {
                   const targetEmail = debt.toMember.paymentHandle || debt.toMember.email || '';

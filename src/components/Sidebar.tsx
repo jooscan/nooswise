@@ -64,7 +64,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     if (!name || !onAddMember) return;
     onAddMember(name);
     setNewPersonName('');
-    setIsAddingPerson(false);
+    // Keep the bar open and refocused so [type] [enter] [type] [enter] adds people back-to-back.
+    addPersonInputRef.current?.focus();
   };
 
   const navItems = [

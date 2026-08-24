@@ -31,7 +31,8 @@ export const FriendsListCard: React.FC<FriendsListCardProps> = ({
     if (!name || !onAddMember) return;
     onAddMember(name);
     setNewPersonName('');
-    setIsAddingPerson(false);
+    // Keep the bar open and refocused so [type] [enter] [type] [enter] adds people back-to-back.
+    addPersonInputRef.current?.focus();
   };
 
   return (
