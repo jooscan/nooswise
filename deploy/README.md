@@ -1,32 +1,46 @@
 # Deploying nooswise
 
-One always-free `e2-micro` VM running Postgres, the app, and Caddy under Docker Compose.
-Caddy terminates TLS with an automatically-renewed Let's Encrypt certificate.
+One always-free `e2-micro` VM running Postgres, the app, and a Cloudflare Tunnel under
+Docker Compose. Cloudflare terminates TLS and routes traffic to the tunnel; nothing
+inbound ever reaches the VM directly.
 
 Most of this is already done for the `nooswise` project — see **"What's already set up"**
-below, and skip to step 5.
+below, then skip to step 4.
 
-## Cost
+## Cost: $0/month
 
-The VM, its disk, and the backup bucket are all inside Google Cloud's Always Free tier.
-The one thing that isn't: **an in-use external IPv4 address, ~$0.005/hr (~$3.65/mo)**.
+Everything here fits inside Google Cloud's Always Free tier, including the external IP.
+That last part is easy to get wrong, so it's worth writing down.
 
-That is effectively unavoidable, and it's worth understanding why, because it's not
-obvious:
+**The external IP is free, but only because of two specific choices:**
 
-- A VM created with `--no-address` has **no internet access at all** — not just no
-  inbound, no *outbound* either. It can't `apt-get`, `docker pull`, or `git clone`.
-- Cloud NAT solves that but costs ~$32+/mo, far more than the IP.
-- **IPv6-only doesn't work**: GitHub publishes no `AAAA` record at all, so `git clone`
-  and the `git pull` in `deploy/update.sh` would fail. (Docker Hub and Debian's mirrors
-  are fine over IPv6 — GitHub is the blocker.)
+Google's billing catalog has two separate SKUs (verified against the Cloud Billing
+Catalog API, service `6F81-5844-456A`):
 
-Cloudflare Tunnel was evaluated as a way to avoid the charge and **does not**, for the
-same reason: the VM still needs outbound access to dial out to Cloudflare in the first
-place.
+| SKU | Free tier | Then |
+|---|---|---|
+| `External IP Charge on a Standard VM` | first **744 hours/month** | $0.005/hr |
+| `Static Ip Charge` | first **1 hour** | $0.010/hr |
 
-So: ~$3.65/mo, plus the domain. Check your billing page after the first day to confirm
-that's the only line item.
+744 hours is exactly one month, so **one** continuously-running VM's external IP is
+free. A second one would be billed. And the IP must be **ephemeral, not a reserved
+static address** — reserving one moves it to the second SKU, which is ~$7.30/mo.
+
+So: don't reserve a static IP, and don't run a second VM with an external IP.
+
+**Why the VM needs an external IP at all**, given the tunnel: a VM created with
+`--no-address` has no internet access in *either* direction. It can't `apt-get`,
+`docker pull`, or `git clone` — and `cloudflared` can't dial out to establish the tunnel
+either. Cloud NAT provides outbound without an IP but costs ~$32+/mo. IPv6-only is free
+but breaks `git clone`, because github.com publishes no `AAAA` record.
+
+**Why the tunnel, then, if the IP is free either way?** Because the IP is ephemeral, it
+changes whenever the VM is stopped and started. With a reverse proxy and an A record
+that would silently break the site until DNS was updated by hand. With the tunnel there
+is no DNS record pointing at the IP, so nothing goes stale. It also means ports 80 and
+443 are never opened at all.
+
+The only recurring cost is the domain.
 
 ---
 
@@ -34,28 +48,26 @@ that's the only line item.
 
 For the `nooswise` GCP project, these steps are done:
 
-- Project `nooswise`, billing linked, APIs enabled (`compute`, `storage`, `iap`)
+- Project `nooswise`, billing linked, APIs enabled (`compute`, `storage`, `iap`, `cloudbilling`)
 - VM `nooswise` in `us-east1-b`: `e2-micro`, 30GB `pd-standard`, Debian 12, tag `nooswise-app`
+- **Ephemeral** external IP for outbound only (currently `34.24.109.34`, expected to change)
 - 2 GB swap file, Docker + Compose, gcloud CLI, unattended security upgrades
 - Repo cloned to `~/nooswise` on the VM
-- Firewall: `allow-iap-ssh` (port 22, scoped to Google's IAP relay range only)
+- Firewall: `allow-iap-ssh` only — port 22 scoped to Google's IAP relay range
 - **GCP's `default-allow-ssh` and `default-allow-rdp` rules deleted** — new projects get
   these automatically and they open ports 22 and 3389 to `0.0.0.0/0`. Worth checking for
   on any new GCP project.
 - Backup bucket `gs://nooswise-backups`, 30-day lifecycle, VM service account has write access
 
-**Still to do: steps 3 (DNS), 4 (firewall for HTTP/HTTPS), and 5 onward.**
+**Still to do: steps 3 (create the tunnel) and 4 onward.**
 
 ---
 
 ## 0. Before you start
 
-Set these once so the commands below can be pasted as-is:
-
 ```bash
 export PROJECT_ID=nooswise
 export ZONE=us-east1-b
-export DOMAIN=your-domain.example.com
 ```
 
 ---
@@ -72,13 +84,14 @@ gcloud config set project "$PROJECT_ID" && gcloud services enable compute.google
 
 **Every flag matters for staying free.** `e2-micro` is the only free machine type, only
 `us-west1`/`us-central1`/`us-east1` qualify, and the free 30 GB allowance covers
-`pd-standard` only — `pd-balanced` is the default and is billed.
+`pd-standard` only — `pd-balanced` is the default and is billed. Note there is no
+`--address` flag, so the IP is ephemeral.
 
 ```bash
 gcloud compute instances create nooswise --zone="$ZONE" --machine-type=e2-micro --boot-disk-type=pd-standard --boot-disk-size=30GB --image-family=debian-12 --image-project=debian-cloud --tags=nooswise-app --scopes=storage-rw
 ```
 
-SSH is via IAP, so port 22 never needs opening to the internet:
+SSH via IAP, so port 22 is never open to the internet:
 
 ```bash
 gcloud compute firewall-rules create allow-iap-ssh --direction=INGRESS --action=ALLOW --rules=tcp:22 --source-ranges=35.235.240.0/20 --target-tags=nooswise-app --network=default
@@ -90,45 +103,31 @@ Then delete the wide-open defaults GCP creates for you:
 gcloud compute firewall-rules delete default-allow-ssh default-allow-rdp --quiet
 ```
 
----
-
-## 3. Point your domain at the VM
-
-Get the external IP:
-
-```bash
-gcloud compute instances describe nooswise --zone="$ZONE" --format='get(networkInterfaces[0].accessConfigs[0].natIP)'
-```
-
-At Cloudflare (your registrar), create an **A record** for your hostname pointing at that IP.
-
-**Set the record to "DNS only" (grey cloud), not "Proxied" (orange cloud).** Caddy needs
-to reach Let's Encrypt directly to prove it controls the domain; proxying breaks that
-challenge. You can switch it to proxied later once the certificate exists, if you want
-Cloudflare in front.
-
-Wait until this returns the VM's IP before continuing — Let's Encrypt rate-limits failures:
-
-```bash
-dig +short "$DOMAIN"
-```
+**No HTTP/HTTPS firewall rule is needed** — the tunnel is outbound-only, so there is
+nothing to open.
 
 ---
 
-## 4. Open HTTP and HTTPS
+## 3. Create the Cloudflare Tunnel
 
-Only do this once DNS resolves, so Caddy can get its certificate on first boot:
+This happens in the Cloudflare dashboard, since it needs your login.
 
-```bash
-gcloud compute firewall-rules create nooswise-web --allow=tcp:80,tcp:443 --target-tags=nooswise-app --description="nooswise HTTP/HTTPS"
-```
-
-Port 80 is required — Let's Encrypt uses it for the HTTP-01 challenge, and Caddy
-redirects it to HTTPS afterwards.
+1. Go to **[one.dash.cloudflare.com](https://one.dash.cloudflare.com) → Networks → Tunnels**.
+2. **Create a tunnel** → **Cloudflared** connector → name it `nooswise`.
+3. On the install-command screen, don't run anything — just copy the **token** (the long
+   string after `--token`, starting with `ey...`). It goes into `.env` in step 4. Keep it
+   private; anyone with it can route traffic through your tunnel.
+4. Click **Next**. Under **Public Hostname**, add:
+   - **Subdomain / Domain**: pick your domain
+   - **Type**: `HTTP`
+   - **URL**: `app:3000` — the app container's name and port on the Docker network
+     Compose creates. Not `localhost`, and not `https`.
+5. Save. Cloudflare creates the DNS record itself — you never enter an IP anywhere,
+   which is the whole point.
 
 ---
 
-## 5. Configure and start
+## 4. Configure and start
 
 ```bash
 gcloud compute ssh nooswise --zone="$ZONE" --tunnel-through-iap
@@ -148,8 +147,8 @@ Generate a database password:
 openssl rand -base64 32
 ```
 
-Edit `.env` (`nano .env`) and set `NOOSWISE_DOMAIN`, `NOOSWISE_ACME_EMAIL`,
-`POSTGRES_PASSWORD`, and `BACKUP_BUCKET` (`nooswise-backups`, without `gs://`).
+Edit `.env` (`nano .env`) and set `CLOUDFLARE_TUNNEL_TOKEN`, `POSTGRES_PASSWORD`, and
+`BACKUP_BUCKET` (`nooswise-backups`, without `gs://`).
 
 Then deploy:
 
@@ -157,21 +156,19 @@ Then deploy:
 bash deploy/update.sh
 ```
 
-That builds the image, runs migrations, and starts all three containers. The first build
-takes a few minutes on a shared-core VM. Caddy fetches the certificate on first request,
-so the very first page load may take a few seconds.
+That builds the image, runs migrations, and starts Postgres, the app, and cloudflared.
+The first build takes a few minutes on a shared-core VM. Once the tunnel shows
+**Healthy** in the Cloudflare dashboard, your domain serves the app over HTTPS.
 
-Visit `https://your-domain` — you should get the landing page over HTTPS.
-
-If it doesn't come up, check Caddy first — certificate problems are the usual cause:
+If it doesn't come up, check the tunnel connection first:
 
 ```bash
-docker compose -f docker-compose.prod.yml logs caddy
+docker compose -f docker-compose.prod.yml logs cloudflared
 ```
 
 ---
 
-## 6. Bring your existing splits across
+## 5. Bring your existing splits across
 
 From **your Mac**, with the old data still in `data/splits.json`:
 
@@ -187,7 +184,7 @@ Anything sitting in a browser's localStorage migrates itself: the app posts it t
 
 ---
 
-## 7. Schedule nightly backups
+## 6. Schedule nightly backups
 
 On the VM:
 
@@ -207,6 +204,20 @@ bash deploy/restore.sh --file <the-file-it-just-listed>
 
 That restores into a scratch database, prints row counts, and re-checks that every expense
 still equals the sum of its splits. Production is untouched.
+
+---
+
+## 7. Confirm the bill really is zero
+
+Check the billing page after a couple of days. Expect **no** external IP line item — the
+744 free hours should absorb it. If one appears, the likely causes are a second VM with
+an external IP, or a reserved static address; check with:
+
+```bash
+gcloud compute addresses list
+```
+
+Empty output is what you want.
 
 ---
 
@@ -263,15 +274,16 @@ gcloud compute ssh nooswise --zone="$ZONE" --tunnel-through-iap
 
 ## Notes
 
-- **Postgres is not reachable from the internet.** It has no published port and lives only
-  on the internal Docker network. Reach it through `docker compose exec`.
-- **SSH is not reachable from the internet either** — only through IAP. If you ever can't
-  connect, check that `allow-iap-ssh` still exists and that `default-allow-ssh` hasn't been
-  recreated.
-- **`caddy_data` holds your TLS certificates.** Don't prune that volume casually —
-  re-issuance is rate-limited by Let's Encrypt.
-- **Egress is 1 GB/month free.** The app bundle is ~240 KB gzipped, so roughly 4,000 page
-  loads. Worth knowing, unlikely to bite.
+- **Nothing on this VM is reachable from the internet.** No container publishes a port,
+  the only firewall rule is IAP-scoped SSH, and the external IP exists purely so the box
+  can reach out. Postgres in particular is only on the internal Docker network.
+- **Stopping and starting the VM changes its IP.** Nothing breaks — that's why the tunnel
+  is here rather than a reverse proxy and an A record.
+- **Rotate the tunnel token** from the Cloudflare dashboard (Networks → Tunnels → your
+  tunnel → Configure) if it's ever exposed, then update `.env` and
+  `docker compose -f docker-compose.prod.yml up -d cloudflared`.
+- **Egress is 1 GB/month free** on the GCP side. The app bundle is ~240 KB gzipped, so
+  roughly 4,000 page loads. Cloudflare's own bandwidth is unmetered on the free plan.
 - **Scaling past one instance** would need the SSE fan-out in `server/services/events.ts`
   moved from an in-memory Map to Postgres `LISTEN/NOTIFY`. That file is the only thing
   that assumes a single process.

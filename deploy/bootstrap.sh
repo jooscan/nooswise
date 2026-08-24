@@ -19,7 +19,7 @@ apt-get update -qq
 apt-get install -y -qq ca-certificates curl gnupg git unattended-upgrades
 
 # ---------------------------------------------------------------------------
-# Swap. This box has 1 GB of RAM shared between Postgres, Node and Caddy. Without
+# Swap. This box has 1 GB of RAM shared between Postgres, Node and cloudflared. Without
 # swap the kernel's OOM killer eventually picks Postgres, usually mid-write.
 # ---------------------------------------------------------------------------
 if [[ ! -f /swapfile ]]; then
