@@ -10,12 +10,12 @@ export const Logo: React.FC<LogoProps> = ({ size = 36, className = '' }) => {
   return (
     <div
       style={{ width: size, height: size }}
-      className={`relative rounded-full overflow-hidden shrink-0 select-none bg-[#8FD4F2]/25 ${className}`}
+      className={`relative rounded-[22%] overflow-hidden shrink-0 select-none bg-[#8FD4F2]/25 ${className}`}
     >
       <img
         src={logoImg}
         alt="nooswise logo"
-        className="w-full h-full object-cover rounded-full"
+        className="w-full h-full object-cover rounded-[22%]"
         referrerPolicy="no-referrer"
       />
     </div>
