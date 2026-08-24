@@ -7,40 +7,41 @@ inbound ever reaches the VM directly.
 Most of this is already done for the `nooswise` project — see **"What's already set up"**
 below, then skip to step 4.
 
-## Cost: $0/month
+## Cost: ~$3.65/month, plus the domain
 
-Everything here fits inside Google Cloud's Always Free tier, including the external IP.
-That last part is easy to get wrong, so it's worth writing down.
+Almost everything here is inside Google Cloud's Always Free tier — the VM, its disk,
+and the backup bucket. The one thing that isn't, and cannot be made to be: **an in-use
+external IPv4 address on a running VM.**
 
-**The external IP is free, but only because of two specific choices:**
+Per Google's own pricing page (cloud.google.com/vpc/network-pricing):
 
-Google's billing catalog has two separate SKUs (verified against the Cloud Billing
-Catalog API, service `6F81-5844-456A`):
+> Both static and ephemeral IP addresses assigned to standard VM instances are offered
+> with a free tier. **This free usage is limited to one hour per month per account.**
 
-| SKU | Free tier | Then |
-|---|---|---|
-| `External IP Charge on a Standard VM` | first **744 hours/month** | $0.005/hr |
-| `Static Ip Charge` | first **1 hour** | $0.010/hr |
+One hour, not a month. And static doesn't help — the same page prices "static and
+ephemeral IP addresses in use on standard VM instances" identically, at $0.005/hr. A
+reserved IP kept permanently attached to a running instance costs exactly what an
+ephemeral one does; there's no cheaper tier to move to. (The Always Free feature list
+for e2-micro confirms this by omission too — it names the instance, the 30GB disk, and
+1GB egress explicitly, and says nothing about an IP.)
 
-744 hours is exactly one month, so **one** continuously-running VM's external IP is
-free. A second one would be billed. And the IP must be **ephemeral, not a reserved
-static address** — reserving one moves it to the second SKU, which is ~$7.30/mo.
+So ~$3.65/mo (730 hours × $0.005) is the real, essentially unavoidable cost of a VM
+that stays running and needs to reach the internet — true whether that VM serves
+traffic through a tunnel or a reverse proxy, and whether its IP is ephemeral or static.
 
-So: don't reserve a static IP, and don't run a second VM with an external IP.
+**Why the VM needs an external IP at all:** a VM created with `--no-address` has no
+internet access in *either* direction — it can't `apt-get`, `docker pull`, or
+`git clone`, and `cloudflared` can't dial out to establish the tunnel either. Cloud NAT
+provides outbound without an IP but costs ~$32+/mo, far worse than the IP itself.
+IPv6-only is genuinely free but breaks `git clone`, because github.com publishes no
+`AAAA` record.
 
-**Why the VM needs an external IP at all**, given the tunnel: a VM created with
-`--no-address` has no internet access in *either* direction. It can't `apt-get`,
-`docker pull`, or `git clone` — and `cloudflared` can't dial out to establish the tunnel
-either. Cloud NAT provides outbound without an IP but costs ~$32+/mo. IPv6-only is free
-but breaks `git clone`, because github.com publishes no `AAAA` record.
-
-**Why the tunnel, then, if the IP is free either way?** Because the IP is ephemeral, it
-changes whenever the VM is stopped and started. With a reverse proxy and an A record
-that would silently break the site until DNS was updated by hand. With the tunnel there
-is no DNS record pointing at the IP, so nothing goes stale. It also means ports 80 and
-443 are never opened at all.
-
-The only recurring cost is the domain.
+**Given the cost is the same either way, why the tunnel and not a plain reverse proxy?**
+Purely operational, not financial: zero ports open on the VM at all (not even 80/443),
+Cloudflare handles TLS issuance and renewal, and because the IP here is ephemeral —
+it changes whenever the VM is stopped and started — there's no DNS A record anywhere
+that could go stale. A reverse-proxy setup would need either a reserved static IP (same
+cost, one less moving part to manage) or a manual DNS update after every restart.
 
 ---
 
@@ -57,7 +58,7 @@ For the `nooswise` GCP project, these steps are done:
 - **GCP's `default-allow-ssh` and `default-allow-rdp` rules deleted** — new projects get
   these automatically and they open ports 22 and 3389 to `0.0.0.0/0`. Worth checking for
   on any new GCP project.
-- Backup bucket `gs://nooswise-backups`, 30-day lifecycle, VM service account has write access
+- Backup bucket `gs://nooswise-backups` in `us-east1` (matches the VM's region — required for the Cloud Storage Always Free tier, which only covers `us-east1`/`us-west1`/`us-central1`, not multi-region locations), 30-day lifecycle, VM service account has write access
 
 **Still to do: steps 3 (create the tunnel) and 4 onward.**
 
@@ -207,17 +208,19 @@ still equals the sum of its splits. Production is untouched.
 
 ---
 
-## 7. Confirm the bill really is zero
+## 7. Confirm the bill matches expectations
 
-Check the billing page after a couple of days. Expect **no** external IP line item — the
-744 free hours should absorb it. If one appears, the likely causes are a second VM with
-an external IP, or a reserved static address; check with:
+Check the billing page after a couple of days. You should see one external-IP line item
+around $3.65/mo (see the Cost section above for why this is real and expected, not a
+mistake). What would mean something is actually wrong: a second such line item — check
+for a second VM with an external IP, or a reserved static address:
 
 ```bash
+gcloud compute instances list
 gcloud compute addresses list
 ```
 
-Empty output is what you want.
+One instance, empty address list, is what you want.
 
 ---
 
