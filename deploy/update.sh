@@ -21,6 +21,17 @@ set -a; source .env; set +a
 echo "==> Pulling latest code"
 git pull --ff-only
 
+# This script just rewrote itself on disk. bash does not guarantee it re-reads a
+# running script from disk after an external change, so without this re-exec the
+# rest of THIS run can execute a stale mix of old and new content — which is exactly
+# what happened the first time this shipped: git pull succeeded, but everything after
+# it kept running the pre-fix logic anyway. Re-exec once into a fresh process that
+# reads the file fresh from the start, then every step below is guaranteed current.
+if [[ "${NOOSWISE_REEXECED:-}" != "1" ]]; then
+  export NOOSWISE_REEXECED=1
+  exec bash "$0" "$@"
+fi
+
 TAG="$(git rev-parse --short HEAD)"
 export NOOSWISE_TAG="$TAG"
 echo "==> Deploying $TAG"
