@@ -54,13 +54,13 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
 
   return (
     <div className="min-h-screen bg-[#F7F9FC] dark:bg-[#090d16] text-[#13223D] dark:text-slate-100 flex flex-col justify-between p-5 sm:p-8 md:p-12 relative overflow-hidden antialiased selection:bg-[#8FD4F2] dark:selection:bg-slate-800 transition-colors">
-      {/* Ambient gradient glows */}
+      {/* Ambient gradient wash, echoing the logo's own holographic glow */}
       <div
-        className="absolute -top-32 -left-32 w-96 h-96 bg-[#8FD4F2]/30 dark:bg-sky-500/10 rounded-full blur-3xl pointer-events-none"
-        aria-hidden="true"
-      />
-      <div
-        className="absolute top-1/3 -right-32 w-96 h-96 bg-[#EAF3FB] dark:bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"
+        className="absolute -top-1/4 left-1/2 -translate-x-1/2 w-[130%] sm:w-[900px] aspect-square rounded-full blur-3xl pointer-events-none opacity-25 dark:opacity-20"
+        style={{
+          background:
+            'radial-gradient(circle, #C4EDF3 0%, #A7D6F7 30%, #8FD4F2 50%, transparent 70%)',
+        }}
         aria-hidden="true"
       />
 

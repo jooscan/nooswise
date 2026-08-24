@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Group } from '../types';
 import {
   getPaymentSummaryTransfers,
@@ -31,6 +31,18 @@ export const PaymentSummaryModal: React.FC<PaymentSummaryModalProps> = ({
   group,
 }) => {
   const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
 
   const transfers = group ? getPaymentSummaryTransfers(group) : [];
   const totalSpent = (group?.expenses || []).reduce((acc, e) => acc + (e.amount || 0), 0);
