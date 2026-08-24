@@ -17,6 +17,7 @@ import {
   Check,
   ArrowUp,
   ArrowDown,
+  X,
 } from 'lucide-react';
 
 export type ActiveTab = 'expenses' | 'settle-up' | 'settings';
@@ -35,6 +36,7 @@ interface SidebarProps {
   onMemberClick?: (member: Member) => void;
   onSwitchIdentityClick?: () => void;
   onAddMember?: (name: string) => void;
+  onRemoveMember?: (memberId: string) => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -51,12 +53,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onMemberClick,
   onSwitchIdentityClick,
   onAddMember,
+  onRemoveMember,
 }) => {
   const [hoveredTab, setHoveredTab] = useState<ActiveTab | null>(null);
   const [mobileHoveredTab, setMobileHoveredTab] = useState<ActiveTab | null>(null);
   const [isAddingPerson, setIsAddingPerson] = useState(false);
   const [newPersonName, setNewPersonName] = useState('');
   const addPersonInputRef = useRef<HTMLInputElement>(null);
+
+  const handleRemoveMember = (e: React.MouseEvent, member: Member) => {
+    e.stopPropagation();
+    if (!onRemoveMember) return;
+    if (!confirm(`Remove ${member.name} from this split?`)) return;
+    onRemoveMember(member.id);
+  };
 
   const handleAddPerson = (e: React.FormEvent) => {
     e.preventDefault();
@@ -237,23 +247,36 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     </div>
 
                     {/* Balance State in Plus Jakarta Sans font */}
-                    <div className="text-right shrink-0 pl-1.5 font-sans font-semibold">
-                      {isPositive && (
-                        <span className="text-[11px] text-[#8B3422] dark:text-[#E88A72] tracking-tight">
-                          +{formatCurrency(netBalance, group.currency)}
-                        </span>
-                      )}
+                    <div className="flex items-center gap-1 shrink-0 pl-1.5">
+                      <div className="text-right font-sans font-semibold">
+                        {isPositive && (
+                          <span className="text-[11px] text-[#8B3422] dark:text-[#E88A72] tracking-tight">
+                            +{formatCurrency(netBalance, group.currency)}
+                          </span>
+                        )}
 
-                      {isNegative && (
-                        <span className="text-[11px] text-[#6E8CB4] dark:text-[#B4D0EE] tracking-tight">
-                          -{formatCurrency(Math.abs(netBalance), group.currency)}
-                        </span>
-                      )}
+                        {isNegative && (
+                          <span className="text-[11px] text-[#6E8CB4] dark:text-[#B4D0EE] tracking-tight">
+                            -{formatCurrency(Math.abs(netBalance), group.currency)}
+                          </span>
+                        )}
 
-                      {isSettled && (
-                        <span className="text-[10px] text-[#2b5927] dark:text-[#A9C1A5] lowercase">
-                          square
-                        </span>
+                        {isSettled && (
+                          <span className="text-[10px] text-[#2b5927] dark:text-[#A9C1A5] lowercase">
+                            square
+                          </span>
+                        )}
+                      </div>
+
+                      {onRemoveMember && (
+                        <button
+                          type="button"
+                          onClick={(e) => handleRemoveMember(e, member)}
+                          title={`Remove ${member.name} from this split`}
+                          className="opacity-0 group-hover:opacity-100 focus:opacity-100 w-5 h-5 rounded-full flex items-center justify-center text-[#6E8CB4] hover:text-white hover:bg-rose-500 transition-all cursor-pointer shrink-0"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
                       )}
                     </div>
                   </motion.div>

@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react';
 import { Group, Member } from '../types';
 import { calculateMemberBalances, formatCurrency } from '../utils/debtSimplification';
 import { CuteAvatarBadge } from './CuteAvatarBadge';
-import { Check, UserPlus, Plus, ArrowUp, ArrowDown } from 'lucide-react';
+import { Check, UserPlus, Plus, ArrowUp, ArrowDown, X } from 'lucide-react';
 import { motion } from 'motion/react';
 
 interface FriendsListCardProps {
@@ -11,6 +11,7 @@ interface FriendsListCardProps {
   onSwitchIdentityClick?: () => void;
   onMemberClick?: (member: Member) => void;
   onAddMember?: (name: string) => void;
+  onRemoveMember?: (memberId: string) => void;
 }
 
 export const FriendsListCard: React.FC<FriendsListCardProps> = ({
@@ -19,11 +20,19 @@ export const FriendsListCard: React.FC<FriendsListCardProps> = ({
   onSwitchIdentityClick,
   onMemberClick,
   onAddMember,
+  onRemoveMember,
 }) => {
   const balances = calculateMemberBalances(group);
   const [isAddingPerson, setIsAddingPerson] = useState(false);
   const [newPersonName, setNewPersonName] = useState('');
   const addPersonInputRef = useRef<HTMLInputElement>(null);
+
+  const handleRemoveMember = (e: React.MouseEvent, member: Member) => {
+    e.stopPropagation();
+    if (!onRemoveMember) return;
+    if (!confirm(`Remove ${member.name} from this split?`)) return;
+    onRemoveMember(member.id);
+  };
 
   const handleAddPerson = (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,26 +86,39 @@ export const FriendsListCard: React.FC<FriendsListCardProps> = ({
               </div>
 
               {/* Balance State */}
-              <div className="text-right shrink-0 pl-2">
-                {isPositive && (
-                  <span className="text-[11px] font-semibold text-[#8B3422] dark:text-[#E88A72] flex items-center gap-0.5">
-                    <ArrowUp className="w-2.5 h-2.5" />
-                    <span>+{formatCurrency(netBalance, group.currency)}</span>
-                  </span>
-                )}
+              <div className="flex items-center gap-1.5 shrink-0 pl-2">
+                <div className="text-right">
+                  {isPositive && (
+                    <span className="text-[11px] font-semibold text-[#8B3422] dark:text-[#E88A72] flex items-center gap-0.5">
+                      <ArrowUp className="w-2.5 h-2.5" />
+                      <span>+{formatCurrency(netBalance, group.currency)}</span>
+                    </span>
+                  )}
 
-                {isNegative && (
-                  <span className="text-[11px] font-semibold text-[#6E8CB4] dark:text-[#B4D0EE] flex items-center gap-0.5">
-                    <ArrowDown className="w-2.5 h-2.5" />
-                    <span>-{formatCurrency(Math.abs(netBalance), group.currency)}</span>
-                  </span>
-                )}
+                  {isNegative && (
+                    <span className="text-[11px] font-semibold text-[#6E8CB4] dark:text-[#B4D0EE] flex items-center gap-0.5">
+                      <ArrowDown className="w-2.5 h-2.5" />
+                      <span>-{formatCurrency(Math.abs(netBalance), group.currency)}</span>
+                    </span>
+                  )}
 
-                {isSettled && (
-                  <span className="text-[10px] font-semibold text-[#2b5927] dark:text-[#A9C1A5] flex items-center gap-1 bg-[#A9C1A5]/15 px-2 py-0.5 rounded-full">
-                    <Check className="w-2.5 h-2.5 stroke-[3]" />
-                    <span>Square</span>
-                  </span>
+                  {isSettled && (
+                    <span className="text-[10px] font-semibold text-[#2b5927] dark:text-[#A9C1A5] flex items-center gap-1 bg-[#A9C1A5]/15 px-2 py-0.5 rounded-full">
+                      <Check className="w-2.5 h-2.5 stroke-[3]" />
+                      <span>Square</span>
+                    </span>
+                  )}
+                </div>
+
+                {onRemoveMember && (
+                  <button
+                    type="button"
+                    onClick={(e) => handleRemoveMember(e, member)}
+                    title={`Remove ${member.name} from this split`}
+                    className="w-6 h-6 rounded-full flex items-center justify-center text-[#6E8CB4] hover:text-white hover:bg-rose-500 transition-colors cursor-pointer shrink-0"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
                 )}
               </div>
             </motion.div>

@@ -561,6 +561,7 @@ export default function App() {
         onMemberClick={(m) => handleClaimIdentity(m.id)}
         onSwitchIdentityClick={() => setIsJoinModalOpen(true)}
         onAddMember={(name) => handleAddMemberToGroup(name)}
+        onRemoveMember={(memberId) => removeMember(activeGroup.id, memberId)}
       />
 
       {/* Main Content Area */}
@@ -777,6 +778,7 @@ export default function App() {
                       onSwitchIdentityClick={() => setIsJoinModalOpen(true)}
                       onMemberClick={(m) => handleClaimIdentity(m.id)}
                       onAddMember={(name) => handleAddMemberToGroup(name)}
+                      onRemoveMember={(memberId) => removeMember(activeGroup.id, memberId)}
                     />
                   </div>
 
