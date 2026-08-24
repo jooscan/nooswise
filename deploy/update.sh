@@ -43,7 +43,7 @@ echo "==> Running migrations"
 $COMPOSE run --rm --no-deps app node dist/migrate.cjs
 
 echo "==> Restarting app"
-$COMPOSE up -d app cloudflared
+$COMPOSE up -d app caddy
 
 echo "==> Waiting for health"
 for i in $(seq 1 30); do

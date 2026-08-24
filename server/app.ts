@@ -16,7 +16,7 @@ import { pool } from './db/client';
 export function createApp(): express.Express {
   const app = express();
 
-  app.set('trust proxy', 1); // behind cloudflared -> Cloudflare's edge in production
+  app.set('trust proxy', 1); // behind Caddy in production
   app.use(express.json({ limit: '2mb' }));
   app.use(express.urlencoded({ extended: true, limit: '2mb' }));
 
