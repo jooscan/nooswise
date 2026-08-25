@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { Group, Member, SettlementRecord, SimplifiedDebt } from '../types';
 import {
@@ -626,7 +627,7 @@ export const SettleUpView: React.FC<SettleUpViewProps> = ({
 
       {/* Settle Debt Confirmation Modal */}
       <AnimatePresence>
-        {activeSettleDebt && (
+        {activeSettleDebt && createPortal(
           <div className="fixed inset-0 z-50 bg-slate-950/45 dark:bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
             <motion.div
               initial={{ opacity: 0, scale: 0.94, y: 15 }}
@@ -712,7 +713,8 @@ export const SettleUpView: React.FC<SettleUpViewProps> = ({
                 </motion.button>
               </div>
             </motion.div>
-          </div>
+          </div>,
+          document.body
         )}
       </AnimatePresence>
     </div>

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { motion } from 'motion/react';
 import { Member } from '../types';
 import { formatCurrency } from '../utils/debtSimplification';
@@ -101,7 +102,7 @@ export const RemindModal: React.FC<RemindModalProps> = ({
 
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 bg-slate-950/45 dark:bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
       <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-[32px] p-6 sm:p-8 shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col gap-5 animate-in fade-in zoom-in-95 duration-150 transition-colors">
         {/* Header */}
@@ -230,6 +231,7 @@ export const RemindModal: React.FC<RemindModalProps> = ({
           Nooswise never sends automated spam to your friends. You stay in control.
         </p>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

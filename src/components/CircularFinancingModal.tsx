@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { X, Sparkles, CheckCircle2, MessageCircleQuestion } from 'lucide-react';
 import { useLockBodyScroll } from '../hooks/useLockBodyScroll';
 
@@ -15,7 +16,7 @@ export const CircularFinancingModal: React.FC<CircularFinancingModalProps> = ({
 
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 bg-slate-950/45 dark:bg-black/75 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200">
       <div className="bg-white/98 dark:bg-slate-900/98 backdrop-blur-xl w-full max-w-lg rounded-[32px] p-6 sm:p-8 shadow-2xl border border-slate-200/80 dark:border-slate-800 my-auto relative text-slate-900 dark:text-slate-100 animate-in zoom-in-95 duration-200 transition-colors">
         {/* Top close button */}
@@ -112,6 +113,7 @@ export const CircularFinancingModal: React.FC<CircularFinancingModalProps> = ({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

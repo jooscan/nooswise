@@ -384,6 +384,7 @@ export const HeroBalanceCard: React.FC<HeroBalanceCardProps> = ({
                 </span>
               </div>
 
+              {youOweList.length > 0 && (
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
                 {/* People You Owe -> "Settle" */}
                 {youOweList.map((debt) => {
@@ -454,42 +455,45 @@ export const HeroBalanceCard: React.FC<HeroBalanceCardProps> = ({
                     </motion.div>
                   );
                 })}
+              </div>
+              )}
 
-                {/* People Who Owe You -> "Give a nudge" */}
+              {/* People Who Owe You -> "Give a nudge" — its own, denser grid since
+                  this card's content is much lighter than the "settle with" cards above. */}
+              {owesYouList.length > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
                 {owesYouList.map((debt) => (
                   <motion.div
                     key={debt.id}
                     whileHover={{ y: -2 }}
                     transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-                    className="bg-[#203652]/70 hover:bg-[#203652] border border-[#2A4365] rounded-[22px] p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-colors backdrop-blur-xs shadow-2xs"
+                    className="bg-[#203652]/70 hover:bg-[#203652] border border-[#2A4365] rounded-2xl px-3 py-2.5 flex items-center justify-between gap-2 transition-colors backdrop-blur-xs shadow-2xs"
                   >
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <CuteAvatarBadge member={debt.fromMember} size="sm" />
+                    <div className="flex items-center gap-2 min-w-0">
+                      <CuteAvatarBadge member={debt.fromMember} size="xs" />
                       <div className="flex flex-col min-w-0">
-                        <span className="text-xs text-[#EAA2A8] font-medium truncate">
+                        <span className="text-[10px] text-[#EAA2A8] font-medium truncate leading-tight">
                           {debt.fromMember.name} has
                         </span>
-                        <span className="font-sans font-bold text-base sm:text-lg text-white truncate">
+                        <span className="font-sans font-bold text-sm text-white truncate leading-tight">
                           {formatCurrency(debt.amount, group.currency)}
-                          <span className="font-normal text-[#A5CFF6] text-xs sm:text-sm ml-1">for you</span>
                         </span>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
-                      <motion.button
-                        whileTap={{ scale: 0.94 }}
-                        onClick={() => onRemindClick(debt.fromMember, debt.amount)}
-                        className="bg-[#11213C] hover:bg-[#0c1524] text-[#A5CFF6] hover:text-white border border-[#2A4365] text-xs font-semibold px-4 py-2 rounded-full transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs"
-                        title={`Give ${debt.fromMember.name} a gentle nudge`}
-                      >
-                        <Send className="w-3 h-3 text-[#A5CFF6]" />
-                        <span>Nudge</span>
-                      </motion.button>
-                    </div>
+                    <motion.button
+                      whileTap={{ scale: 0.94 }}
+                      onClick={() => onRemindClick(debt.fromMember, debt.amount)}
+                      className="bg-[#11213C] hover:bg-[#0c1524] text-[#A5CFF6] hover:text-white border border-[#2A4365] text-[11px] font-semibold px-2.5 py-1.5 rounded-full transition-colors flex items-center gap-1 cursor-pointer shadow-2xs shrink-0"
+                      title={`Give ${debt.fromMember.name} a gentle nudge`}
+                    >
+                      <Send className="w-3 h-3 text-[#A5CFF6]" />
+                      <span>Nudge</span>
+                    </motion.button>
                   </motion.div>
                 ))}
               </div>
+              )}
             </div>
           )}
         </div>
