@@ -14,11 +14,28 @@ export const CircularFinancingModal: React.FC<CircularFinancingModalProps> = ({
 }) => {
   useLockBodyScroll(isOpen);
 
+  React.useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-50 bg-slate-950/45 dark:bg-black/75 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200">
-      <div className="bg-white/98 dark:bg-slate-900/98 backdrop-blur-xl w-full max-w-lg rounded-[32px] p-6 sm:p-8 shadow-2xl border border-slate-200/80 dark:border-slate-800 my-auto relative text-slate-900 dark:text-slate-100 animate-in zoom-in-95 duration-200 transition-colors">
+    <div
+      onClick={onClose}
+      className="fixed inset-0 z-50 bg-slate-950/45 dark:bg-black/75 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200 cursor-pointer"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="bg-white/98 dark:bg-slate-900/98 backdrop-blur-xl w-full max-w-lg rounded-[32px] p-6 sm:p-8 shadow-2xl border border-slate-200/80 dark:border-slate-800 my-auto relative text-slate-900 dark:text-slate-100 animate-in zoom-in-95 duration-200 transition-colors cursor-default">
         {/* Top close button */}
         <button
           onClick={onClose}
