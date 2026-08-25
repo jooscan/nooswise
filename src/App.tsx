@@ -461,6 +461,34 @@ export default function App() {
     await saveExpenseOnServer(activeGroup.id, expenseData, editingId);
   };
 
+  /**
+   * A newly-joined member picks which existing (equally-split) expenses they were
+   * actually part of, so those expenses recalculate to include their share instead
+   * of silently leaving them off bills they were there for.
+   */
+  const handleJoinExpenses = async (memberId: string, expenseIds: string[]) => {
+    if (!activeGroup) return;
+    for (const expenseId of expenseIds) {
+      const expense = activeGroup.expenses.find((e) => e.id === expenseId);
+      if (!expense || expense.splitType !== 'equally') continue;
+      if (expense.splits.some((s) => s.memberId === memberId)) continue;
+
+      const participantIds = [...expense.splits.map((s) => s.memberId), memberId];
+      const share = Math.round((expense.amount / participantIds.length) * 100) / 100;
+      let remaining = Math.round(expense.amount * 100) / 100;
+      const updatedSplits = participantIds.map((mId, idx) => {
+        if (idx === participantIds.length - 1) {
+          return { memberId: mId, amount: remaining };
+        }
+        remaining = Math.round((remaining - share) * 100) / 100;
+        return { memberId: mId, amount: share };
+      });
+
+      const { id, ...expenseData } = expense;
+      await saveExpenseOnServer(activeGroup.id, { ...expenseData, splits: updatedSplits }, expenseId);
+    }
+  };
+
   const handleDeleteExpense = async (expenseId: string) => {
     if (!activeGroup) return;
     await deleteExpenseOnServer(activeGroup.id, expenseId);
@@ -955,6 +983,7 @@ export default function App() {
         group={activeGroup}
         onClaimIdentity={handleClaimIdentity}
         onAddMember={handleAddMemberToGroup}
+        onJoinExpenses={handleJoinExpenses}
       />
 
       <TripWrapUpModal

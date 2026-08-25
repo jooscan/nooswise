@@ -2,7 +2,8 @@ import React, { useState, useRef } from 'react';
 import { motion } from 'motion/react';
 import { Group, Member } from '../types';
 import { CuteAvatarBadge } from './CuteAvatarBadge';
-import { X, Check, Sparkles, UserPlus, ArrowRight } from 'lucide-react';
+import { formatCurrency } from '../utils/debtSimplification';
+import { X, Check, Sparkles, UserPlus, ArrowRight, Receipt } from 'lucide-react';
 import { Logo } from './Logo';
 import { useLockBodyScroll } from '../hooks/useLockBodyScroll';
 
@@ -11,7 +12,8 @@ interface JoinGroupModalProps {
   onClose: () => void;
   group: Group;
   onClaimIdentity: (memberId: string) => void;
-  onAddMember: (name: string, claimAsCurrentUser?: boolean) => void;
+  onAddMember: (name: string, claimAsCurrentUser?: boolean) => Promise<Member | null> | void;
+  onJoinExpenses: (memberId: string, expenseIds: string[]) => void | Promise<void>;
 }
 
 export const JoinGroupModal: React.FC<JoinGroupModalProps> = ({
@@ -20,18 +22,50 @@ export const JoinGroupModal: React.FC<JoinGroupModalProps> = ({
   group,
   onClaimIdentity,
   onAddMember,
+  onJoinExpenses,
 }) => {
   const [newName, setNewName] = useState('');
   const [isAddingNew, setIsAddingNew] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const handleAddPerson = (e: React.FormEvent) => {
+  // After a brand-new member is added, they pick which existing (equally-split)
+  // expenses they actually took part in, so those bills recalculate to include them.
+  const [pickingExpensesFor, setPickingExpensesFor] = useState<Member | null>(null);
+  const [selectedExpenseIds, setSelectedExpenseIds] = useState<Set<string>>(new Set());
+
+  const joinableExpenses = group?.expenses.filter((e) => e.splitType === 'equally') ?? [];
+
+  const handleAddPerson = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newName.trim()) return;
+    const cleanName = newName.trim();
+    if (!cleanName) return;
 
     // Add person and claim immediately as current user
-    onAddMember(newName.trim(), true);
+    const added = await onAddMember(cleanName, true);
     setNewName('');
+
+    if (added && joinableExpenses.length > 0) {
+      setPickingExpensesFor(added);
+    } else {
+      onClose();
+    }
+  };
+
+  const toggleExpense = (expenseId: string) => {
+    setSelectedExpenseIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(expenseId)) next.delete(expenseId);
+      else next.add(expenseId);
+      return next;
+    });
+  };
+
+  const handleConfirmExpenses = async () => {
+    if (pickingExpensesFor && selectedExpenseIds.size > 0) {
+      await onJoinExpenses(pickingExpensesFor.id, Array.from(selectedExpenseIds));
+    }
+    setPickingExpensesFor(null);
+    setSelectedExpenseIds(new Set());
     onClose();
   };
 
@@ -43,6 +77,96 @@ export const JoinGroupModal: React.FC<JoinGroupModalProps> = ({
   useLockBodyScroll(isOpen);
 
   if (!isOpen || !group) return null;
+
+  if (pickingExpensesFor) {
+    return (
+      <div className="fixed inset-0 z-50 bg-[#11213C]/75 dark:bg-black/85 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.94, y: 16 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.94, y: 16 }}
+          transition={{ type: 'spring', stiffness: 420, damping: 28 }}
+          className="bg-white dark:bg-[#11213C] w-full max-w-md rounded-[30px] p-6 sm:p-8 shadow-2xl border border-[#DCE6F1] dark:border-[#2A4365] my-auto relative text-[#11213C] dark:text-[#F8F9FB] transition-colors flex flex-col gap-4"
+        >
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-[#E9EFF8] dark:bg-[#203652] flex items-center justify-center text-[#11213C] dark:text-[#A5CFF6] shrink-0">
+              <Receipt className="w-4 h-4" />
+            </div>
+            <span className="text-xs font-semibold text-[#6FA4EA] dark:text-[#A5CFF6]">
+              Welcome, {pickingExpensesFor.name}!
+            </span>
+          </div>
+
+          <div>
+            <h2 className="font-display text-2xl sm:text-3xl text-[#11213C] dark:text-white font-normal tracking-tight">
+              Which of these did you take part in?
+            </h2>
+            <p className="text-xs text-[#6FA4EA] dark:text-[#A5CFF6] mt-1">
+              Pick any expenses you were actually there for — we'll split them to include your share.
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-2 max-h-72 overflow-y-auto pr-1">
+            {joinableExpenses.map((exp) => {
+              const isSelected = selectedExpenseIds.has(exp.id);
+              return (
+                <button
+                  key={exp.id}
+                  type="button"
+                  onClick={() => toggleExpense(exp.id)}
+                  className={`w-full p-3.5 rounded-2xl flex items-center justify-between gap-3 transition-colors cursor-pointer border text-left ${
+                    isSelected
+                      ? 'bg-[#E9EFF8] dark:bg-[#203652] border-[#A5CFF6] dark:border-[#3B5B88]'
+                      : 'bg-[#F8F9FB] dark:bg-[#11213C]/70 border-[#DCE6F1] dark:border-[#2A4365] hover:bg-[#E9EFF8] dark:hover:bg-[#203652]'
+                  }`}
+                >
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-sm font-semibold text-[#11213C] dark:text-white truncate">
+                      {exp.title}
+                    </span>
+                    <span className="text-[11px] text-[#6FA4EA] dark:text-[#A5CFF6]">
+                      {formatCurrency(exp.amount, group.currency)} · split {exp.splits.length} way
+                      {exp.splits.length === 1 ? '' : 's'}
+                    </span>
+                  </div>
+                  <div
+                    className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 border-2 transition-colors ${
+                      isSelected
+                        ? 'bg-[#11213C] dark:bg-white border-[#11213C] dark:border-white'
+                        : 'border-[#DCE6F1] dark:border-[#3B5B88]'
+                    }`}
+                  >
+                    {isSelected && <Check className="w-3 h-3 text-white dark:text-[#11213C] stroke-[3]" />}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="flex items-center gap-2 pt-1">
+            <button
+              onClick={() => {
+                setPickingExpensesFor(null);
+                setSelectedExpenseIds(new Set());
+                onClose();
+              }}
+              className="flex-1 py-2.5 px-4 rounded-full bg-[#E9EFF8] dark:bg-[#203652] text-[#11213C] dark:text-white text-xs font-semibold hover:bg-[#A5CFF6] dark:hover:bg-[#2A4365] transition-colors cursor-pointer"
+            >
+              Skip for now
+            </button>
+            <button
+              onClick={handleConfirmExpenses}
+              disabled={selectedExpenseIds.size === 0}
+              className="flex-1 py-2.5 px-4 rounded-full bg-[#11213C] dark:bg-white text-white dark:text-[#11213C] text-xs font-semibold disabled:opacity-40 transition-opacity cursor-pointer flex items-center justify-center gap-1.5"
+            >
+              <span>Join {selectedExpenseIds.size > 0 ? `${selectedExpenseIds.size} ` : ''}expense{selectedExpenseIds.size === 1 ? '' : 's'}</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 bg-[#11213C]/75 dark:bg-black/85 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
